@@ -9,8 +9,10 @@ Verified 2026-11-12 against the providers' own pages (links below). Not legal ad
 | Copernicus DEM GLO-30 | free licence — dataspace.copernicus.eu COP-DEM page | modified data: "produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved" | we modify it (DTM correction), so the "produced using" form is used. The page references an ESA user licence PDF that was not read: re-check before commercial use |
 | Copernicus Sentinel-2 | EU law, free full and open (Sentinel Data Legal Notice) | "Contains modified Copernicus Sentinel data 2026" | reproduction, distribution, adaptation explicitly allowed |
 | GHSL GHS-BUILT-H R2023A | CC BY 4.0 — copyright.txt next to the data | "GHSL © European Union 1995-2026, JRC; changes made" | |
+| Meta & WRI High Resolution Canopy Height Maps v2 | CC BY 4.0 — AWS Open Data registry entry `dataforgood-fb-forestsv2` | "Canopy height: Meta and World Resources Institute (WRI), CC BY 4.0; changes made" | tree tops, heights and crowns are *derived* (segmentation); window of one tile read with range requests |
+| ESA WorldCover 2021 v200 | CC BY 4.0 — esa-worldcover.org | "© ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium" | used only to decide where the canopy model is outdated, never as geometry |
 | Wikidata | CC0 | — | coordinates and names of listed buildings |
-| Wikimedia Commons photos | CC BY-SA 3.0/4.0 (per file) | — (not redistributed) | used only as visual reference to estimate colours/roof family/storeys of 2 buildings; no pixels are copied into the model |
+| Wikimedia Commons photos | CC BY-SA 3.0/4.0 (per file) | — (not redistributed) | used only as visual reference to estimate colours/roof family/storeys of 2 buildings and the lyceum corner tower (position, diameter, drum, dome); no pixels are copied into the model |
 
 ## Compatibility
 
@@ -38,4 +40,5 @@ Nothing has been published. Before publishing: (1) re-read the ESA COP-DEM user 
 © OpenStreetMap contributors (ODbL) · Building footprints © Microsoft (CDLA-Permissive-2.0) · produced using
 Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under
 COPERNICUS by the European Union and ESA; all rights reserved · Contains modified Copernicus Sentinel data
-2026 · GHSL © European Union, JRC (CC BY 4.0)
+2026 · GHSL © European Union, JRC (CC BY 4.0) · Canopy height © Meta and WRI (CC BY 4.0) · © ESA WorldCover
+project 2021 (CC BY 4.0)

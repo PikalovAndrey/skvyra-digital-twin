@@ -12,14 +12,36 @@
    "roof_material": "seam",
    "wall_colour": "#c8916a",
    "roof_colour": "#9da2a4",
-   "evidence": "Two tall storeys of ochre-salmon brick, grey sheet-metal hipped roofs with pediments; a domed corner tower is visible but NOT modelled.",
+   "evidence": "Two tall storeys of ochre-salmon tile-clad brick, grey sheet-metal hipped roofs with pediments (pediments not modelled). Domed corner tower modelled from photos: three-quarter cylinder on the south-west corner of the south wing (position inferred from the tower close-up - both adjoining walls recede symmetrically, so it stands on a convex corner - and from a geotagged 2019 photo taken 5 m from that corner showing the adjoining facades); diameter ~7 m from 5 window bays on the visible half-circumference; white drum with ~8 round windows, ribbed grey metal dome. All tower dimensions are estimates.",
    "photos": [
-    "https://commons.wikimedia.org/wiki/File:Skvyra_lyceum_(1).jpg"
+    "https://commons.wikimedia.org/wiki/File:Skvyra_lyceum_(1).jpg",
+    "https://commons.wikimedia.org/wiki/File:Skvyra_lyceum_(4).jpg",
+    "https://commons.wikimedia.org/wiki/File:Skvyra_lyceum_(5).jpg",
+    "https://commons.wikimedia.org/wiki/File:Будівля_чоловічої_гімназії_IMG_20191122_154741.jpg"
    ],
    "license": "CC BY-SA 4.0 (Wikimedia Commons)",
    "lonlat": [
     29.652008,
     49.736667
+   ],
+   "features": [
+    {
+     "type": "rotunda",
+     "method": "photo_estimate",
+     "centre_lonlat": [
+      29.6518798,
+      49.7363261
+     ],
+     "diameter_m": 7.0,
+     "wall_above_eave_m": 0.6,
+     "drum_diameter_m": 6.0,
+     "drum_h_m": 1.2,
+     "dome_rise_m": 2.1,
+     "oculi": 8,
+     "drum_colour": "#e6e2d8",
+     "dome_colour": "#8e979c",
+     "cornice_colour": "#e9e4da"
+    }
    ]
   },
   {

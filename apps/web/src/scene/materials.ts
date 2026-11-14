@@ -308,6 +308,7 @@ export const QUALITY_COLORS = {
   hSource: '#3a7bd5',
   hGhsl: '#9b7fd1',
   hDefault: '#b9b4ab',
+  treeModel: '#1fa59a',
 } as const
 
 const tmp = new THREE.Color()

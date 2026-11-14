@@ -1,6 +1,6 @@
 # Limitations
 
-Honest list of what this reconstruction is **not**, as of 2026-11-12.
+Honest list of what this reconstruction is **not**, as of 2026-11-14.
 
 ## Data
 
@@ -66,3 +66,16 @@ Honest list of what this reconstruction is **not**, as of 2026-11-12.
 - Trees are drawn only on the nearest LOD (≤ 650 m at medium quality, ≤ 2.8 km at high); further away the
   town looks sparser in trees than it is.
 - Ground beyond ~200 m is the 10 m Sentinel-2 colour and looks blurry from low angles.
+
+## Trees (Realism & Authenticity 3.0)
+
+- Tree tops come from an **ML canopy height model** (Meta/WRI v2) of Maxar imagery from **2015-06-24** (84 % of
+  the town) and **2011-04-28** (16 %, leaf-off → confidence `low`). Trees felled or planted since then are wrong;
+  present-day buildings remove candidates on them, WorldCover 2021 flags larger grown patches, nothing else does.
+- Tree candidates are local maxima of a smoothed surface: dense canopies give one tree per dominant crown (real
+  counts are higher), small trees under a big crown are lost, trees < 3 m are not modelled.
+- Species / crown shape (broadleaf, conifer, fruit) is **inferred appearance**, never data.
+- Where the model is not trusted (model-fill plateaus 3.7 km² inside the town, outdated patches 1.19 km², 14 OSM
+  orchards/forests without canopy in the model) trees are still rule-based, with invented positions.
+- Only one landmark part is modelled (the lyceum's corner tower); its position, diameter and heights are photo
+  estimates. The kostel has no footprint and is not modelled.

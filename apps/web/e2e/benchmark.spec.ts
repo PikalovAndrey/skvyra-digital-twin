@@ -35,6 +35,10 @@ async function frames(page: Page, ms: number): Promise<number[]> {
 
 test('benchmark: city route', async ({ page }) => {
   test.setTimeout(400_000)
+  // THROTTLE=4: Chrome CPU throttling (main thread slowed 4x) as a rough "weaker laptop CPU" profile. The GPU is
+  // NOT throttled, so this is not a benchmark of a weak device.
+  const throttle = Number(process.env.THROTTLE || 1)
+  if (throttle > 1) await (await page.context().newCDPSession(page)).send('Emulation.setCPUThrottlingRate', { rate: throttle })
   const t0 = Date.now()
   await page.goto('/?clean=1')
   const idle = async () => {
@@ -103,7 +107,7 @@ test('benchmark: city route', async ({ page }) => {
   })
   const result = {
     date: new Date().toISOString(), machine: `${os.cpus()[0].model}, ${os.cpus().length} cores, ${(os.totalmem() / 2 ** 30).toFixed(0)} GB`,
-    gpu: gl, viewport: page.viewportSize(), browser: 'Chrome (Playwright, channel chrome, ANGLE Metal, vsync off)',
+    gpu: gl, viewport: page.viewportSize(), browser: 'Chrome (Playwright, channel chrome, ANGLE Metal, vsync off)', cpuThrottle: throttle,
     firstIdleMs, samples,
     flight: { frameMs: summary(flightFrames), hitchesOver50ms: flightFrames.map((v, i) => [i, +v.toFixed(1)]).filter(([, v]) => v > 50), tileLoadsDuringFlight: loads.all.length, loadMs: summary(loads.all), parseMs: summary(loads.parse), heapMBTrace: heapTrace },
     allTileLoads: { loadMs: summary(allLoads.all), parseMs: summary(allLoads.parse) },

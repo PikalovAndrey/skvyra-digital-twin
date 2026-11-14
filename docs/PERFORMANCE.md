@@ -28,6 +28,21 @@ session's unit tests loaded the CPU): same draw calls, triangles within ±0.1 %;
 flight p99 3.9 ms, one 163 ms teleport frame. The +0.1–0.5 ms p95 is consistent with the background load; not
 re-measured on an idle machine.
 
+## Realism & Authenticity 3.0 (2026-11-14) — trees from the canopy height model
+
+The machine was **not idle** during these runs (another app, an Android emulator, loaded CPU and GPU; load
+average 6–14), so absolute values are 2–3× the 2026-11-12 ones; only runs made back-to-back are compared.
+
+| Pair (same session, same viewer code) | Result |
+|---|---|
+| VF2 tiles → CHM trees, before tree LOD (`13-27-29` → `13-28-40`) | triangles ×2 in close views (723 k → 1,501 k at 90 m; 1,277 k → 2,758 k centre); p95 +0.3–2.8 ms, p99 +0.5–5.7 ms |
+| + tree detail by distance: full crowns < 220 m, one-blob crowns beyond and in LOD1 (`13-39-31`) | centre low angle (high) 5.35 M → 2.69 M triangles; p95/p99 back to the VF2 run of the same session (p99 ≤ 15.6 ms in every view) |
+| 4× CPU throttling (CDP `Emulation.setCPUThrottlingRate`; GPU not throttled — **not a weak-device test**) VF2 tiles vs 3.0 (`13-41-06` → `13-42-18`) | static views equal or better (centre low angle high p95 17.2 → 10.2 ms); flight p99 13.6 → 15.6 ms; tile load p95 229 → 382 ms (trees are built on the main thread) |
+| Final (with OSM orchards back as rule-based trees, 50.6 k trees), VF2 tiles vs 3.0, heavy external load (`14-09-17` → `14-10-30`) | p99 +0–5 ms in tree-heavy views (worst: centre low angle high 18.0 → 22.9 ms), overview unchanged; flight p99 19.0 → 21.2 ms |
+
+Reproduce: `make bench` (add `THROTTLE=4` for the CPU profile). Re-measure on an idle machine before quoting
+absolute numbers.
+
 ## Fast camera movement
 
 - Continuous 18 s flight across town at 120 m (≈ 9,300 frames, 14 tile loads while moving): p50 2.0, p95

@@ -302,6 +302,9 @@ class FlakyHandler(http.server.BaseHTTPRequestHandler):
     script: list = []
 
     def do_POST(self):
+        # consume the request body: closing a socket with unread data sends a TCP RST, and the client then sees a
+        # random ConnectionResetError (made this test flaky)
+        self.rfile.read(int(self.headers.get("Content-Length") or 0))
         code, body = self.script.pop(0)
         self.send_response(code)
         if code == 429:
@@ -569,3 +572,57 @@ def test_pond_cut_leaves_no_terrain_above_water_inside_outline():
     assert (a2[np.abs(a2) > 1e-9] > 0).all()      # every ground triangle faces up (not culled)
     assert (np.abs(a2) <= 1e-9).sum() > 0         # bank wall down to the water exists
     assert T.face_up(np.array([[[0, 0, 0], [0, 1, 0], [1, 0, 0]]], float))[0, 0, 0] == 1  # clockwise -> flipped
+
+
+# ---------------------------------------------------------------------------------------------------
+# canopy height model -> tree candidates (Realism & Authenticity 3.0)
+# ---------------------------------------------------------------------------------------------------
+def _crown(shape, cx, cy, h, r):
+    yy, xx = np.indices(shape)
+    return h * np.exp(-((xx - cx) ** 2 + (yy - cy) ** 2) / (2 * (r / 2) ** 2))
+
+
+def test_canopy_one_candidate_per_crown_not_per_pixel():
+    from skvyra import canopy as CN
+    chm = np.maximum(_crown((120, 120), 30, 30, 14.0, 9), _crown((120, 120), 80, 70, 7.0, 6)).astype(np.float32)
+    c = CN.detect(chm, 0.0, 120 * CN.PX, CN.PX)
+    assert len(c) == 2
+    tall = c[np.argmax(c[:, 2])]
+    assert abs(tall[0] - 30.5 * CN.PX) < 1.0 and abs(tall[1] - (120 - 30.5) * CN.PX) < 1.0  # north-up grid
+    assert 12.5 < tall[2] <= 14.0 and 2.0 < tall[3] <= 0.35 * 14 + 1.0
+    # a blocked mask (building) removes the candidate on it
+    m = np.zeros(chm.shape, bool)
+    m[20:40, 20:40] = True
+    assert len(CN.detect(chm, 0.0, 120 * CN.PX, CN.PX, blocked_mask=m)) == 1
+
+
+def test_canopy_flags_constant_height_fill_but_not_real_canopy():
+    from skvyra import canopy as CN
+    flat = np.zeros((128, 128), np.float32)
+    flat[:64, :64] = 1.0     # model fill: constant plateau
+    flat[64:, 64:] = 0.1     # real canopy: rarely flat
+    bad = CN.unreliable_blocks(flat, block=32)
+    assert bad[0, 0] and bad[1, 1] and not bad[3, 3]
+
+
+def test_canopy_confidence_and_kind_are_deterministic_appearance_only():
+    from skvyra import canopy as CN
+    assert CN.confidence(12, "2015-06-24") == "medium"
+    assert CN.confidence(12, "2011-04-28") == "low"  # leaf-off imagery
+    assert CN.confidence(4, "2015-06-24") == "low"
+    houses = [((0.0, 0.0), 5.0)]
+    k = [CN.kind_for(3.3, 4.4, 5.0, None, houses) for _ in range(3)]
+    assert len(set(k)) == 1 and k[0] in (0, 2)
+    assert CN.kind_for(500, 500, 15, None, houses) == 0
+
+
+def test_rotunda_walls_face_out_and_dome_tops_the_drum():
+    spec = {"diameter_m": 7.0, "wall_above_eave_m": 0.6, "drum_diameter_m": 6.0, "drum_h_m": 1.2, "dome_rise_m": 2.1}
+    wt, wu, dt, dc = B.rotunda_mesh(10.0, 20.0, 99.5, 100.0, spec, eave=8.4, floor_h=4.0, n=24)
+    n = np.cross(wt[:, 1] - wt[:, 0], wt[:, 2] - wt[:, 0])
+    mid = wt.mean(axis=1)
+    radial = mid[:, :2] - np.array([10.0, 20.0])
+    assert ((n[:, :2] * radial).sum(axis=1) > 0).all()  # outward
+    assert wu.shape == (len(wt), 3, 2) and len(dc) == len(dt)
+    top = dt[:, :, 2].max()
+    assert abs(top - (100.0 + 8.4 + 0.6 + 1.2 + 0.18 + 2.1)) < 0.05

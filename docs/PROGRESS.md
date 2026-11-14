@@ -1,4 +1,19 @@
-# Progress — 2026-11-12
+# Progress — 2026-11-14
+
+## Iteration 5 — Realism & Authenticity 3.0 (2026-11-14)
+
+| Phase | Result |
+|---|---|
+| 0 Data discovery | CHM v2 usable (2015/2011 imagery, model-fill plateaus found); WorldCover 2021 as a newer check; Sentinel-2 composite rejected; Panoramax 0, KartaView without licence, Mapillary needs a token; GlobalBuildingAtlas tile 1.02 GB → not downloaded |
+| 1 Real vegetation | pilot (residential quarter + Парк культури) → city-wide: 23,514 of 50,569 trees from observed data; three trust masks; provenance colouring in the viewer |
+| 2 Landmarks | lyceum corner tower (photo estimate); kostel / zemstvo / Babaev: not reliably reproducible from the available evidence (documented) |
+| 3 Performance | distance-based tree detail; paired benchmarks; CPU-throttled profile added to `make bench` |
+| 4 Ground | multi-date composite tested, not adopted |
+| 5 Integration | 16 before/after pairs (`docs/img/vf3/`), QA 0 defects, 122 Python tests, 34 vitest, tsc 0, e2e 6 passed, production build OK |
+
+Also fixed: a fresh clone failed at `make acquire` (gitignored `data/raw` missing); a flaky unit test (test HTTP
+server did not read POST bodies → random TCP resets).
+
 
 ## Iteration 4 — Visual Fidelity 2.0 (same day)
 

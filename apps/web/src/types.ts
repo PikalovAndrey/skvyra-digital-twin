@@ -72,7 +72,8 @@ export interface TileMeta {
   hash: string
   bounds: [number, number, number, number]
   buildings: BuildingMeta[]
-  trees: [number, number, number, number, number, number, number][] // x y z h r kind src
+  trees: [number, number, number, number, number, number, number, number?, number?][] // x y z h r kind src (0 OSM, 1 land-cover rule, 2 decorative, 3 canopy model) conf (0 rule, 1 low, 2 medium) dateIdx
+  tree_dates?: string[] // imagery dates of canopy-model trees
   issues: Issue[]
 }
 

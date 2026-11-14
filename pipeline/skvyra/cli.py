@@ -30,6 +30,10 @@ def stage_acquire(cfg, args):
     acquire.ms_buildings(cfg, bbox, offline=args.offline, refresh=args.refresh)
     if cfg.get("sentinel2"):
         acquire.sentinel2_window(cfg, frame, m.buffer(cfg["context_buffer_m"]).bounds, offline=args.offline, refresh=args.refresh)
+    if cfg.get("canopy_height"):
+        acquire.chm_window(cfg, frame, m.buffer(cfg["context_buffer_m"]).bounds, offline=args.offline, refresh=args.refresh)
+    if cfg.get("worldcover"):
+        acquire.worldcover_window(cfg, bbox, offline=args.offline, refresh=args.refresh)
     if cfg.get("ghsl_height"):
         acquire.ghsl_height_window(cfg, bbox, offline=args.offline, refresh=args.refresh)
     acquire.dem_window(cfg, (s - pad, w - pad, n + pad, e + pad), offline=args.offline, refresh=args.refresh)
@@ -40,8 +44,10 @@ def stage_acquire(cfg, args):
 
 
 def stage_normalize(cfg, args):
-    from . import normalize
+    from . import canopy, normalize
     normalize.run(cfg)
+    if cfg.get("canopy_height"):
+        canopy.run(cfg)
 
 
 def stage_audit(cfg, args):

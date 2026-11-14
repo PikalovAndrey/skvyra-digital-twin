@@ -14,6 +14,8 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
+import numpy as np
+
 from . import config as C
 from .log import log
 
@@ -335,3 +337,96 @@ def sentinel2_window(cfg: dict, frame, aoi_local_bounds, offline: bool = False, 
            license=s2["license"], source_timestamp=item["properties"]["datetime"],
            cloud_cover=item["properties"].get("eo:cloud_cover"))
     return path
+
+
+def chm_window(cfg: dict, frame, aoi_local_bounds, offline: bool = False, refresh: bool = False) -> Path:
+    """Meta/WRI canopy height v2: AOI window of the z10 quadkey COG(s) (HTTP range requests, ~3 MB instead of
+    ~60 MB per tile) plus the per-area source-imagery dates, clipped to the AOI."""
+    name, dname = "chm_meta_v2.tif", "chm_meta_v2_dates.geojson"
+    hit, dhit = (None, None) if refresh else (cached(name), cached(dname))
+    if hit and dhit:
+        log.info("using cached %s", name)
+        return hit
+    if offline:
+        raise AcquisitionError(f"offline mode: {name} not cached")
+    import rasterio
+    import shapely
+    from pyproj import Transformer
+    from rasterio.windows import from_bounds
+    from shapely.geometry import box, mapping, shape
+    c = cfg["canopy_height"]
+    x0, y0, x1, y1 = aoi_local_bounds
+    lons, lats = frame.to_geo(np.array([x0, x1, x0, x1]), np.array([y0, y0, y1, y1]))
+    w, e, s, n = min(lons), max(lons), min(lats), max(lats)
+    qks = sorted({quadkey(la, lo, 10) for la in (s, n) for lo in (w, e)})
+    if len(qks) != 1:
+        raise AcquisitionError(f"AOI spans CHM tiles {qks}; mosaicking is not implemented")
+    qk = qks[0]
+    t = Transformer.from_crs(4326, 3857, always_xy=True)
+    mx0, my0 = t.transform(w, s)
+    mx1, my1 = t.transform(e, n)
+    href = f"{c['base_url']}/chm/{qk}.tif"
+    with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR"):
+        with rasterio.open("/vsicurl/" + href) as src:
+            win = from_bounds(mx0, my0, mx1, my1, src.transform).round_offsets().round_lengths()
+            arr = src.read(1, window=win)
+            prof = src.profile.copy()
+            prof.update(width=arr.shape[1], height=arr.shape[0], transform=src.window_transform(win), driver="GTiff",
+                        compress="deflate", predictor=2, tiled=False)
+            for k in ("blockxsize", "blockysize", "interleave"):
+                prof.pop(k, None)
+    path = C.RAW / name
+    with rasterio.open(path, "w", **prof) as dst:
+        dst.write(arr, 1)
+    tmp = C.RAW / f"chm_meta_v2_{qk}_dates_full.geojson"
+    http_get(f"{c['base_url']}/metadata/{qk}.geojson", tmp, cfg["user_agent"])
+    aoi = box(w, s, e, n)
+    feats = []
+    for f in json.loads(tmp.read_text())["features"]:
+        g = shape(f["geometry"])
+        if g.intersects(aoi):
+            feats.append({"type": "Feature", "properties": f["properties"], "geometry": mapping(shapely.make_valid(g).intersection(aoi))})
+    tmp.unlink()
+    dpath = C.RAW / dname
+    dpath.write_text(json.dumps({"type": "FeatureCollection", "features": feats}))
+    record(name, path, source=f"Meta/WRI High Resolution Canopy Height Map v2, quadkey {qk}", url=href, license=c["license"])
+    record(dname, dpath, source="CHM v2 source-imagery acquisition dates (clipped to AOI)",
+           url=f"{c['base_url']}/metadata/{qk}.geojson", license=c["license"],
+           dates=sorted({f["properties"]["acq_date"] for f in feats}))
+    return path
+
+
+def worldcover_window(cfg: dict, bbox, offline: bool = False, refresh: bool = False) -> Path:
+    """ESA WorldCover 2021 v200 (10 m land cover, CC BY 4.0): AOI window of the 3x3 degree COG. Used to check
+    the canopy model against newer observations (class 10 = tree cover), never as geometry."""
+    name = "worldcover_2021.tif"
+    hit = None if refresh else cached(name)
+    if hit:
+        log.info("using cached %s", name)
+        return hit
+    if offline:
+        raise AcquisitionError(f"offline mode: {name} not cached")
+    import math as _m
+    import rasterio
+    from rasterio.windows import from_bounds
+    s, w, n, e = bbox
+    la, lo = int(_m.floor(s / 3) * 3), int(_m.floor(w / 3) * 3)
+    if _m.floor(n / 3) * 3 != la or _m.floor(e / 3) * 3 != lo:
+        raise AcquisitionError("AOI spans two WorldCover tiles; mosaicking is not implemented")
+    c = cfg["worldcover"]
+    href = c["url"].format(tile=f"{'N' if la >= 0 else 'S'}{abs(la):02d}{'E' if lo >= 0 else 'W'}{abs(lo):03d}")
+    with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR"):
+        with rasterio.open("/vsicurl/" + href) as src:
+            win = from_bounds(w, s, e, n, src.transform).round_offsets().round_lengths()
+            arr = src.read(1, window=win)
+            prof = src.profile.copy()
+            prof.update(width=arr.shape[1], height=arr.shape[0], transform=src.window_transform(win), driver="GTiff",
+                        compress="deflate", tiled=False)
+            for k in ("blockxsize", "blockysize", "interleave"):
+                prof.pop(k, None)
+    path = C.RAW / name
+    with rasterio.open(path, "w", **prof) as dst:
+        dst.write(arr, 1)
+    record(name, path, source="ESA WorldCover 10 m 2021 v200", url=href, license=c["license"])
+    return path
+

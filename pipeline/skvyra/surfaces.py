@@ -309,7 +309,7 @@ def world_noise(xs, ys, cell: float, seed: int):
 # ------------------------------------------------------------------------------------------------------
 TREE_DENSITY = {"forest": 1 / 30, "park": 1 / 90, "cemetery": 1 / 120, "orchard": 1 / 40, "scrub": 1 / 60,
                 "wetland": 1 / 250}
-SRC_MAPPED, SRC_LANDCOVER, SRC_DECORATIVE = 0, 1, 2
+SRC_MAPPED, SRC_LANDCOVER, SRC_DECORATIVE, SRC_CHM = 0, 1, 2, 3  # 3: canopy height model (canopy.py)
 
 
 def place_trees(tile_bounds, areas_local, blocked, houses, mapped, seed: str, decorative: bool):

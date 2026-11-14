@@ -726,3 +726,64 @@ def box_tris(c, u, v, hu, hv, z0, z1):
     t = [(*q, z1) for q in corners]
     out += [[t[0], t[1], t[2]], [t[0], t[2], t[3]]]
     return out
+
+
+def rotunda_mesh(cx, cy, z_bot, z_ground, spec: dict, eave: float, floor_h: float, n: int = 32):
+    """Domed corner tower of a landmark (photo-estimated, see config/landmarks.json "features"): cylinder wall
+    centred on the footprint corner (three quarters stand outside the building), set-back drum with round
+    windows (oculi) and a ribbed dome. -> (wall tris, wall uvs, detail tris, detail colours). Local coords.
+    Wall UVs follow the facade convention (u = bays of 3 m along the wall, v = storeys) so the facade shader
+    draws the same windows as on the wings."""
+    R = spec["diameter_m"] / 2
+    top = z_ground + eave + spec.get("wall_above_eave_m", 0.6)
+    rd = spec.get("drum_diameter_m", 0.85 * 2 * R) / 2
+    d_top = top + spec.get("drum_h_m", 1.2)
+    rise = spec.get("dome_rise_m", 0.35 * 2 * rd)
+    a = np.linspace(0, 2 * math.pi, n + 1)
+    ring = lambda r, z: np.column_stack([cx + r * np.cos(a), cy + r * np.sin(a), np.full(n + 1, z)])
+    walls, uvs, det, col = [], [], [], []
+
+    def band(r0, z0, r1, z1, c=None, uv=False):
+        p, q = ring(r0, z0), ring(r1, z1)
+        for k in range(n):
+            A, B, Cc, D = p[k], p[k + 1], q[k + 1], q[k]
+            if uv:
+                u0, u1 = k * (2 * math.pi * R / n) / 3.0, (k + 1) * (2 * math.pi * R / n) / 3.0
+                v0, v1 = (z0 - z_ground) / floor_h, (z1 - z_ground) / floor_h
+                walls.extend([[A, B, Cc], [A, Cc, D]])
+                uvs.extend([[(u0, v0), (u1, v0), (u1, v1)], [(u0, v0), (u1, v1), (u0, v1)]])
+            else:
+                det.extend([[A, B, Cc], [A, Cc, D]])
+                cc = c(k) if callable(c) else c
+                col.extend([cc, cc])
+
+    cornice = srgb_to_linear(hex_rgb(spec.get("cornice_colour", "#e9e4da"))).tolist()
+    drum_c = srgb_to_linear(hex_rgb(spec.get("drum_colour", "#e6e2d8"))).tolist()
+    dome_a = np.array(srgb_to_linear(hex_rgb(spec.get("dome_colour", "#8e979c"))))
+    band(R, z_bot, R, top, uv=True)                                   # tower wall (facade shader: windows)
+    band(R + 0.25, top - 0.35, R + 0.25, top, cornice)                # cornice band
+    band(R + 0.25, top, rd, top, cornice)                             # flat roof ring between wall and drum
+    band(R, top - 0.35, R + 0.25, top - 0.35, cornice)                # cornice soffit (faces down)
+    band(rd, top, rd, d_top, drum_c)                                  # drum
+    band(rd + 0.12, d_top, rd + 0.12, d_top + 0.18, cornice)          # drum cornice
+    band(rd, d_top, rd + 0.12, d_top, cornice)
+    rib = lambda k: (dome_a * (1.12 if k % 2 else 0.9)).tolist()      # metal sheet panels read as ribs
+    steps = 6
+    rb, zb = rd + 0.12, d_top + 0.18
+    for s in range(steps):  # dome: quarter-ellipse profile
+        t0, t1 = s / steps * math.pi / 2, (s + 1) / steps * math.pi / 2
+        band(rb * math.cos(t0), zb + rise * math.sin(t0), max(rb * math.cos(t1), 0.02), zb + rise * math.sin(t1), rib)
+    # oculi: dark discs just outside the drum
+    k_oc = spec.get("oculi", 8)
+    zc, ro = (top + d_top) / 2, min(0.32, (d_top - top) * 0.32)
+    dark = srgb_to_linear(hex_rgb("#2b2e33")).tolist()
+    for j in range(k_oc):
+        ang = 2 * math.pi * (j + 0.5) / k_oc
+        c0 = np.array([cx + (rd + 0.03) * math.cos(ang), cy + (rd + 0.03) * math.sin(ang), zc])
+        t = np.array([-math.sin(ang), math.cos(ang), 0.0])
+        up = np.array([0.0, 0.0, 1.0])
+        pts = [c0 + ro * (math.cos(b) * t + math.sin(b) * up) for b in np.linspace(0, 2 * math.pi, 9)]
+        for k in range(8):
+            det.append([c0.tolist(), pts[k].tolist(), pts[k + 1].tolist()])
+            col.append(dark)
+    return np.array(walls), np.array(uvs, float), np.array(det), np.array(col)

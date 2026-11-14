@@ -98,6 +98,7 @@ const uk = {
   'legend.source': 'Геометрія з OSM',
   'legend.inferred': 'Виведена геометрія (ML)',
   'legend.missing': 'Відсутні / некоректні дані',
+  'legend.treeModel': 'Дерево з моделі висоти крон (Meta/WRI, знімки 2011–2015); дерева з OSM — сині, за правилами — помаранчеві',
   'legend.hOverride': 'Висота перевірена',
   'legend.hSource': 'Висота з тегів OSM',
   'legend.hDefault': 'Висота — оцінка за типом',
@@ -125,7 +126,7 @@ const uk = {
   m: 'м',
   m2: 'м²',
   about: 'Про дані',
-  aboutText: 'Будівлі: OpenStreetMap + Microsoft Global ML Building Footprints (заповнення прогалин). Рельєф: Copernicus GLO-30 (30 м, модель поверхні). Висоти будівель здебільшого оцінені за типом.',
+  aboutText: 'Будівлі: OpenStreetMap + Microsoft Global ML Building Footprints (заповнення прогалин). Рельєф: Copernicus GLO-30 (30 м, модель поверхні). Висоти будівель здебільшого оцінені за типом. Дерева: позиції й висоти з моделі висоти крон Meta/WRI (знімки 2011–2015), перевірені за ESA WorldCover 2021; там, де модель ненадійна, — за правилами.',
   sourcesTitle: 'Джерела та ліцензії',
 } as const
 
@@ -227,6 +228,7 @@ const en = {
   'legend.source': 'Geometry from OSM',
   'legend.inferred': 'Inferred geometry (ML)',
   'legend.missing': 'Missing / invalid data',
+  'legend.treeModel': 'Tree from canopy height model (Meta/WRI, imagery 2011–2015); OSM trees blue, rule-based orange',
   'legend.hOverride': 'Height verified',
   'legend.hSource': 'Height from OSM tags',
   'legend.hDefault': 'Height is a type estimate',
@@ -254,7 +256,7 @@ const en = {
   m: 'm',
   m2: 'm²',
   about: 'About the data',
-  aboutText: 'Buildings: OpenStreetMap + Microsoft Global ML Building Footprints (gap fill). Terrain: Copernicus GLO-30 (30 m surface model). Building heights are mostly type-based estimates.',
+  aboutText: 'Buildings: OpenStreetMap + Microsoft Global ML Building Footprints (gap fill). Terrain: Copernicus GLO-30 (30 m surface model). Building heights are mostly type-based estimates. Trees: positions and heights from the Meta/WRI canopy height model (imagery 2011–2015), checked against ESA WorldCover 2021; rule-based where the model is unreliable.',
   sourcesTitle: 'Sources & licences',
 } satisfies Record<Key, string>
 

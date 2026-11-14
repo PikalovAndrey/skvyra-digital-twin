@@ -140,7 +140,36 @@ def main():
                        crs="EPSG:4326", transform=fo(gw, gn, gres, gres)) as dst:
         dst.write(anbh, 1)
 
+    # synthetic Meta/WRI canopy height (Web Mercator ~1.19 m like the real COG): two crowns, one model-fill plateau
+    from pyproj import Transformer
+    tm = Transformer.from_crs(4326, 3857, always_xy=True)
+    c_ll = ll(0, 0)
+    mx, my = tm.transform(c_ll["lon"], c_ll["lat"])
+    px = 1.1943285669558747
+    n = 1100  # +-~655 m (+-~420 m on the ground)
+    chm = np.zeros((n, n), np.uint8)
+    yy, xx = np.mgrid[0:n, 0:n]
+    k = 1 / np.cos(np.radians(LAT0))  # ground m -> mercator px
+    for gx, gy, h, r in ((300, 300, 14, 5), (-300, 250, 9, 4)):
+        q = ll(gx, gy)  # exact local -> WGS84 -> Web Mercator (UTM grid north is ~2 deg off Mercator north here)
+        qx, qy = tm.transform(q["lon"], q["lat"])
+        cx_, cy_ = (qx - (mx - n / 2 * px)) / px - 0.5, ((my + n / 2 * px) - qy) / px - 0.5
+        chm = np.maximum(chm, (h * np.exp(-((xx - cx_) ** 2 + (yy - cy_) ** 2) / (2 * (r * k / px / 2) ** 2))).astype(np.uint8))
+    chm[n // 2 + int(150 * k / px):n // 2 + int(300 * k / px), n // 2 - int(300 * k / px):n // 2 - int(150 * k / px)] = 10
+    with rasterio.open(raw / "chm_meta_v2.tif", "w", driver="GTiff", height=n, width=n, count=1, dtype="uint8",
+                       crs="EPSG:3857", transform=fo(mx - n / 2 * px, my + n / 2 * px, px, px)) as dst:
+        dst.write(chm, 1)
+    (raw / "chm_meta_v2_dates.geojson").write_text(json.dumps({"type": "FeatureCollection", "features": [{"type": "Feature",
+        "properties": {"acq_date": "2015-06-24"}, "geometry": {"type": "Polygon", "coordinates": [[
+            [LON0 - 0.02, LAT0 - 0.02], [LON0 + 0.02, LAT0 - 0.02], [LON0 + 0.02, LAT0 + 0.02], [LON0 - 0.02, LAT0 + 0.02], [LON0 - 0.02, LAT0 - 0.02]]]}}]}))
+    wres = 1 / 12000
+    with rasterio.open(raw / "worldcover_2021.tif", "w", driver="GTiff", height=480, width=720, count=1, dtype="uint8",
+                       crs="EPSG:4326", transform=fo(LON0 - 0.03, LAT0 + 0.02, wres, wres)) as dst:
+        dst.write(np.full((480, 720), 30, np.uint8), 1)  # grassland everywhere
+
     from skvyra import acquire
+    for nm in ("chm_meta_v2.tif", "chm_meta_v2_dates.geojson", "worldcover_2021.tif"):
+        acquire.record(nm, raw / nm, source="SYNTHETIC fixture", license="test only")
     acquire.record("sentinel2_tci.tif", raw / "sentinel2_tci.tif", source="SYNTHETIC fixture", license="test only")
     acquire.record("ghsl_anbh_2018.tif", raw / "ghsl_anbh_2018.tif", source="SYNTHETIC fixture", license="test only")
     acquire.record("boundary.json", raw / "boundary.json", source="SYNTHETIC fixture", license="test only",

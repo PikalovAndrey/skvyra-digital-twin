@@ -193,7 +193,7 @@ export function Legend() {
   if (mode === 'realistic') return null
   const rows: [string, Key][] =
     mode === 'geometry'
-      ? [[QUALITY_COLORS.verified, 'legend.verified'], [QUALITY_COLORS.source, 'legend.source'], [QUALITY_COLORS.inferred, 'legend.inferred'], [QUALITY_COLORS.missing, 'legend.missing']]
+      ? [[QUALITY_COLORS.verified, 'legend.verified'], [QUALITY_COLORS.source, 'legend.source'], [QUALITY_COLORS.inferred, 'legend.inferred'], [QUALITY_COLORS.missing, 'legend.missing'], [QUALITY_COLORS.treeModel, 'legend.treeModel']]
       : [[QUALITY_COLORS.hOverride, 'legend.hOverride'], [QUALITY_COLORS.hSource, 'legend.hSource'], [QUALITY_COLORS.hGhsl, 'legend.hGhsl'], [QUALITY_COLORS.hDefault, 'legend.hDefault'], [QUALITY_COLORS.missing, 'legend.missing']]
   return (
     <div className={`${panel} px-2.5 py-2 text-[11px]`} data-testid="legend">
@@ -420,7 +420,7 @@ export function Attribution({ index }: { index: TileIndex }) {
   return (
     <div className="pointer-events-auto text-right text-[10px] text-slate-200 [text-shadow:0_1px_2px_#000]">
       <button onClick={() => setOpen(!open)} className="underline decoration-dotted">
-        © OpenStreetMap contributors (ODbL) · Microsoft Building Footprints (CDLA-Permissive-2.0) · Copernicus WorldDEM-30 · Copernicus Sentinel data 2026 · GHSL (CC BY 4.0)
+        © OpenStreetMap contributors (ODbL) · Microsoft Building Footprints (CDLA-Permissive-2.0) · Copernicus WorldDEM-30 · Copernicus Sentinel data 2026 · GHSL (CC BY 4.0) · Trees: Meta & WRI Canopy Height Maps v2 (CC BY 4.0) · ESA WorldCover 2021 (CC BY 4.0)
       </button>
       {open && (
         <div className={`${panel} mt-1 max-w-md p-3 text-left text-[11px]`}>

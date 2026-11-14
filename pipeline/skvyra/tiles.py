@@ -18,7 +18,7 @@ import numpy as np
 import shapely
 from shapely.geometry import box, shape
 
-from . import acquire, buildings as B, config as C, heights as H, landmarks as LM, overrides as OV, surfaces as S
+from . import acquire, buildings as B, canopy as CN, config as C, heights as H, landmarks as LM, overrides as OV, surfaces as S
 from .geo import Frame
 from .log import log
 from .mesh import Soup, hex_rgb, srgb_to_linear, write_glb
@@ -84,6 +84,16 @@ def init_ctx(cfg):
     waterways = _load_layer("waterways.geojson", frame)
     rails = _load_layer("railways.geojson", frame)
     trees = _load_layer("trees.geojson", frame)
+    canopy = None
+    if cfg.get("canopy_height") and (C.PROCESSED / "canopy_trees.geojson").exists():
+        doc = json.loads((C.PROCESSED / "canopy_trees.geojson").read_text())
+        pts = [(frame.geom_to_local(shape(f["geometry"])), f["properties"]) for f in doc["features"]]
+        cov = shapely.union_all([g for g, _ in _load_layer("canopy_coverage.geojson", frame)])
+        shapely.prepare(cov)
+        osm_h = {(round(g.x, 2), round(g.y, 2)): v for (g, _), v in zip(trees, doc["osm_heights"]) if v}
+        canopy = dict(pts=pts, tree=shapely.STRtree([g for g, _ in pts]), cov=cov, osm_h=osm_h,
+                      sha=acquire.load_manifest().get("chm_meta_v2.tif", {}).get("sha256"),
+                      pilot=cfg["canopy_height"].get("pilot_tiles"))
     quarantine = [(g, p) for g, p in ((frame.geom_to_local(shape(f["geometry"])), f["properties"])
                                       for f in json.loads((C.PROCESSED / "quarantine.geojson").read_text())["features"]
                                       if f.get("geometry"))]
@@ -125,7 +135,7 @@ def init_ctx(cfg):
     rail_polys = [g.buffer(2.5, cap_style="flat") for g, p in rails if p.get("railway") != "abandoned"]
     area_tree = shapely.STRtree([g for g, _ in areas])
     _CTX.update(cfg=cfg, frame=frame, terrains=terrains, bld=bld, roads=roads, areas=areas, water=water,
-                rail_polys=rail_polys, trees=trees, quarantine=quarantine, overrides=ov, ov_report=ov_report,
+                rail_polys=rail_polys, trees=trees, canopy=canopy, quarantine=quarantine, overrides=ov, ov_report=ov_report,
                 evidence=evidence, landmarks=landmarks, s2=s2, still_water=still,
                 s2_sha=acquire.load_manifest().get("sentinel2_tci.tif", {}).get("sha256"),
                 bld_tree=shapely.STRtree([g.representative_point() for g, _ in bld]),
@@ -169,7 +179,12 @@ def tile_hash(ix, iy, b, bidx, ridx, aidx) -> str:
     h = hashlib.sha256()
     cfg = _CTX["cfg"]
     h.update(json.dumps([code_version(), _CTX["dem_sha"], _CTX["ghsl_sha"], _CTX["s2_sha"], b, cfg["seed"], cfg["floor_height_m"],
-                         cfg.get("decorative_trees", True)]).encode())
+                         cfg.get("decorative_trees", True), cfg.get("canopy_height")]).encode())
+    if _CTX["canopy"]:
+        h.update(str(_CTX["canopy"]["sha"]).encode())
+        for i in _CTX["canopy"]["tree"].query(box(*b)):
+            g, p = _CTX["canopy"]["pts"][i]
+            h.update(shapely.to_wkb(g) + json.dumps(p, sort_keys=True).encode())
     for i in bidx:
         g, p = _CTX["bld"][i]
         h.update(shapely.to_wkb(g) + json.dumps(p, sort_keys=True).encode())
@@ -324,7 +339,7 @@ def build_tile(ix, iy, force=False) -> dict:
             "inb": bool(p.get("in_boundary")), "poi": p.get("poi"),
             # GHSL cell value shown as context for every building (not only where it set the height)
             "ghsl": {k: ev[k] for k in ("anbh", "share") if ev.get(k) is not None} or None,
-            "landmark": {k: lm[k] for k in ("name", "wikidata", "evidence", "photos", "license", "match_distance_m", "match", "address", "heritage") if lm.get(k) not in (None, "", [])} if lm else None,
+            "landmark": {k: lm[k] for k in ("name", "wikidata", "evidence", "photos", "license", "match_distance_m", "match", "address", "heritage", "features") if lm.get(k) not in (None, "", [])} if lm else None,
             "name": tags.get("name"), "addr": " ".join(x for x in (tags.get("addr:street"), tags.get("addr:housenumber")) if x) or None,
             "ll": [round(float(lon), 6), round(float(lat), 6)], "area": p["area_m2"], "ts": p.get("source_timestamp"),
             "flags": p.get("flags"), "note": ov.get("note") if ov else None,
@@ -377,9 +392,42 @@ def build_tile(ix, iy, force=False) -> dict:
     mapped = [(x, y) for x, y in mapped if b[0] <= x < b[2] and b[1] <= y < b[3]]
     houses = [((g.centroid.x, g.centroid.y), math.sqrt(g.area / math.pi)) for g, p, a, _, _ in blds if a["kind"] == "house"]
     trees = S.place_trees(b, areas_local, blocked, houses, mapped, f"{cfg['seed']}{tid}", cfg.get("decorative_trees", True))
+    trees = [(*t, 0, -1) for t in trees]  # + confidence code (0 rule-based, 1 low, 2 medium), imagery-date index
+    cn = _CTX["canopy"]
+    tree_dates = []
+    if cn and (cn["pilot"] is None or tid in cn["pilot"]):
+        # Real trees (Meta/WRI CHM v2) replace the rule-based trees wherever the CHM is trusted; outside (no
+        # coverage, model-fill plateaus) the land-cover rules stay as fallback. Decorative garden shrubs (< 2 m,
+        # below what the CHM resolves) stay in the switchable decorative layer.
+        cov = cn["cov"]
+        kept = []
+        for t in trees:
+            x, y, h, r, kind, src = t[:6]
+            if src == S.SRC_MAPPED:
+                m = cn["osm_h"].get((round(x, 2), round(y, 2)))
+                if m:  # OSM position, CHM height and crown
+                    if m[2] not in tree_dates:
+                        tree_dates.append(m[2])
+                    t = (x, y, m[0], m[1], kind, src, CN.CONF_CODE[CN.confidence(m[0], m[2])], tree_dates.index(m[2]))
+            elif shapely.contains_xy(cov, x, y) and not (src == S.SRC_DECORATIVE and kind == 4):
+                continue
+            kept.append(t)
+        no_trunk = shapely.union_all([_CTX["bld"][j][0].buffer(0.3) for j in near_idx] +
+                                     [v for k, v in road_polys.items() if k in ("paved", "unpaved")] + rails +
+                                     ([water] if water is not None else []) + [p for p, *_ in bridges])
+        for i in cn["tree"].query(box(*b)):
+            g, p = cn["pts"][i]
+            if not (b[0] <= g.x < b[2] and b[1] <= g.y < b[3]) or not shapely.contains_xy(cov, g.x, g.y) \
+                    or (not no_trunk.is_empty and shapely.contains_xy(no_trunk, g.x, g.y)):
+                continue
+            if p["date"] not in tree_dates:
+                tree_dates.append(p["date"])
+            kept.append((g.x, g.y, p["h"], p["r"], CN.kind_for(g.x, g.y, p["h"], cover_at(g), houses), S.SRC_CHM,
+                         CN.CONF_CODE[p["conf"]], tree_dates.index(p["date"])))
+        trees = kept
     t0z = _CTX["terrains"][0]
     tz = t0z.z(np.array([t[0] for t in trees]), np.array([t[1] for t in trees])) if trees else []
-    tree_arr = [[round(t[0], 2), round(t[1], 2), round(float(z), 2), round(t[2], 1), round(t[3], 1), t[4], t[5]]
+    tree_arr = [[round(t[0], 2), round(t[1], 2), round(float(z), 2), round(t[2], 1), round(t[3], 1), t[4], t[5], t[6], t[7]]
                 for t, z in zip(trees, tz)]
 
     issues = []
@@ -409,6 +457,18 @@ def build_tile(ix, iy, force=False) -> dict:
             soups["roofs"].add(m["roof"][0], attrs["roof_color"], m["roof"][1], fid=fi, style=B.ROOF_MAT[attrs["roof_mat"]])
             if len(m["extra"]):
                 soups["details"].add(m["extra"], m["extra_col"], fid=fi)
+            lm = _CTX["landmarks"].get(p["source_id"])
+            if lod < 2 and lm and lm.get("match") != "probable":
+                for fs in lm.get("features", []):  # photo-estimated landmark parts (towers, domes)
+                    if fs["type"] != "rotunda":
+                        continue
+                    cx, cy = _CTX["frame"].to_local(*fs["centre_lonlat"])
+                    ext_ = np.asarray(g.exterior.coords)
+                    gz = ter.z(ext_[:, 0], ext_[:, 1])
+                    wt, wu, dt, dc = B.rotunda_mesh(float(cx), float(cy), float(gz.min()) - 0.5, float(gz.mean()), fs,
+                                                    attrs["eave_height"], attrs["floor_h"], n=32 if lod == 0 else 16)
+                    soups["walls"].add(wt, attrs["wall_color"], wu, fid=fi, style=B.FACADE[attrs["facade"]])
+                    soups["details"].add(dt, dc, fid=fi)
         if lod < 2:
             off = OFFSET[lod]
             for k, mat in (("paved", "road_paved"), ("unpaved", "road_unpaved"), ("foot", "road_foot"), ("shoulder", "road_shoulder")):
@@ -440,7 +500,7 @@ def build_tile(ix, iy, force=False) -> dict:
     index_entry = {"id": tid, "ix": ix, "iy": iy, "b": list(b), "z": [round(zr[0], 2), round(zr[1], 2)],
                    "n": {"buildings": len(metas), "trees": len(tree_arr), "issues": len(issues)},
                    "files": files, "hash": digest, "secs": round(time.time() - t0, 2)}
-    meta = {"id": tid, "hash": digest, "bounds": list(b), "buildings": metas, "trees": tree_arr,
+    meta = {"id": tid, "hash": digest, "bounds": list(b), "buildings": metas, "trees": tree_arr, "tree_dates": tree_dates,
             "issues": issues, "files": files, "index": index_entry}
     tmp = meta_path.with_suffix(".tmp")
     tmp.write_text(json.dumps(meta, ensure_ascii=False, separators=(",", ":")))

@@ -39,6 +39,15 @@
     "tile_url": "https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/GHSL/GHS_BUILT_H_GLOBE_R2023A/GHS_BUILT_H_ANBH_E2018_GLOBE_R2023A_4326_3ss/V1-0/tiles/GHS_BUILT_H_ANBH_E2018_GLOBE_R2023A_4326_3ss_V1_0_R{row}_C{col}.zip",
     "license": "GHSL data © European Union 1995-2026, CC BY 4.0 (Pesaresi M., Politis P., GHS-BUILT-H R2023A, JRC)"
   },
+  "canopy_height": {
+    "base_url": "https://dataforgood-fb-data.s3.amazonaws.com/forests/v2/global/dinov3_global_chm_v2_ml3",
+    "license": "CC BY 4.0 - High Resolution Canopy Height Maps v2 by Meta and World Resources Institute (WRI)",
+    "pilot_tiles": null
+  },
+  "worldcover": {
+    "url": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_{tile}_Map.tif",
+    "license": "CC BY 4.0 - (c) ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium"
+  },
   "sentinel2": {
     "stac_url": "https://earth-search.aws.element84.com/v1",
     "item": "S2C_35UPR_20260718_0_L2A",

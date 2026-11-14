@@ -68,6 +68,8 @@ export class TileManager {
   readonly parseMs: number[] = [] // main-thread part: glTF parse + material setup
   private clock = 0
   private colorMode: ColorMode = 'realistic'
+  private farTrees = new Set<string>()
+  private tileById: Map<string, TileEntry>
   private selected: { tile: string; fid: number } | null = null
   private layers: Record<LayerKey, boolean> = { buildings: true, roads: true, water: true, trees: true, decorativeTrees: true, terrain: true, issues: true }
   quality: Quality = 'medium'
@@ -76,6 +78,7 @@ export class TileManager {
 
   constructor(readonly index: TileIndex, readonly baseUrl: string) {
     this.root.name = 'tiles'
+    this.tileById = new Map(index.tiles.map((t) => [t.id, t]))
   }
 
   /** Call every few frames. Returns true if the scene graph changed. */
@@ -135,6 +138,20 @@ export class TileManager {
       }
     }
     this.queued = queued
+    // tree detail by distance (hysteresis so a tile on the boundary does not flip every frame)
+    for (const [id, lod] of this.shown) {
+      if (lod !== 0) continue
+      const t = this.tileById.get(id)
+      if (!t) continue
+      const dx = Math.max(t.b[0] - cam.x, 0, cam.x - t.b[2])
+      const dy = Math.max(t.b[1] - cam.y, 0, cam.y - t.b[3])
+      const d = Math.hypot(dx, dy, Math.max(0, cam.z - t.z[1]))
+      const far = this.farTrees.has(id)
+      if (!far && d > TREE_NEAR_M * 1.25) this.farTrees.add(id)
+      else if (far && d < TREE_NEAR_M) this.farTrees.delete(id)
+      else continue
+      this.syncExtras(id)
+    }
     for (const id of [...this.shown.keys()]) {
       if (!wantedTiles.has(id)) {
         this.setShown(id, null)
@@ -271,7 +288,16 @@ export class TileManager {
     const lod = this.shown.get(id)
     const treeLimit: Lod = this.quality === 'high' ? 1 : 0
     const wantTrees = lod !== undefined && lod <= treeLimit
-    if (wantTrees && !ex.trees) ex.trees = buildTrees(ex.meta)
+    const lite = lod === 1 || this.farTrees.has(id)
+    if (ex.trees && wantTrees && ex.trees.userData.lite !== lite) {
+      this.root.remove(ex.trees)
+      disposeObject(ex.trees, true)
+      ex.trees = null
+    }
+    if (wantTrees && !ex.trees) {
+      ex.trees = buildTrees(ex.meta, lite, this.colorMode)
+      if (ex.trees) ex.trees.userData.lite = lite
+    }
     if (ex.trees) {
       if (wantTrees) this.root.add(ex.trees)
       else this.root.remove(ex.trees)
@@ -335,6 +361,7 @@ export class TileManager {
   setColorMode(mode: ColorMode) {
     this.colorMode = mode
     for (const l of this.loaded.values()) this.recolorEntry(l)
+    for (const ex of this.extras.values()) if (ex.trees) recolorTrees(ex.trees, mode)
   }
 
   setSelection(sel: { tile: string; fid: number } | null) {
@@ -457,7 +484,9 @@ function paletteFor(buildings: BuildingMeta[], mode: ColorMode): ([number, numbe
 // ------------------------------------------------------------------------------------------------------
 // trees and issue markers
 // ------------------------------------------------------------------------------------------------------
+const TREE_NEAR_M = 220 // full-detail trees within this distance of the camera (tile bbox), lite beyond
 let protos: THREE.BufferGeometry[] | null = null
+let protosLite: THREE.BufferGeometry[] | null = null
 
 function coloured(g: THREE.BufferGeometry, hex: string) {
   const geo = g.index ? g.toNonIndexed() : g
@@ -469,17 +498,29 @@ function coloured(g: THREE.BufferGeometry, hex: string) {
   return geo
 }
 
-function treeProtos(): THREE.BufferGeometry[] {
-  if (protos) return protos
+function treeProtos(lite = false): THREE.BufferGeometry[] {
+  const cached = lite ? protosLite : protos
+  if (cached) return cached
   // unit trees: height 1, crown diameter 1 -> scaled per instance (h, 2r). Crowns are clusters of several
   // blobs in two greens (sunlit top, darker inner) with smooth normals, so they read as foliage, not facets.
+  // The lite set (one blob per crown, ~5x fewer triangles) is used beyond TREE_NEAR_M and in LOD1 tiles.
   const trunk = (r = 0.06, h = 0.42) => coloured(new THREE.CylinderGeometry(r * 0.65, r, h, 6).translate(0, h / 2, 0), '#4a3626')
-  const blob = (r: number, x: number, y: number, z: number, hex: string, sy = 0.85) =>
-    coloured(new THREE.IcosahedronGeometry(r, 1).scale(1, sy, 1).translate(x, y, z), hex)
+  const blob = (r: number, x: number, y: number, z: number, hex: string, sy = 0.85, detail = 1) =>
+    coloured(new THREE.IcosahedronGeometry(r, detail).scale(1, sy, 1).translate(x, y, z), hex)
   const smooth = (g: THREE.BufferGeometry) => {
     const m = mergeVertices(g, 1e-4)
     m.computeVertexNormals()
     return m
+  }
+  if (lite) {
+    protosLite = [
+      smooth(mergeGeometries([trunk(), blob(0.42, 0, 0.66, 0, '#3f6b2b', 0.85)])!),
+      smooth(mergeGeometries([trunk(0.05), coloured(new THREE.ConeGeometry(0.45, 0.85, 7).translate(0, 0.55, 0), '#25492d')])!),
+      smooth(mergeGeometries([trunk(0.05, 0.38), blob(0.45, 0, 0.6, 0, '#587d37', 0.72)])!),
+      smooth(coloured(new THREE.CylinderGeometry(0.3, 0.5, 1, 6).translate(0, 0.5, 0), '#2a4a29')),
+      smooth(blob(0.5, 0, 0.4, 0, '#4b6f30', 0.8, 0)),
+    ]
+    return protosLite
   }
   const decid = smooth(mergeGeometries([trunk(), blob(0.33, 0, 0.68, 0, '#3d6a2a'), blob(0.27, 0.19, 0.58, 0.07, '#47722f'),
     blob(0.26, -0.17, 0.6, -0.11, '#355e26'), blob(0.24, 0.04, 0.86, 0.06, '#4f7c35'), blob(0.22, -0.06, 0.55, 0.2, '#3a6428'),
@@ -496,7 +537,30 @@ function treeProtos(): THREE.BufferGeometry[] {
   return protos
 }
 
-function buildTrees(meta: TileMeta): THREE.Group | null {
+/** Instance colour: per-tree tint (avoids the "copy-paste forest" look) or, in the geometry-source mode, the
+ *  provenance colour: OSM-mapped, canopy height model (Meta/WRI, real crowns), rule-based / decorative. */
+function treeTint(t: TileMeta['trees'][number], hsh: number, mode: ColorMode, col: THREE.Color) {
+  if (mode === 'geometry') {
+    const hex = t[6] === 0 ? QUALITY_COLORS.source : t[6] === 3 ? QUALITY_COLORS.treeModel : QUALITY_COLORS.inferred
+    const [r, g, b] = linear(hex)
+    // the tree material multiplies the (dark green) vertex colours: divide by a typical leaf colour (#3d6a2a,
+    // linear) so the crown shows the provenance colour
+    return col.setRGB(r / 0.047, g / 0.144, b / 0.023)
+  }
+  return col.setRGB(0.82 + 0.3 * hsh, 0.85 + 0.25 * ((hsh * 7.3) % 1), 0.75 + 0.3 * ((hsh * 3.1) % 1))
+}
+
+function recolorTrees(g: THREE.Group, mode: ColorMode) {
+  const col = new THREE.Color()
+  for (const c of g.children) {
+    const im = c as THREE.InstancedMesh
+    const rows = im.userData.rows as TileMeta['trees']
+    rows.forEach((t, i) => im.setColorAt(i, treeTint(t, Math.abs(Math.sin(t[0] * 12.9898 + t[1] * 78.233) * 43758.5453) % 1, mode, col)))
+    if (im.instanceColor) im.instanceColor.needsUpdate = true
+  }
+}
+
+function buildTrees(meta: TileMeta, lite = false, mode: ColorMode = 'realistic'): THREE.Group | null {
   if (!meta.trees.length) return null
   const g = new THREE.Group()
   g.name = `${meta.id}:trees`
@@ -507,17 +571,16 @@ function buildTrees(meta: TileMeta): THREE.Group | null {
     for (const kind of [0, 1, 2, 3, 4]) {
       const rows = meta.trees.filter((t) => t[5] === kind && (t[6] === 2) === decorative)
       if (!rows.length) continue
-      const im = new THREE.InstancedMesh(treeProtos()[kind], MAT.tree, rows.length)
+      const im = new THREE.InstancedMesh(treeProtos(lite)[kind], MAT.tree, rows.length)
       const col = new THREE.Color()
       rows.forEach(([x, y, z, h, r], i) => {
         const hsh = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453) % 1
         q.setFromAxisAngle(up, hsh * 6.283)
         m4.compose(new THREE.Vector3(x, z - 0.2, -y), q, new THREE.Vector3(2 * r, h, 2 * r))
         im.setMatrixAt(i, m4)
-        // per-tree tint: avoids the "copy-paste forest" look (hue / lightness jitter, deterministic)
-        col.setRGB(0.82 + 0.3 * hsh, 0.85 + 0.25 * ((hsh * 7.3) % 1), 0.75 + 0.3 * ((hsh * 3.1) % 1))
-        im.setColorAt(i, col)
+        im.setColorAt(i, treeTint(rows[i], hsh, mode, col))
       })
+      im.userData.rows = rows
       im.computeBoundingSphere()
       im.castShadow = true
       im.userData.decorative = decorative

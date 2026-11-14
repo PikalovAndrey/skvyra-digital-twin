@@ -1,0 +1,235 @@
+{
+  "date": "2026-11-14T13:27:29.669Z",
+  "machine": "Apple M4 Pro, 14 cores, 24 GB",
+  "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Pro, Unspecified Version)",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "browser": "Chrome (Playwright, channel chrome, ANGLE Metal, vsync off)",
+  "firstIdleMs": 2379,
+  "samples": [
+    {
+      "label": "overview (medium)",
+      "frameMs": {
+        "n": 643,
+        "mean": 4.67,
+        "p50": 3.5,
+        "p95": 11.1,
+        "p99": 13.6,
+        "max": 20.4
+      },
+      "calls": 380,
+      "triangles": 229913,
+      "lodCounts": [
+        0,
+        0,
+        119
+      ],
+      "heapMB": 86.6,
+      "transferredMB": 13.448952
+    },
+    {
+      "label": "centre 350 m (medium)",
+      "frameMs": {
+        "n": 671,
+        "mean": 4.49,
+        "p50": 3.5,
+        "p95": 10.1,
+        "p99": 14,
+        "max": 16.9
+      },
+      "calls": 154,
+      "triangles": 1277547,
+      "lodCounts": [
+        6,
+        0,
+        113
+      ],
+      "heapMB": 135.9,
+      "transferredMB": 47.354184
+    },
+    {
+      "label": "south-west houses 90 m (medium)",
+      "frameMs": {
+        "n": 783,
+        "mean": 3.84,
+        "p50": 2.8,
+        "p95": 8.8,
+        "p99": 12.2,
+        "max": 19.9
+      },
+      "calls": 76,
+      "triangles": 723531,
+      "lodCounts": [
+        3,
+        0,
+        116
+      ],
+      "heapMB": 126.8,
+      "transferredMB": 50.947836
+    },
+    {
+      "label": "centre low angle 10° (medium)",
+      "frameMs": {
+        "n": 693,
+        "mean": 4.34,
+        "p50": 3.3,
+        "p95": 9.9,
+        "p99": 12.7,
+        "max": 17
+      },
+      "calls": 197,
+      "triangles": 1019486,
+      "lodCounts": [
+        4,
+        13,
+        102
+      ],
+      "heapMB": 163.9,
+      "transferredMB": 64.063452
+    },
+    {
+      "label": "overview (high)",
+      "frameMs": {
+        "n": 576,
+        "mean": 5.22,
+        "p50": 4.3,
+        "p95": 11.3,
+        "p99": 14.4,
+        "max": 16.4
+      },
+      "calls": 380,
+      "triangles": 229913,
+      "lodCounts": [
+        0,
+        0,
+        119
+      ],
+      "heapMB": 163.6,
+      "transferredMB": 82.35392
+    },
+    {
+      "label": "centre 350 m (high)",
+      "frameMs": {
+        "n": 603,
+        "mean": 4.99,
+        "p50": 4,
+        "p95": 11.4,
+        "p99": 14.1,
+        "max": 18.2
+      },
+      "calls": 154,
+      "triangles": 1277547,
+      "lodCounts": [
+        6,
+        0,
+        113
+      ],
+      "heapMB": 179.1,
+      "transferredMB": 87.261108
+    },
+    {
+      "label": "south-west houses 90 m (high)",
+      "frameMs": {
+        "n": 706,
+        "mean": 4.26,
+        "p50": 3.1,
+        "p95": 9.6,
+        "p99": 13.5,
+        "max": 21.6
+      },
+      "calls": 76,
+      "triangles": 723531,
+      "lodCounts": [
+        3,
+        0,
+        116
+      ],
+      "heapMB": 178.8,
+      "transferredMB": 89.259928
+    },
+    {
+      "label": "centre low angle 10° (high)",
+      "frameMs": {
+        "n": 487,
+        "mean": 6.17,
+        "p50": 5.4,
+        "p95": 12.4,
+        "p99": 16.1,
+        "max": 19.1
+      },
+      "calls": 321,
+      "triangles": 5352334,
+      "lodCounts": [
+        8,
+        21,
+        90
+      ],
+      "heapMB": 168.1,
+      "transferredMB": 91.745712
+    }
+  ],
+  "flight": {
+    "frameMs": {
+      "n": 3505,
+      "mean": 5.16,
+      "p50": 4,
+      "p95": 11.7,
+      "p99": 16.2,
+      "max": 384
+    },
+    "hitchesOver50ms": [
+      [
+        17,
+        384
+      ]
+    ],
+    "tileLoadsDuringFlight": 14,
+    "loadMs": {
+      "n": 14,
+      "mean": 134.43,
+      "p50": 53.4,
+      "p95": 435.2,
+      "p99": 435.2,
+      "max": 435.2
+    },
+    "parseMs": {
+      "n": 14,
+      "mean": 111.64,
+      "p50": 30.7,
+      "p95": 413.8,
+      "p99": 413.8,
+      "max": 413.8
+    },
+    "heapMBTrace": [
+      178.9,
+      186.9,
+      190.7,
+      192.7,
+      185.4,
+      173.7,
+      196.6,
+      203.5,
+      211.1
+    ]
+  },
+  "allTileLoads": {
+    "loadMs": {
+      "n": 203,
+      "mean": 50.87,
+      "p50": 15.2,
+      "p95": 165.7,
+      "p99": 421.8,
+      "max": 435.2
+    },
+    "parseMs": {
+      "n": 203,
+      "mean": 35.65,
+      "p50": 7.6,
+      "p95": 109.2,
+      "p99": 400,
+      "max": 413.8
+    }
+  }
+}

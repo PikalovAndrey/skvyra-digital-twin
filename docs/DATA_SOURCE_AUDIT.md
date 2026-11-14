@@ -61,6 +61,16 @@ Researched and **not usable**:
   the State Geocadastre orthophoto is view-only. Sentinel-2 (10 m) cannot resolve roof shapes of 10 m houses.
   → **No legal source for per-building roof shapes exists for Skvyra**; all roofs are inferred and labelled.
 
+### Added in Realism & Authenticity 3.0 (2026-11-14, verified by download)
+
+| Source | Access | Size for the AOI | Licence | Used for |
+|---|---|---|---|---|
+| Meta/WRI High Resolution Canopy Height Maps v2 | public S3 (`dataforgood-fb-data/forests/v2/global/dinov3_global_chm_v2_ml3`), z10 quadkey `1203032300`, HTTP range read of the AOI window | 4.3 MB window (of a 58.8 MB tile) + 0.5 MB imagery-date polygons (of 8.6 MB) | CC BY 4.0 | tree candidates (`canopy.py`) |
+| ESA WorldCover 2021 v200 | public S3 COG, tile N48E027, window | 51 KB | CC BY 4.0 | trust check of the canopy model only |
+| Sentinel-2 L2A, 7 extra scenes (2025-06-08 … 2026-08-29) | earth-search STAC, range reads | ~14 MB | free and open | tested as a median composite and **rejected** (see REALISM_3.md) |
+| Panoramax / KartaView / Mapillary | public APIs | — | per item / not stated / CC BY-SA | 0 pictures / 134 photos without a licence field / unknown without a token — none used |
+| GlobalBuildingAtlas LoD1 | Hugging Face `vitrobot/GBA.LoD1` | 1.02 GB tile (monolithic JSON) | CC BY-NC 4.0 | **not downloaded** (size; would be comparison-only, outside the pipeline) |
+
 ## 3. Measured coverage (inside the boundary)
 
 | Feature | Count | Notes |

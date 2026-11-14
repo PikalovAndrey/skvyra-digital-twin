@@ -4,6 +4,11 @@ Ordered by expected gain in *geographic truth* per hour of work.
 
 ## Next (highest value)
 
+0. **After Realism & Authenticity 3.0** (see REALISM_3.md): map the kostel footprint in OSM (it unlocks a
+   photo-based model); verify the zemstvo footprint on the ground; the synagogue has 25+ Commons photos and an
+   OSM footprint — the next landmark candidate; a newer canopy model (or own imagery) would remove the 2011/2015
+   vintage of the trees; build trees in a worker to cut tile-load time.
+
 1. **Contribute to OSM** – the largest remaining accuracy gain is human mapping: `building:levels` and
    `roof:shape` for the centre and apartment blocks (anyone in the town can add them); the pipeline picks
    them up on the next `make acquire --refresh` and they outrank every estimate.

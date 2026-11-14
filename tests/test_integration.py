@@ -217,3 +217,18 @@ def test_blender_builds_and_saves_scene(built, tmp_path):
     js, _ = read_glb(glb)
     names = {n.get("name", "") for n in js["nodes"]}
     assert any(n.endswith("_walls") for n in names) and any(n.endswith("_terrain") for n in names)
+
+
+def test_canopy_trees_reach_tiles_and_model_fill_is_untrusted(built):
+    trees = json.loads((built / "data" / "processed" / "canopy_trees.geojson").read_text())["features"]
+    assert len(trees) == 2  # one per synthetic crown, nothing on the constant-height plateau
+    hs = sorted(f["properties"]["h"] for f in trees)  # uint8 + bilinear reprojection: within 1.5 m of the crown top
+    assert abs(hs[0] - 9) <= 1.5 and abs(hs[1] - 14) <= 1.5
+    assert all(f["properties"]["date"] == "2015-06-24" and f["properties"]["source"] == "chm_v2" for f in trees)
+    idx = json.loads((tiles_dir(built) / "index.json").read_text())
+    rows = [r for t in idx["tiles"] for r in json.loads((tiles_dir(built) / f"{t['id']}.json").read_text())["trees"]]
+    chm = [r for r in rows if r[6] == 3]
+    # the crown at (-300, 250) is real canopy in open land -> canopy-model tree with confidence + date
+    assert len(chm) == 1 and abs(chm[0][0] + 300) < 3 and chm[0][7] in (1, 2)
+    # the OSM forest around (250, 250) has < 10 % CHM canopy -> newer mapping than the imagery: land-cover rule
+    assert any(r[6] == 1 and 150 <= r[0] <= 350 and 175 <= r[1] <= 325 for r in rows)

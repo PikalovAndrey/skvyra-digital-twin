@@ -15,6 +15,13 @@ labelled as inferred.
 |---|---|---|
 | ![](docs/img/render-after_centre_sunset_cycles.jpg) | ![](docs/img/render-after_houses_day_cycles.jpg) | ![](docs/img/render-night-eevee.jpg) |
 
+Realism & Authenticity 3.0 — real trees from a canopy height model and the lyceum's domed corner tower
+(16 viewer pairs in `docs/img/vf3/`, details in [docs/REALISM_3.md](docs/REALISM_3.md)):
+
+![](docs/img/vf3/web-yards-sw.jpg)
+![](docs/img/vf3/web-lyceum-tower.jpg)
+![](docs/img/vf3/web-centre.jpg)
+
 Visual Fidelity 2.0, before → after from identical cameras (13 viewer pairs + 13 Blender pairs in `docs/img/vf2/`):
 
 ![](docs/img/vf2/web-house-close.jpg)
@@ -35,7 +42,8 @@ Earlier realism iteration (20 pairs in `docs/img/compare/`):
 | Heights | 1 measured, 8 from OSM storeys, 1 photo estimate, 96 large non-residential buildings from GHSL satellite data (low confidence), 98.6 % documented type defaults — every building shows its method and confidence |
 | Roofs | 0 known from data; all inferred by documented rules (6 families, 732 multi-part roofs on complex plans); materials and colours from photo-based style rules |
 | Ground | real colours from Sentinel-2 (18 July 2026, 10 m); terrain = Copernicus DSM corrected to an approximate DTM under buildings and woodland |
-| Landmarks | 4 listed buildings matched via Wikidata; 2 with photo-estimated attributes (Commons, CC BY-SA) |
+| Trees | 50,569: 23,514 (46 %) with position and height from observed data (Meta/WRI canopy height model, imagery 2011/2015, segmented into crowns; 45 OSM-mapped), the rest by land-cover rules where that model is unreliable (model fill, outdated vs ESA WorldCover 2021, orchards mapped after 2015) or in the switchable decorative layer |
+| Landmarks | 4 listed buildings matched via Wikidata; 2 with photo-estimated attributes (Commons, CC BY-SA); the lyceum's domed corner tower modelled from photos (dimensions estimated) |
 | Streets | 118.5 km, 108 named streets, 13 bridge segments |
 | Terrain | Copernicus GLO-30 (30 m), 181–248 m above sea level |
 | Style rules | docs/ARCHITECTURE_STYLE.md (sources and observations) |
@@ -53,7 +61,7 @@ API keys or accounts.
 ```bash
 make setup          # Python venv (wheels bundle GEOS/PROJ/GDAL) + web dependencies
 make env            # verify the environment
-make acquire        # ~23 MB: OSM (Overpass), Microsoft footprints, Copernicus DEM, Sentinel-2 and GHSL windows
+make acquire        # ~28 MB: OSM (Overpass), Microsoft footprints, Copernicus DEM, Sentinel-2, GHSL, canopy height, WorldCover windows
 make validate       # normalize + coverage audit + diagnostic maps (docs/img)
 make build          # all 119 tiles × 3 LODs (~200 MB in assets/generated), ~15 s with 6 workers
 make qa             # geometry QA, must exit 0
@@ -66,7 +74,8 @@ from the figures below (snapshot of 2026-11-12); the Sentinel-2 scene and the ot
 
 The interface is Ukrainian by default (EN button switches). Orbit: left-drag pan, right-drag rotate,
 wheel zoom to cursor. Fly mode: WASD, Q/E down/up, Shift faster, drag to look. Click a building for its
-metadata; the *Розфарбування* control switches to geometry-source / height-source colouring.
+metadata; the *Розфарбування* control switches to geometry-source / height-source colouring (in the geometry-source
+mode trees are coloured by provenance too: teal canopy model, blue OSM, orange rule-based).
 
 ## Commands
 
@@ -100,26 +109,26 @@ by the *ID у джерелі* shown in the info panel, e.g.
 Rebuild: only the affected tile changes. Overrides that no longer match a feature are reported in
 `data/processed/overrides_report.json`, never dropped.
 
-## Status (2026-11-12, after Visual Fidelity 2.0 + stabilisation)
+## Status (2026-11-14, after Realism & Authenticity 3.0)
 
 | Check | Result |
 |---|---|
-| Tile build (`build --force`) | 119 / 119 tiles, 0 failed, 13 s |
+| Tile build (`build --force`) | 119 / 119 tiles, 0 failed, 17 s |
 | Geometry QA (`make qa`) | 0 floating, 0 buried, 0 road/building overlaps, 0 trees in buildings, 0 surfaces facing down; 13 low uphill walls (real slopes), 1 height outlier |
-| Python tests | 117 passed |
+| Python tests | 122 passed (incl. canopy segmentation, trust masks, tower geometry, synthetic CHM end-to-end) |
 | TypeScript unit tests (vitest) | 34 passed |
 | Typecheck (`tsc --noEmit`) | 0 errors |
 | Browser e2e (Playwright) | 6 passed, 2 on-demand skipped (benchmark, compare) |
-| Production build (`vite build`) | OK — JS 1.35 MB (381 KB gzip); `dist/` 228 MB incl. tiles |
-| Performance | see docs/PERFORMANCE.md (static p95 ≤ 4.1 ms, p99 ≤ 5.0 ms on M4 Pro; weaker hardware not measured) |
+| Production build (`vite build`) | OK — JS 1.36 MB (382 KB gzip); `dist/` 229 MB incl. tiles |
+| Performance | see docs/PERFORMANCE.md — M4 Pro only; 3.0 adds ~0–5 ms p99 in tree-heavy views (paired runs under external load), CPU-throttled profile without regression in static views; weak GPUs not measured |
 
-Best before/after pairs: `docs/img/vf2/web-house-close.jpg`, `web-street-ground.jpg`, `web-pond-shore.jpg`,
-`web-river.jpg`, `web-centre-street.jpg`; LOD transitions: `docs/img/vf2/web-lod-transitions.jpg`.
+Best before/after pairs (3.0): `docs/img/vf3/web-yards-sw.jpg`, `web-houses-ne.jpg`, `web-lyceum-tower.jpg`,
+`web-park.jpg`, `web-centre.jpg`. Visual Fidelity 2.0: `docs/img/vf2/web-house-close.jpg`, `web-pond-shore.jpg`.
 
 ## Audits
 
 [AUDIT_REPORT](docs/AUDIT_REPORT.md) (data, licences, geometry QA, landmarks, performance) ·
-[VISUAL_FIDELITY](docs/VISUAL_FIDELITY.md) · [LICENSES](docs/LICENSES.md) · `make qa` for geometry checks.
+[VISUAL_FIDELITY](docs/VISUAL_FIDELITY.md) · [REALISM_3](docs/REALISM_3.md) · [LICENSES](docs/LICENSES.md) · `make qa` for geometry checks.
 
 ## Documentation
 
@@ -136,6 +145,9 @@ Best before/after pairs: `docs/img/vf2/web-house-close.jpg`, `web-street-ground.
   COPERNICUS by the European Union and ESA; all rights reserved.
 - Contains modified Copernicus Sentinel data 2026 (scene S2C_35UPR_20260718).
 - GHSL GHS-BUILT-H R2023A © European Union 1995-2026, CC BY 4.0 (JRC).
+- Trees: High Resolution Canopy Height Maps v2 © Meta and World Resources Institute (WRI), CC BY 4.0; changes made
+  (tree segmentation). Land cover check: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data
+  (2021) processed by ESA WorldCover consortium, CC BY 4.0.
 - Landmark coordinates: Wikidata (CC0). Style references: Wikimedia Commons photos (CC BY-SA, authors on the
   linked file pages) — referenced, not redistributed.
 
