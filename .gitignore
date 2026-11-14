@@ -1,0 +1,20 @@
+# source data and generated artifacts are reproducible from the pipeline - never committed
+data/raw/
+data/processed/
+assets/generated/
+renders/
+# keep manual corrections (they are user work), but not scratch files there
+!data/overrides/
+# environments
+.venv/
+node_modules/
+__pycache__/
+*.pyc
+.pytest_cache/
+# web build / test output
+apps/web/dist/
+apps/web/test-results/
+apps/web/e2e-results/
+apps/web/playwright-report/
+*.blend1
+.DS_Store

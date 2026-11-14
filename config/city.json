@@ -1,0 +1,47 @@
+{
+  "name": "Skvyra",
+  "names": [
+    "Сквира",
+    "Skvyra",
+    "Skvira"
+  ],
+  "boundary": {
+    "osm_relation": 3811860,
+    "expect": {
+      "admin_level": "9",
+      "place": "town",
+      "wikidata": "Q70598"
+    }
+  },
+  "crs_metric": "EPSG:32635",
+  "origin_utm": [
+    691900,
+    5512000
+  ],
+  "context_buffer_m": 300,
+  "tile_size_m": 500,
+  "floor_height_m": 3.0,
+  "seed": 20261112,
+  "overpass_url": "https://overpass-api.de/api/interpreter",
+  "user_agent": "skvyra-digital-twin/0.1 (offline research pipeline)",
+  "dem": {
+    "name": "Copernicus GLO-30 DEM (DSM)",
+    "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N49_00_E029_00_DEM/Copernicus_DSM_COG_10_N49_00_E029_00_DEM.tif",
+    "license": "produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved"
+  },
+  "osm_license": "© OpenStreetMap contributors, ODbL 1.0",
+  "ms_buildings": {
+    "index_url": "https://minedbuildings.z5.web.core.windows.net/global-buildings/dataset-links.csv",
+    "region": "Ukraine",
+    "license": "Microsoft Global ML Building Footprints, CDLA Permissive 2.0 (https://github.com/microsoft/GlobalMLBuildingFootprints, https://cdla.dev/permissive-2-0/)"
+  },
+  "ghsl_height": {
+    "tile_url": "https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/GHSL/GHS_BUILT_H_GLOBE_R2023A/GHS_BUILT_H_ANBH_E2018_GLOBE_R2023A_4326_3ss/V1-0/tiles/GHS_BUILT_H_ANBH_E2018_GLOBE_R2023A_4326_3ss_V1_0_R{row}_C{col}.zip",
+    "license": "GHSL data © European Union 1995-2026, CC BY 4.0 (Pesaresi M., Politis P., GHS-BUILT-H R2023A, JRC)"
+  },
+  "sentinel2": {
+    "stac_url": "https://earth-search.aws.element84.com/v1",
+    "item": "S2C_35UPR_20260718_0_L2A",
+    "license": "Contains modified Copernicus Sentinel data 2026 (free, full and open access; attribution required)"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "buildings": {
+    "osm:way/000000000": {
+      "levels": 2,
+      "roof_shape": "hipped",
+      "wall_colour": "#e8dcc0",
+      "roof_colour": "#8e3b2f",
+      "verified": true,
+      "note": "EXAMPLE ONLY - copy to overrides.json and use a real source id from the viewer's info panel",
+      "author": "",
+      "date": "2026-11-12",
+      "evidence": "own photo",
+      "anchor": [29.6629, 49.7298]
+    }
+  }
+}

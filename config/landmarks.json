@@ -1,0 +1,137 @@
+{
+ "about": "Listed / notable buildings of Skvyra. Coordinates from Wikidata (P625). Attributes are ESTIMATES read from the listed licensed photos (method photo_estimate, confidence medium), never measurements. Photos are referenced, not redistributed.",
+ "retrieved": "2026-11-12",
+ "landmarks": [
+  {
+   "wikidata": "Q122727138",
+   "name": "Будівля чоловічої гімназії (Сквирський ліцей)",
+   "heritage": true,
+   "levels": 2,
+   "facade": "historic",
+   "roof_shape": "hipped",
+   "roof_material": "seam",
+   "wall_colour": "#c8916a",
+   "roof_colour": "#9da2a4",
+   "evidence": "Two tall storeys of ochre-salmon brick, grey sheet-metal hipped roofs with pediments; a domed corner tower is visible but NOT modelled.",
+   "photos": [
+    "https://commons.wikimedia.org/wiki/File:Skvyra_lyceum_(1).jpg"
+   ],
+   "license": "CC BY-SA 4.0 (Wikimedia Commons)",
+   "lonlat": [
+    29.652008,
+    49.736667
+   ]
+  },
+  {
+   "wikidata": "Q30968245",
+   "name": "Костел Святого Яна Непомука",
+   "heritage": true,
+   "levels": 2,
+   "facade": "church",
+   "roof_shape": "gabled",
+   "roof_material": "slate",
+   "wall_colour": "#e4e1d8",
+   "roof_colour": "#7d7f7c",
+   "evidence": "Classicist plastered (white/grey, weathered) single-nave church with a pedimented gable and pilasters; roof of corrugated sheets. Height read from photos as about two tall storeys; towers or interior not modelled.",
+   "photos": [
+    "https://commons.wikimedia.org/wiki/File:Saint_John_of_Nepomuk_church,_Skvyra_(1).jpg",
+    "https://commons.wikimedia.org/wiki/File:Saint_John_of_Nepomuk_church,_Skvyra_(4).jpg"
+   ],
+   "license": "CC BY-SA 4.0 (Wikimedia Commons)",
+   "lonlat": [
+    29.664638888,
+    49.728055555
+   ],
+   "note": "Only footprint at the coordinate is a merged Microsoft ML outline (2,279 m2); no OSM footprint exists. Needs mapping in OSM."
+  },
+  {
+   "wikidata": "Q122300599",
+   "name": "Будинок земської управи",
+   "heritage": true,
+   "levels": 2,
+   "facade": "historic",
+   "roof_shape": "hipped",
+   "roof_material": "metal_tile",
+   "wall_colour": "#d99a7c",
+   "roof_colour": "#6b3f2e",
+   "evidence": "Two storeys, salmon/peach plaster with white trim and arched windows, brown metal-tile hipped roof with gabled dormers (dormers not modelled).",
+   "photos": [
+    "https://commons.wikimedia.org/wiki/File:Будинок_земської_управи,_Сквира_01.jpg"
+   ],
+   "license": "CC BY-SA 4.0 (Wikimedia Commons)",
+   "lonlat": [
+    29.6549,
+    49.7308
+   ],
+   "address": "провулок Каштановий, 10",
+   "address_street": "Каштановий провулок"
+  },
+  {
+   "wikidata": "Q122249377",
+   "name": "Особняк Бабаєва",
+   "heritage": true,
+   "levels": 1,
+   "facade": "historic",
+   "roof_shape": "hipped",
+   "roof_material": "metal_tile",
+   "wall_colour": "#bfc0b8",
+   "roof_colour": "#5e4636",
+   "evidence": "One tall storey plus an attic with dormers, grey plaster with brick accents, brown metal roof (attic dormers not modelled).",
+   "photos": [
+    "https://commons.wikimedia.org/wiki/File:Особняк_Бабаєва.JPG"
+   ],
+   "license": "CC BY-SA 3.0 (Wikimedia Commons)",
+   "lonlat": [
+    29.659637,
+    49.729553
+   ]
+  },
+  {
+   "wikidata": "Q122249375",
+   "name": "Будинок, у якому жив та працював М. Т. Рильський (дитсадок «Світанок»)",
+   "heritage": true,
+   "levels": 1,
+   "facade": "historic",
+   "roof_material": "metal_tile",
+   "wall_colour": "#a9442f",
+   "roof_colour": "#5a3427",
+   "evidence": "Terracotta-red plaster with white pilasters and white window frames, brown roof; one storey judged from the eaves height in the photo.",
+   "photos": [
+    "https://commons.wikimedia.org/wiki/File:Будинок,_у_якому_жив_та_працював_Рильський_М._Т.jpg"
+   ],
+   "license": "CC BY-SA 4.0 (Wikimedia Commons)",
+   "lonlat": [
+    29.655688,
+    49.731241
+   ],
+   "address": "вулиця Рильського, 51",
+   "address_street": "вулиця Максима Рильського"
+  },
+  {
+   "wikidata": "Q9350086",
+   "name": "Синагога (Сквира)",
+   "heritage": false,
+   "facade": "historic",
+   "evidence": "No licensed exterior photo found; only the OSM tags (building:levels=2, start_date=1711) are used. Listed so it is named and searchable.",
+   "photos": [],
+   "license": "",
+   "lonlat": [
+    29.669398,
+    49.731846
+   ]
+  },
+  {
+   "wikidata": "Q122249371",
+   "name": "Житловий будинок (вул. Київська, 1)",
+   "heritage": true,
+   "facade": "historic",
+   "evidence": "Listed monument; no photo inspected - only named and given the historic facade style.",
+   "photos": [],
+   "license": "",
+   "lonlat": [
+    29.667004,
+    49.73606
+   ]
+  }
+ ]
+}

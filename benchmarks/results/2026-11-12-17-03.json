@@ -1,0 +1,184 @@
+{
+  "date": "2026-11-12T17:03:31.237Z",
+  "machine": "Apple M4 Pro, 14 cores, 24 GB",
+  "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Pro, Unspecified Version)",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "browser": "Chrome (Playwright, channel chrome, ANGLE Metal, vsync off)",
+  "firstIdleMs": 1094,
+  "samples": [
+    {
+      "label": "overview (medium)",
+      "fps": 535.7856857225174,
+      "frameMs": 1.895193417132527,
+      "calls": 379,
+      "triangles": 224489,
+      "activeTiles": 119,
+      "loading": 0,
+      "queued": 0,
+      "failed": 0,
+      "cachedMB": 27.376927199999987,
+      "heapMB": 126.303006,
+      "transferredMB": 19.554948,
+      "lodCounts": [
+        0,
+        0,
+        119
+      ]
+    },
+    {
+      "label": "centre 350 m (medium)",
+      "fps": 675.7297081127273,
+      "frameMs": 1.4142048632576065,
+      "calls": 131,
+      "triangles": 921718,
+      "activeTiles": 119,
+      "loading": 0,
+      "queued": 0,
+      "failed": 0,
+      "cachedMB": 73.31129679999997,
+      "heapMB": 133.77618,
+      "transferredMB": 53.635376,
+      "lodCounts": [
+        6,
+        0,
+        113
+      ]
+    },
+    {
+      "label": "centre street level 90 m (medium)",
+      "fps": 711.1466240490217,
+      "frameMs": 1.4468479812631672,
+      "calls": 76,
+      "triangles": 490671,
+      "activeTiles": 119,
+      "loading": 0,
+      "queued": 0,
+      "failed": 0,
+      "cachedMB": 73.31129679999997,
+      "heapMB": 156.504204,
+      "transferredMB": 53.635376,
+      "lodCounts": [
+        3,
+        0,
+        116
+      ]
+    },
+    {
+      "label": "south-west houses 90 m (medium)",
+      "fps": 722.6991415473685,
+      "frameMs": 1.4097823738367399,
+      "calls": 63,
+      "triangles": 513396,
+      "activeTiles": 119,
+      "loading": 0,
+      "queued": 0,
+      "failed": 0,
+      "cachedMB": 79.18035999999996,
+      "heapMB": 145.888033,
+      "transferredMB": 57.827564,
+      "lodCounts": [
+        3,
+        0,
+        116
+      ]
+    },
+    {
+      "label": "centre low angle 10° toward horizon (medium)",
+      "fps": 635.7457017155244,
+      "frameMs": 1.5257166130682236,
+      "calls": 181,
+      "triangles": 737111,
+      "activeTiles": 119,
+      "loading": 0,
+      "queued": 0,
+      "failed": 0,
+      "cachedMB": 91.40847519999996,
+      "heapMB": 150.690896,
+      "transferredMB": 66.561932,
+      "lodCounts": [
+        4,
+        13,
+        102
+      ]
+    },
+    {
+      "label": "centre low angle 10° toward horizon (high)",
+      "fps": 337.3253493013972,
+      "frameMs": 2.9046955914535095,
+      "calls": 280,
+      "triangles": 3951663,
+      "activeTiles": 119,
+      "loading": 0,
+      "queued": 0,
+      "failed": 0,
+      "cachedMB": 102.10566799999997,
+      "heapMB": 178.397258,
+      "transferredMB": 74.202784,
+      "lodCounts": [
+        8,
+        21,
+        90
+      ]
+    },
+    {
+      "label": "south-west houses 90 m (high)",
+      "fps": 703.7185125907693,
+      "frameMs": 1.3918927579748146,
+      "calls": 63,
+      "triangles": 513396,
+      "activeTiles": 119,
+      "loading": 0,
+      "queued": 0,
+      "failed": 0,
+      "cachedMB": 103.73950159999998,
+      "heapMB": 173.141234,
+      "transferredMB": 75.369808,
+      "lodCounts": [
+        3,
+        0,
+        116
+      ]
+    },
+    {
+      "label": "centre 350 m (high)",
+      "fps": 656.9779016562969,
+      "frameMs": 1.6126996553826705,
+      "calls": 131,
+      "triangles": 921718,
+      "activeTiles": 119,
+      "loading": 0,
+      "queued": 0,
+      "failed": 0,
+      "cachedMB": 106.35899119999998,
+      "heapMB": 174.369678,
+      "transferredMB": 77.240872,
+      "lodCounts": [
+        6,
+        0,
+        113
+      ]
+    },
+    {
+      "label": "overview (high)",
+      "fps": 514.0466228347599,
+      "frameMs": 2.009148843923695,
+      "calls": 379,
+      "triangles": 224489,
+      "activeTiles": 119,
+      "loading": 0,
+      "queued": 0,
+      "failed": 0,
+      "cachedMB": 122.13693519999997,
+      "heapMB": 170.618406,
+      "transferredMB": 88.93694,
+      "lodCounts": [
+        0,
+        0,
+        119
+      ]
+    }
+  ]
+}

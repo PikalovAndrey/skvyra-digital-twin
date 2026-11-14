@@ -1,0 +1,8 @@
+# Python 3.12+ (tested with 3.14.2). All wheels bundle GEOS/PROJ/GDAL: no system GIS install needed.
+shapely>=2.1      # constrained_delaunay_triangles needs GEOS >= 3.10 (wheel ships 3.14)
+pyproj>=3.7
+numpy>=2.0
+rasterio>=1.4     # DEM window reads over HTTP range requests (/vsicurl/)
+matplotlib>=3.9   # diagnostic maps only
+pillow>=10        # ground textures (also a matplotlib dependency)
+pytest>=8
