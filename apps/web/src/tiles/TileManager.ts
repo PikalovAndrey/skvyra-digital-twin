@@ -66,6 +66,7 @@ export class TileManager {
   private queued = 0 // wanted tiles whose desired LOD is neither loaded nor in flight
   readonly loadMs: number[] = [] // fetch + parse + prepare per tile (benchmarks)
   readonly parseMs: number[] = [] // main-thread part: glTF parse + material setup
+  readonly treeMs: number[] = [] // main-thread tree instancing per tile (benchmarks)
   private clock = 0
   private colorMode: ColorMode = 'realistic'
   private farTrees = new Set<string>()
@@ -295,7 +296,9 @@ export class TileManager {
       ex.trees = null
     }
     if (wantTrees && !ex.trees) {
+      const t0 = performance.now()
       ex.trees = buildTrees(ex.meta, lite, this.colorMode)
+      this.treeMs.push(performance.now() - t0)
       if (ex.trees) ex.trees.userData.lite = lite
     }
     if (ex.trees) {

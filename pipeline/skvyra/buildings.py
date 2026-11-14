@@ -574,12 +574,23 @@ def building_mesh(p: Polygon, attrs: dict, ground, floor_h: float, lod: int, par
             for k in range(len(q) - 1):
                 (x0, y0), (x1, y1) = q[k], q[k + 1]
                 t0, t1 = zt[k], zt[k + 1]
-                A, B, Cc, D = (x0, y0, z_bot), (x1, y1, z_bot), (x1, y1, t1), (x0, y0, t0)
                 d0, d1 = dist + ts[k] * ln, dist + ts[k + 1] * ln
-                ua, ub = (d0 / 3.0, d1 / 3.0) if windows else (-1.0, -1.0)
-                va, vb, vd = (z_bot - z_ground) / fh, (t1 - z_ground) / fh, (t0 - z_ground) / fh
-                wall_tris += [[A, B, Cc], [A, Cc, D]]
-                wall_uv += [[(ua, va), (ub, va), (ub, vb)], [(ua, va), (ub, vb), (ua, vd)]]
+                bay = attrs.get("bay_m", 3.0)
+                ua, ub = (d0 / bay, d1 / bay) if windows else (-1.0, -1.0)
+                wb = attrs.get("window_base_m", 0.0)  # window rows start above a raised plinth / semi-basement
+                v = lambda z: (z - z_ground - wb) / fh
+                e = z_ground + eave_main
+                if attrs.get("gable_windows", True) or max(t0, t1) <= e + 0.05:
+                    A, B, Cc, D = (x0, y0, z_bot), (x1, y1, z_bot), (x1, y1, t1), (x0, y0, t0)
+                    wall_tris += [[A, B, Cc], [A, Cc, D]]
+                    wall_uv += [[(ua, v(z_bot)), (ub, v(z_bot)), (ub, v(t1))], [(ua, v(z_bot)), (ub, v(t1)), (ua, v(t0))]]
+                else:  # plain gable: windows below the eave only
+                    A, B, Cc, D = (x0, y0, z_bot), (x1, y1, z_bot), (x1, y1, e), (x0, y0, e)
+                    wall_tris += [[A, B, Cc], [A, Cc, D], [D, Cc, (x1, y1, t1)], [D, (x1, y1, t1), (x0, y0, t0)]]
+                    wall_uv += [[(ua, v(z_bot)), (ub, v(z_bot)), (ub, v(e))], [(ua, v(z_bot)), (ub, v(e)), (ua, v(e))]]
+                    # u < -0.5 switches the facade shader's windows off; keeping it varying keeps the brick pattern
+                    ga, gb = -1000.0 - d0 / bay, -1000.0 - d1 / bay
+                    wall_uv += [[(ga, v(e)), (gb, v(e)), (gb, v(t1))], [(ga, v(e)), (gb, v(t1)), (ga, v(t0))]]
             dist += ln
 
     # ---- vertical faces between parts of different height (gable ends, wall above a lean-to) ----
@@ -787,3 +798,126 @@ def rotunda_mesh(cx, cy, z_bot, z_ground, spec: dict, eave: float, floor_h: floa
             det.append([c0.tolist(), pts[k].tolist(), pts[k + 1].tolist()])
             col.append(dark)
     return np.array(walls), np.array(uvs, float), np.array(det), np.array(col)
+
+
+# ------------------------------------------------------------------------------------------------------
+# composite landmarks: the real footprint cut into photo-measured blocks + facade details
+# (config/landmarks.json "composite"; every dimension there is a photo estimate)
+# ------------------------------------------------------------------------------------------------------
+def composite_frame(p: Polygon, spec: dict):
+    """Axis u along the long side (pointing to spec["axis_from"]'s opposite), outward front normal n, origin at the
+    footprint's extreme along -u. -> (origin, u, n)."""
+    c, u, v, L, W = obb(p)
+    ends = {"west": np.array([-1.0, 0.0]), "east": np.array([1.0, 0.0]), "south": np.array([0.0, -1.0]), "north": np.array([0.0, 1.0])}
+    if u @ ends[spec.get("axis_from", "west")] > 0:
+        u = -u
+    n = np.array([u[1], -u[0]])
+    if n @ ends[spec.get("front", "south")] < 0:
+        n = -n
+    s0 = float((np.asarray(p.exterior.coords) @ u).min())
+    return u * s0, u, n
+
+
+def composite_parts(p: Polygon, spec: dict):
+    """Cut the real footprint into blocks at the given distances along the axis. -> [(polygon, part spec)]."""
+    _, u, n = composite_frame(p, spec)
+    xy = np.asarray(p.exterior.coords)
+    s_min, s_max = float((xy @ u).min()), float((xy @ u).max())
+    t_min, t_max = float((xy @ n).min()) - 50, float((xy @ n).max()) + 50
+    cuts = [s_min] + [s_min + d for d in spec["split_m"]] + [s_max]
+    out = []
+    for (a, b), ps in zip(zip(cuts[:-1], cuts[1:]), spec["parts"]):
+        strip = Polygon([a * u + t_min * n, b * u + t_min * n, b * u + t_max * n, a * u + t_max * n])
+        g = p.intersection(strip)
+        g = max(shapely.get_parts(g), key=lambda q: q.area) if not g.is_empty else None
+        if g is not None and g.area > 1.0:
+            out.append((shapely.orient_polygons(g, exterior_cw=False), ps))
+    return out
+
+
+def composite_details(p: Polygon, spec: dict, ground, lod: int, wall_rgb):
+    """Stone plinth and brick frieze bands around the outline, plus listed features (stepped parapet, gable window,
+    stairs, doors). -> (tris (n,3,3), colours (n,3)). z from ground(x, y)."""
+    s0u, u, n = composite_frame(p, spec)
+    s_min = float(s0u @ u)
+    parts = composite_parts(p, spec)
+    lin = lambda h: srgb_to_linear(hex_rgb(h)).tolist()
+    tris, cols = [], []
+
+    def quad(a, b, z0a, z0b, z1a, z1b, col):
+        A, B_ = (*a, z0a), (*b, z0b)
+        tris.extend([[A, B_, (*b, z1b)], [A, (*b, z1b), (*a, z1a)]])
+        cols.extend([col, col])
+
+    def box(c2, hu, hv, z0, z1, col):
+        t = box_tris(np.asarray(c2), u, -n, hu, hv, z0, z1)  # (u, -n) is counter-clockwise: faces point outward
+        tris.extend(t)
+        cols.extend([col] * len(t))
+
+    ring = shapely.orient_polygons(p, exterior_cw=False)
+    ext = np.asarray(ring.exterior.coords)
+    zg = {id(ps): float(np.mean(ground(np.asarray(g.exterior.coords)[:, 0], np.asarray(g.exterior.coords)[:, 1]))) for g, ps in parts}
+    z_bot = float(np.min(ground(ext[:, 0], ext[:, 1]))) - 0.5
+    stone, frieze = lin(spec.get("plinth_colour", "#8e8b84")), (np.array(wall_rgb) * 0.72).tolist()
+    seg = np.asarray(shapely.segmentize(ring.exterior, 1.0).coords)
+    for a, b in zip(seg[:-1], seg[1:]):
+        d = b - a
+        ln = float(np.hypot(*d))
+        if ln < 1e-6:
+            continue
+        out = np.array([d[1], -d[0]]) / ln  # outward for a CCW ring
+        mid = shapely.Point((a + b) / 2 - out * 0.3)
+        hit = [(g, ps) for g, ps in parts if g.buffer(0.5).contains(mid)]
+        if not hit:
+            continue
+        g, ps = hit[0]
+        z0 = zg[id(ps)]
+        o = out * 0.04
+        if ps.get("plinth_m"):
+            quad(a + o, b + o, z_bot, z_bot, z0 + ps["plinth_m"], z0 + ps["plinth_m"], stone)
+        if lod == 0 and ps.get("frieze", True):
+            e = z0 + ps["eave_m"]
+            quad(a + out * 0.08, b + out * 0.08, e - 0.55, e - 0.55, e - 0.1, e - 0.1, frieze)
+    for f in spec.get("features", []):
+        g, ps = parts[f["part"]]
+        z0 = zg[id(ps)]
+        gxy = np.asarray(g.exterior.coords)
+        face = float((gxy @ n).max())                       # the part's front plane
+        at = s_min + f["at_m"]
+        base = at * u + face * n
+        if f["type"] == "stepped_parapet":
+            e = z0 + ps["eave_m"]
+            wall = lin(f["colour"]) if f.get("colour") else list(wall_rgb)
+            for w_, top in zip(f["widths_m"], f["tops_m"]):  # widest first; tops above the eave
+                box(base - n * 0.2, w_ / 2, 0.2, e - 0.6, e + top, wall)
+            nz0, nz1 = e + f["tops_m"][-1] - 1.5, e + f["tops_m"][-1] - 0.25
+            box(base + n * 0.02, 0.38, 0.02, nz0, nz1, lin("#3a2a22"))   # niche with the tablets
+        elif f["type"] == "gable_window":
+            zc = z0 + ps["eave_m"] + f["height_above_eave_m"]
+            r = f.get("radius_m", 0.5)
+            c3 = np.array([*(base + n * 0.03), zc])
+            up = np.array([0.0, 0.0, 1.0])
+            uu = np.array([*u, 0.0])
+            ring_pts = [c3 + r * (math.cos(t) * uu + math.sin(t) * up) for t in np.linspace(0, 2 * math.pi, 13)]
+            for k in range(12):
+                tris.append([c3.tolist(), ring_pts[k].tolist(), ring_pts[k + 1].tolist()])
+                cols.append(lin("#1f2328"))
+            if f.get("star"):  # hexagram lattice, two triangles in front of the glass
+                for rot in (math.pi / 2, -math.pi / 2):
+                    a3 = [rot + k * 2 * math.pi / 3 for k in range(3)]
+                    pts = [c3 + np.array([*(n * 0.01), 0.0]) + 0.8 * r * (math.cos(t) * uu + math.sin(t) * up) for t in a3]
+                    tris.append([q.tolist() for q in pts])
+                    cols.append(lin("#e9e6df"))
+        elif f["type"] == "door":
+            z_a = z0 + f.get("sill_m", 0.0)
+            box(base + n * 0.02, f.get("width_m", 1.2) / 2, 0.03, z_a, z_a + f.get("height_m", 2.3), lin(f.get("colour", "#5a3b26")))
+        elif f["type"] == "stair":
+            # stone stair along the facade: rises from at_m to at_m + dir*length_m up to height_m, landing at the top
+            length, h, w_, d = f["length_m"], f["height_m"], f.get("width_m", 1.5), f.get("dir", 1)
+            steps = max(3, int(h / 0.18))
+            for k in range(steps):
+                s_ = at + d * (k + 0.5) * length / steps
+                box(s_ * u + (face + w_ / 2) * n, length / steps / 2, w_ / 2, z_bot, z0 + (k + 1) * h / steps, stone)
+            land = at + d * (length + f.get("landing_m", 1.6) / 2)
+            box(land * u + (face + w_ / 2) * n, f.get("landing_m", 1.6) / 2, w_ / 2, z_bot, z0 + h, stone)
+    return np.array(tris, float).reshape(-1, 3, 3), np.array(cols, float).reshape(-1, 3)

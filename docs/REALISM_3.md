@@ -93,3 +93,55 @@ remaining visual limit, with no legal higher-resolution imagery available.
   inferred; nothing in open data shows them.
 * **Distance to Google Earth 3D**: still large; it comes from photogrammetry of real roofs and facades, which no
   open source provides for Skvyra.
+
+---
+
+# Authenticity 3.1 (2026-11-14) — the synagogue, street photos re-checked
+
+## Synagogue (Q9350086)
+
+**Status**: a historic building, **not a protected monument** — it appears only in the Wiki Loves Monuments
+"Jewish heritage" list (ID 99-322-4001) with "охоронний номер: (не охороняється)", and Wikidata has no heritage
+designation (P1435). The model therefore does not mark it as heritage; the WLM id is kept as `wlm_id` with that note.
+(The other landmarks' heritage flags rest on Wikidata P1435: local architectural/historic monument designations.)
+
+**Photo credits** (all CC BY-SA 4.0, Wikimedia Commons, referenced not redistributed): dimensions from Michael
+Byalsky (2019, 4 files), Oleksandr Mykhaylyk (2019) and Xsandriel (2025); identity confirmed additionally on photos
+by Kiyanka (2015), Ростислав Маленков (2007) and Gabbai26 (2008). Per-file list: `config/landmarks.json →
+photo_credits`. Limitation: the viewer links the files (author and licence are on each file page) and shows the
+author line; any published image derived from these photos would itself have to be CC BY-SA.
+
+**Identity checks**: the Commons category *Synagogue in Skvyra* is the item's P373; a 2025 photo geotag lies
+inside the OSM footprint (`osm:way/953038401`, 672 m²) and the Wikidata point 2.3 m from it; 2007–2025 photos by
+six authors (all CC BY-SA 4.0; 9 interior and 4 archival files ignored; three of them were used for dimensions, see credits above) show the same building — pink paint in
+2008, red brick after the renovation of ~2018–19. The OSM outline (51 × 12 m with a 9 × 5.6 m projection at the
+west end) matches the front seen on the photos.
+
+| | Observed on the photos | Estimated (frontal photos, scale from door heights ≈ 2.2–2.4 m) |
+|---|---|---|
+| Layout | three blocks on a south front: west block with its gable to the south (= the outline's projection), central block, prayer hall | cut of the real outline at 9 m and 27 m from the west end |
+| West block | 2 storeys over a rubble-stone semi-basement; Star-of-David window in the gable; door at the top of a stone stair along the facade | eave 5.9 m, ridge +2.8 m, plinth 2.1 m |
+| Central block | 2 storeys over the same plinth; stepped brick attic with a niche over the entrance; stone stair descending east | eave 5.6 m, hipped roof +2.2 m; attic 5.8 → 3.4 → 1.4 m wide, up to 2.4 m above the eave |
+| Prayer hall | one tall storey at street level, a door and 8 tall round-arched windows | eave 4.5 m, hipped roof +2.0 m, ~2.7 m window bays |
+| Materials | red brick (#c96a43), grey rubble-stone plinth, brick corbel frieze under the eaves, dark brown metal-tile roofs (west/central), dark grey roof (hall) | colours sampled from sunlit photo areas |
+| Not visible → not modelled | north facade details, courtyard annexes, roof plan behind the front, real basement window positions | |
+
+Implementation: `config/landmarks.json → composite` (blocks + features) → `buildings.composite_parts / composite_details`,
+used by the tile builder for any landmark with a `composite` spec. The outline is cut, never changed (unit test
+checks the areas). Windows on the plain gables are switched off and window rows start above the semi-basement;
+decorative (invented) fences are kept 12 m away from landmarks rebuilt from photos. Photos are references only:
+nothing is copied into textures, and the photo/model comparison image stays outside the repository.
+
+## Street-level photos
+
+| Service | Finding |
+|---|---|
+| KartaView | Licence **verified**: the official terms (served by kartaview.org) license user imagery under **CC BY-SA 4.0**. The Skvyra material is one sequence (`3133530`): 134 GoPro-style fisheye frames, 2019-11-22 15:49–15:51, dusk, ~11 m/s along ~600 m from the lyceum to Каштановий провулок. **Caveats**: the sequence status is `deleted` (removed on KartaView, frames still served by the nearby-photo API); the API exposes only a numeric user id (no author name for attribution); positions/headings are track-derived (±10–20 m). Verifiable from the frames checked: the kindergarten «Світанок» (the Rylskyi house, Q122249375) is a one-storey terracotta building with white corner pilasters and a stone-pillar fence — consistent with the Commons-based attributes already used — but its footprint cannot be pinned: the camera stands ~20 m from the nearest mapped outline, so the building may be unmapped. **Not used in the model** (deleted sequence, no attributable author); kept as a lead for OSM mapping. |
+| Panoramax | 0 pictures (unchanged) |
+| Mapillary | not checked further (needs a token) |
+
+## Results (3.1)
+
+* Before/after: `docs/img/a31/web-synagogue-front.jpg` (street view, new viewpoint), `web-synagogue.jpg` (district view).
+* Tests: 123 Python (new: composite landmark cut + outward-facing details), 34 vitest, tsc 0, e2e 6; `make qa` 0 defects.
+* Benchmark tree build time per tile is now recorded (`treeBuildMs`); paired 2.0 vs 3.1 runs: see PERFORMANCE.md.

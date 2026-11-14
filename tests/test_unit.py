@@ -626,3 +626,21 @@ def test_rotunda_walls_face_out_and_dome_tops_the_drum():
     assert wu.shape == (len(wt), 3, 2) and len(dc) == len(dt)
     top = dt[:, :, 2].max()
     assert abs(top - (100.0 + 8.4 + 0.6 + 1.2 + 0.18 + 2.1)) < 0.05
+
+
+def test_composite_landmark_cuts_real_footprint_and_details_face_outward():
+    # synagogue-like outline: 51 x 12 m block with a 9 m wide projection to the south at the west end
+    fp = Polygon([(0, 0), (9, 0), (9, 5.6), (51, 5.6), (51, 17.8), (0, 17.8)])
+    spec = {"axis_from": "west", "front": "south", "split_m": [9.0, 27.0],
+            "parts": [{"roof": "gabled", "eave_m": 5.9, "rise_m": 2.8}, {"roof": "hipped", "eave_m": 5.6, "rise_m": 2.2},
+                      {"roof": "hipped", "eave_m": 4.5, "rise_m": 2.0}],
+            "features": [{"type": "door", "part": 1, "at_m": 16.0, "sill_m": 2.1}]}
+    parts = B.composite_parts(fp, spec)
+    assert len(parts) == 3 and abs(sum(g.area for g, _ in parts) - fp.area) < 1e-6  # real outline kept exactly
+    assert parts[0][0].bounds[1] == 0.0 and parts[0][0].bounds[2] <= 9.0 + 1e-9    # the projection is the west block
+    tris, cols = B.composite_details(fp, spec, lambda x, y: np.zeros(np.shape(x)), lod=1, wall_rgb=[0.6, 0.2, 0.1])
+    door = tris[np.isclose(tris[:, :, 2].max(axis=1), 2.1 + 2.3) | np.isclose(tris[:, :, 2].min(axis=1), 2.1)]
+    c = door.reshape(-1, 3).mean(axis=0)
+    nrm = np.cross(door[:, 1] - door[:, 0], door[:, 2] - door[:, 0])
+    assert len(door) and ((nrm * (door.mean(axis=1) - c)).sum(axis=1) > 0).all()     # every face points out of the box
+    assert abs(c[1] - 5.6) < 0.1 and abs(c[0] - 16.0) < 0.1                           # on the front of the central block

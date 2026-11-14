@@ -1,5 +1,12 @@
 # Progress — 2026-11-14
 
+## Iteration 6 — Authenticity 3.1 (2026-11-14)
+
+Synagogue rebuilt from 30+ Commons photos on its real OSM outline (three blocks, stepped attic, Star-of-David
+gable window, stone plinth and stairs); KartaView licence verified (CC BY-SA 4.0) but the Skvyra sequence is
+deleted and unattributable → not used; decorative fences kept off photo-based landmarks; tree build time
+recorded in the benchmark. Tests 123 / 34 / tsc 0 / e2e 6, QA 0 defects.
+
 ## Iteration 5 — Realism & Authenticity 3.0 (2026-11-14)
 
 | Phase | Result |

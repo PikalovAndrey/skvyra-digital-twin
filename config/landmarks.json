@@ -19,7 +19,7 @@
     "https://commons.wikimedia.org/wiki/File:Skvyra_lyceum_(5).jpg",
     "https://commons.wikimedia.org/wiki/File:Будівля_чоловічої_гімназії_IMG_20191122_154741.jpg"
    ],
-   "license": "CC BY-SA 4.0 (Wikimedia Commons)",
+   "license": "CC BY-SA 4.0, Wikimedia Commons - photos by Xsandriel (2025, 3 files) and WestBam (2019); referenced, not redistributed",
    "lonlat": [
     29.652008,
     49.736667
@@ -134,13 +134,151 @@
    "name": "Синагога (Сквира)",
    "heritage": false,
    "facade": "historic",
-   "evidence": "No licensed exterior photo found; only the OSM tags (building:levels=2, start_date=1711) are used. Listed so it is named and searchable.",
-   "photos": [],
-   "license": "",
+   "evidence": "Identity: Commons category 'Synagogue in Skvyra' is the Wikidata item's P373; a 2025 photo geotag falls inside the OSM footprint; 2007-2025 photos by six authors show the same building (painted pink in 2008, red brick after the renovation of ~2018-2019). Observed: three blocks along a 51 m south front - west block with a south-facing gable and a Star-of-David gable window (2 storeys over a rubble-stone semi-basement; it is the 5.6 m projection of the OSM outline), central two-storey block with a stepped brick attic over the entrance, eastern prayer hall with a door and 8 tall round-arched windows; red brick, grey rubble-stone plinth, dark metal roofs, brick corbel frieze under the eaves, two stone stairs along the facade. Estimated (from frontal photos, scale from door heights): block lengths 9 / 18 / 24 m, eaves 5.9 / 5.6 / 4.5 m, roof rises, attic size, stair and door positions. Not visible / assumed: rear and roof plan behind the front, exact window counts on the north side.",
+   "photos": [
+    "https://commons.wikimedia.org/wiki/File:The_Skver_Beth_midrash_01.jpg",
+    "https://commons.wikimedia.org/wiki/File:The_Skver_Beth_midrash_04.jpg",
+    "https://commons.wikimedia.org/wiki/File:The_Skver_Beth_midrash_05.jpg",
+    "https://commons.wikimedia.org/wiki/File:The_Skver_Beth_midrash_12.jpg",
+    "https://commons.wikimedia.org/wiki/File:Rabbi_David_Twersky%27s_Synagogue_in_Skvyra.jpg",
+    "https://commons.wikimedia.org/wiki/File:Skvyra_synagogue_(2).jpg"
+   ],
+   "license": "CC BY-SA 4.0, Wikimedia Commons - measurement photos by Michael Byalsky (2019, 4 files), Oleksandr Mykhaylyk (2019) and Xsandriel (2025); referenced, not redistributed",
    "lonlat": [
     29.669398,
     49.731846
-   ]
+   ],
+   "levels": 2,
+   "wall_colour": "#c96a43",
+   "composite": {
+    "method": "photo_estimate",
+    "axis_from": "west",
+    "front": "south",
+    "split_m": [
+     9.0,
+     27.0
+    ],
+    "plinth_colour": "#6e6b65",
+    "parts": [
+     {
+      "name": "west gabled block",
+      "roof": "gabled",
+      "eave_m": 5.9,
+      "rise_m": 2.8,
+      "floor_h": 3.8,
+      "bay_m": 3.0,
+      "facade": "public",
+      "plinth_m": 2.1,
+      "roof_colour": "#5d4f47",
+      "roof_material": "metal_tile"
+     },
+     {
+      "name": "central block",
+      "roof": "hipped",
+      "eave_m": 5.6,
+      "rise_m": 2.2,
+      "floor_h": 3.5,
+      "bay_m": 2.0,
+      "facade": "public",
+      "plinth_m": 2.1,
+      "roof_colour": "#5d4f47",
+      "roof_material": "metal_tile"
+     },
+     {
+      "name": "prayer hall",
+      "roof": "hipped",
+      "eave_m": 4.5,
+      "rise_m": 2.0,
+      "floor_h": 4.5,
+      "bay_m": 2.7,
+      "facade": "historic",
+      "plinth_m": 0.35,
+      "roof_colour": "#55585c",
+      "roof_material": "seam"
+     }
+    ],
+    "features": [
+     {
+      "type": "gable_window",
+      "part": 0,
+      "at_m": 4.45,
+      "height_above_eave_m": 1.2,
+      "radius_m": 0.55,
+      "star": true
+     },
+     {
+      "type": "stair",
+      "part": 0,
+      "at_m": 0.0,
+      "dir": 1,
+      "length_m": 3.4,
+      "height_m": 2.1,
+      "width_m": 1.4,
+      "landing_m": 1.8
+     },
+     {
+      "type": "door",
+      "part": 0,
+      "at_m": 4.5,
+      "sill_m": 2.1,
+      "width_m": 1.3,
+      "height_m": 2.3
+     },
+     {
+      "type": "stepped_parapet",
+      "part": 1,
+      "at_m": 16.1,
+      "widths_m": [
+       5.8,
+       3.4,
+       1.4
+      ],
+      "tops_m": [
+       0.9,
+       1.7,
+       2.4
+      ]
+     },
+     {
+      "type": "door",
+      "part": 1,
+      "at_m": 16.1,
+      "sill_m": 2.1,
+      "width_m": 1.3,
+      "height_m": 2.4
+     },
+     {
+      "type": "stair",
+      "part": 1,
+      "at_m": 20.8,
+      "dir": -1,
+      "length_m": 3.8,
+      "height_m": 2.1,
+      "width_m": 1.6,
+      "landing_m": 1.8
+     },
+     {
+      "type": "door",
+      "part": 2,
+      "at_m": 28.0,
+      "sill_m": 0.0,
+      "width_m": 1.4,
+      "height_m": 3.0
+     }
+    ]
+   },
+   "wlm_id": "UA-99-322-4001",
+   "status_note": "Historic building, NOT a protected monument: it is in the Wiki Loves Monuments 'Jewish heritage' list (ID 99-322-4001) with the entry 'охоронний номер: (не охороняється)', and Wikidata has no heritage designation (P1435). Checked 2026-11-14.",
+   "wlm_address": "вул. Шолом-Алейхема",
+   "photo_credits": [
+    "The Skver Beth midrash 01.jpg - Michael Byalsky, 2019-09-06, CC BY-SA 4.0",
+    "The Skver Beth midrash 04.jpg - Michael Byalsky, 2019-09-06, CC BY-SA 4.0",
+    "The Skver Beth midrash 05.jpg - Michael Byalsky, 2019-09-06, CC BY-SA 4.0 (frontal: proportions)",
+    "The Skver Beth midrash 12.jpg - Michael Byalsky, 2019-09-06, CC BY-SA 4.0",
+    "Rabbi David Twersky's Synagogue in Skvyra.jpg - Oleksandr Mykhaylyk, 2019-09-10, CC BY-SA 4.0",
+    "Skvyra synagogue (2).jpg - Xsandriel, 2025-07-27, CC BY-SA 4.0 (geotag inside the OSM outline)"
+   ],
+   "identity_only_photos": "Also viewed only to confirm identity (not used for dimensions): Kiyanka 2015 (3 files), Ростислав Маленков 2007 (Синагога6.jpg), Gabbai26 2008 (Skver Beis Hamedrash) - all CC BY-SA 4.0"
   },
   {
    "wikidata": "Q122249371",

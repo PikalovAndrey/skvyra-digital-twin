@@ -40,6 +40,30 @@ average 6–14), so absolute values are 2–3× the 2026-11-12 ones; only runs m
 | 4× CPU throttling (CDP `Emulation.setCPUThrottlingRate`; GPU not throttled — **not a weak-device test**) VF2 tiles vs 3.0 (`13-41-06` → `13-42-18`) | static views equal or better (centre low angle high p95 17.2 → 10.2 ms); flight p99 13.6 → 15.6 ms; tile load p95 229 → 382 ms (trees are built on the main thread) |
 | Final (with OSM orchards back as rule-based trees, 50.6 k trees), VF2 tiles vs 3.0, heavy external load (`14-09-17` → `14-10-30`) | p99 +0–5 ms in tree-heavy views (worst: centre low angle high 18.0 → 22.9 ms), overview unchanged; flight p99 19.0 → 21.2 ms |
 
+**Paired re-run, 2026-11-14 18:51–18:56** (started only after the machine passed an idle check: load < 3, no
+process > 40 % CPU, heavy-check queue empty; order 2.0 → 3.1 → 2.0 → 3.1; 2.0 = commit 6ba4c29 code + tiles,
+3.1 = current code + tiles; files `16-52-32-code2.0`, `16-53-47`, `16-55-03-code2.0`, `16-56-19`):
+
+| View | 2.0 p95 / p99 (run a, b) | 3.1 p95 / p99 (run a, b) | triangles 2.0 → 3.1 |
+|---|---|---|---|
+| overview (medium) | 12.8, 11.1 / 14.6, 13.4 | 12.3, 12.3 / 13.5, 14.1 | 229 k → 229 k |
+| centre 350 m (medium) | 10.9, 13.0 / 13.3, 14.2 | 13.8, 13.2 / 15.1, 14.6 | 1,277 k → 2,019 k |
+| houses 90 m (medium) | 8.3, 8.4 / 9.6, 9.6 | 8.1, 9.0 / 9.5, 10.7 | 723 k → 1,503 k |
+| centre low angle (medium) | 12.8, 10.2 / 14.2, 13.6 | 13.6, 13.9 / 14.6, 14.8 | 1,019 k → 1,960 k |
+| overview (high) | 13.2, 14.3 / 16.7, 15.8 | 14.6, 11.5 / 16.5, 16.2 | 229 k → 229 k |
+| centre 350 m (high) | 11.4, 13.9 / 14.2, 15.3 | 11.7, 13.0 / 14.2, 14.1 | 1,277 k → 823 k |
+| houses 90 m (high) | 9.4, 9.4 / 12.1, 12.7 | 11.9, 11.8 / 14.0, 14.3 | 723 k → 1,503 k |
+| centre low angle (high) | 15.6, 15.6 / 16.7, 18.5 | 15.3, 13.7 / 16.7, 17.0 | 5,352 k → 3,617 k |
+| flight p95 / p99 | 13.1, 13.1 / 14.8, 14.9 | 13.1, 13.0 / 15.0, 15.3 | |
+
+* Differences between versions are mostly inside the run-to-run spread of one version; the largest: houses 90 m
+  (high) p99 +1.6–2.2 ms. Teleport hitches (316–698 ms) occur in both versions.
+* **Trees on the main thread** (new `treeBuildMs`): mean 0.35 ms per tile, p95 0.8–0.9 ms, max 9.6 ms — not a
+  bottleneck. Tile load p95 was 475/721 ms (2.0) vs 384/252 ms (3.1): dominated by noise.
+* **Still not a peak-performance measurement**: even the identical overview had p95 11–14 ms here vs 2.9 ms on the
+  idle machine of 2026-11-12 (and p50 alternated between ~2.8 and ~7.5 ms between runs), so something else was
+  still using the GPU/CPU. Re-run on a truly idle machine before quoting absolute numbers.
+
 Reproduce: `make bench` (add `THROTTLE=4` for the CPU profile). Re-measure on an idle machine before quoting
 absolute numbers.
 

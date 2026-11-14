@@ -106,6 +106,9 @@ def init_ctx(cfg):
         if p.get("name"):
             streets.setdefault(p["name"], []).append(g)
     landmarks = LM.match(bld, frame, streets={k: shapely.union_all(v) for k, v in streets.items()})
+    # no invented (decorative) fences around landmarks rebuilt from photos: the photos show what is there
+    lm_keepout = shapely.union_all([g.buffer(12.0) for g, p in bld if (landmarks.get(p["source_id"]) or {}).get("composite")
+                                    or (landmarks.get(p["source_id"]) or {}).get("features")])
     s2 = None
     s2_path = C.RAW / "sentinel2_tci.tif"
     if s2_path.exists():
@@ -136,7 +139,7 @@ def init_ctx(cfg):
     area_tree = shapely.STRtree([g for g, _ in areas])
     _CTX.update(cfg=cfg, frame=frame, terrains=terrains, bld=bld, roads=roads, areas=areas, water=water,
                 rail_polys=rail_polys, trees=trees, canopy=canopy, quarantine=quarantine, overrides=ov, ov_report=ov_report,
-                evidence=evidence, landmarks=landmarks, s2=s2, still_water=still,
+                evidence=evidence, landmarks=landmarks, lm_keepout=lm_keepout, s2=s2, still_water=still,
                 s2_sha=acquire.load_manifest().get("sentinel2_tci.tif", {}).get("sha256"),
                 bld_tree=shapely.STRtree([g.representative_point() for g, _ in bld]),
                 bld_geom_tree=shapely.STRtree([g for g, _ in bld]),
@@ -161,6 +164,27 @@ def cover_at(pt):
         if best is None or g.area < best[0]:
             best = (g.area, p["cover"])
     return best[1] if best else None
+
+
+def composite_mesh(soups, g, attrs, comp, ter, floor_h, lod, fi):
+    """A landmark rebuilt from photos: the real footprint cut into blocks, each with its measured eave, roof and
+    materials, plus facade details (config/landmarks.json "composite")."""
+    for gp, ps in B.composite_parts(g, comp):
+        a = {**attrs, "roof": ps["roof"], "eave_height": ps["eave_m"], "roof_height": ps["rise_m"], "decompose": False,
+             "floor_h": ps.get("floor_h", attrs["floor_h"]), "bay_m": ps.get("bay_m", 3.0), "door": None, "chimney": False,
+             "facade": ps.get("facade", attrs["facade"]), "overhang": ps.get("overhang_m", 0.35),
+             "roof_mat": ps.get("roof_material", attrs["roof_mat"]), "window_base_m": ps.get("plinth_m", 0.0) if ps.get("plinth_m", 0) > 1 else 0.0,
+             "gable_windows": False}
+        if ps.get("roof_colour"):
+            a["roof_color"] = srgb_to_linear(hex_rgb(ps["roof_colour"])).tolist()
+        m = B.building_mesh(gp, a, ter.z, floor_h, lod)
+        if m is None:
+            continue
+        soups["walls"].add(m["walls"][0], a["wall_color"], m["walls"][1], fid=fi, style=B.FACADE[a["facade"]])
+        soups["roofs"].add(m["roof"][0], a["roof_color"], m["roof"][1], fid=fi, style=B.ROOF_MAT[a["roof_mat"]])
+    if lod < 2:
+        dt, dc = B.composite_details(g, comp, ter.z, lod, attrs["wall_color"])
+        soups["details"].add(dt, dc, fid=fi)
 
 
 def tile_inputs(ix, iy):
@@ -326,6 +350,11 @@ def build_tile(ix, iy, force=False) -> dict:
         parts = B.plan(shapely.orient_polygons(g, exterior_cw=False), attrs)
         attrs["door"] = door_edge(g, attrs, i)
         ridge = max(pt.eave + pt.rh for pt in parts[0])
+        comp = lm.get("composite") if lm and lm.get("match") != "probable" else None
+        if comp:  # photo-measured blocks replace the generic roof plan (see composite_mesh below)
+            ridge = max(ps["eave_m"] + ps["rise_m"] for ps in comp["parts"])
+            attrs.update(eave_height=max(ps["eave_m"] for ps in comp["parts"]), height_method="photo_estimate",
+                         height_conf=B.CONF["photo_estimate"], roof="complex", roof_method="photo_estimate", door=None)
         blds.append((g, p, attrs, ov, parts))
         rp = g.representative_point()
         lon, lat = frame.to_geo(rp.x, rp.y)
@@ -381,7 +410,8 @@ def build_tile(ix, iy, force=False) -> dict:
     roads_union = shapely.union_all([v for k, v in road_polys.items()]) if road_polys else shapely.Polygon()
     vehicle = [g for g, p in roads_local if p.get("highway") not in S.FOOT]
     house_polys = [(g, p["id"]) for g, p, a, _, _ in blds if a["kind"] == "house"]
-    fences = S.yard_fences(house_polys, vehicle, roads_union, near_fp.buffer(0.6) if near_fp is not None else shapely.Polygon(),
+    fences = S.yard_fences(house_polys, vehicle, roads_union, shapely.union_all([near_fp.buffer(0.6) if near_fp is not None else shapely.Polygon(),
+                                                                        _CTX["lm_keepout"]]),
                            f"{cfg['seed']}") if cfg.get("decorative_trees", True) else []
 
     # ---- trees (LOD0 only in the viewer; stored in tile meta) ----
@@ -450,6 +480,11 @@ def build_tile(ix, iy, force=False) -> dict:
         uv = np.stack([(tris[..., 0] - b[0]) / (b[2] - b[0]), (b[3] - tris[..., 1]) / (b[3] - b[1])], -1)
         soups["terrain"].add(tris, COLORS["terrain"], uv)
         for fi, (g, p, attrs, ov, parts) in enumerate(blds):
+            lm = _CTX["landmarks"].get(p["source_id"])
+            comp = lm.get("composite") if lm and lm.get("match") != "probable" else None
+            if comp:
+                composite_mesh(soups, g, attrs, comp, ter, floor_h, lod, fi)
+                continue
             m = B.building_mesh(g, attrs, ter.z, floor_h, lod, parts=None if lod == 2 else parts)
             if m is None:
                 continue

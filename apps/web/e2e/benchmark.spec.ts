@@ -12,7 +12,7 @@ test.use({ launchOptions: { args: ['--use-angle=metal', '--enable-gpu', '--ignor
 type Ring = { buf: Float32Array; n: number }
 interface W {
   __skvyraStore: { getState(): { stats: Record<string, unknown>; set(p: object): void } }
-  __skvyra: { stats(): { active: number; loading: number; queued: number }; loadMs: number[]; parseMs: number[] }
+  __skvyra: { stats(): { active: number; loading: number; queued: number }; loadMs: number[]; parseMs: number[]; treeMs: number[] }
   __skvyraFrames: Ring
 }
 
@@ -111,6 +111,7 @@ test('benchmark: city route', async ({ page }) => {
     firstIdleMs, samples,
     flight: { frameMs: summary(flightFrames), hitchesOver50ms: flightFrames.map((v, i) => [i, +v.toFixed(1)]).filter(([, v]) => v > 50), tileLoadsDuringFlight: loads.all.length, loadMs: summary(loads.all), parseMs: summary(loads.parse), heapMBTrace: heapTrace },
     allTileLoads: { loadMs: summary(allLoads.all), parseMs: summary(allLoads.parse) },
+    treeBuildMs: summary(await page.evaluate(() => (window as unknown as W).__skvyra.treeMs)),
   }
   mkdirSync('../../benchmarks/results', { recursive: true })
   writeFileSync(`../../benchmarks/results/${result.date.slice(0, 19).replace(/[:T]/g, '-')}.json`, JSON.stringify(result, null, 2))

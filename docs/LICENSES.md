@@ -11,8 +11,9 @@ Verified 2026-11-12 against the providers' own pages (links below). Not legal ad
 | GHSL GHS-BUILT-H R2023A | CC BY 4.0 — copyright.txt next to the data | "GHSL © European Union 1995-2026, JRC; changes made" | |
 | Meta & WRI High Resolution Canopy Height Maps v2 | CC BY 4.0 — AWS Open Data registry entry `dataforgood-fb-forestsv2` | "Canopy height: Meta and World Resources Institute (WRI), CC BY 4.0; changes made" | tree tops, heights and crowns are *derived* (segmentation); window of one tile read with range requests |
 | ESA WorldCover 2021 v200 | CC BY 4.0 — esa-worldcover.org | "© ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium" | used only to decide where the canopy model is outdated, never as geometry |
+| KartaView street imagery | CC BY-SA 4.0 — KartaView terms (kartaview.org, checked 2026-11-14) | contributor + KartaView + licence | **not used**: the only Skvyra sequence is marked deleted and exposes no author name; viewed for research only |
 | Wikidata | CC0 | — | coordinates and names of listed buildings |
-| Wikimedia Commons photos | CC BY-SA 3.0/4.0 (per file) | — (not redistributed) | used only as visual reference to estimate colours/roof family/storeys of 2 buildings and the lyceum corner tower (position, diameter, drum, dome); no pixels are copied into the model |
+| Wikimedia Commons photos | CC BY-SA 3.0/4.0 (per file) | — (not redistributed) | used only as visual reference to estimate colours/roof family/storeys of 2 buildings, the lyceum corner tower and the synagogue (blocks, heights, attic, stairs, colours); no pixels are copied into the model, and no photo is stored in the repository |
 
 ## Compatibility
 

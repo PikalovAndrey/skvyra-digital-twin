@@ -43,7 +43,7 @@ Earlier realism iteration (20 pairs in `docs/img/compare/`):
 | Roofs | 0 known from data; all inferred by documented rules (6 families, 732 multi-part roofs on complex plans); materials and colours from photo-based style rules |
 | Ground | real colours from Sentinel-2 (18 July 2026, 10 m); terrain = Copernicus DSM corrected to an approximate DTM under buildings and woodland |
 | Trees | 50,569: 23,514 (46 %) with position and height from observed data (Meta/WRI canopy height model, imagery 2011/2015, segmented into crowns; 45 OSM-mapped), the rest by land-cover rules where that model is unreliable (model fill, outdated vs ESA WorldCover 2021, orchards mapped after 2015) or in the switchable decorative layer |
-| Landmarks | 4 listed buildings matched via Wikidata; 2 with photo-estimated attributes (Commons, CC BY-SA); the lyceum's domed corner tower modelled from photos (dimensions estimated) |
+| Landmarks | 4 listed buildings matched via Wikidata; 2 with photo-estimated attributes (Commons, CC BY-SA); the lyceum's domed corner tower and the synagogue (three blocks, stepped attic, stairs; Authenticity 3.1) modelled from photos (dimensions estimated) |
 | Streets | 118.5 km, 108 named streets, 13 bridge segments |
 | Terrain | Copernicus GLO-30 (30 m), 181–248 m above sea level |
 | Style rules | docs/ARCHITECTURE_STYLE.md (sources and observations) |
@@ -109,20 +109,20 @@ by the *ID у джерелі* shown in the info panel, e.g.
 Rebuild: only the affected tile changes. Overrides that no longer match a feature are reported in
 `data/processed/overrides_report.json`, never dropped.
 
-## Status (2026-11-14, after Realism & Authenticity 3.0)
+## Status (2026-11-14, after Authenticity 3.1)
 
 | Check | Result |
 |---|---|
 | Tile build (`build --force`) | 119 / 119 tiles, 0 failed, 17 s |
 | Geometry QA (`make qa`) | 0 floating, 0 buried, 0 road/building overlaps, 0 trees in buildings, 0 surfaces facing down; 13 low uphill walls (real slopes), 1 height outlier |
-| Python tests | 122 passed (incl. canopy segmentation, trust masks, tower geometry, synthetic CHM end-to-end) |
+| Python tests | 123 passed (incl. canopy segmentation, trust masks, tower geometry, composite landmark, synthetic CHM end-to-end) |
 | TypeScript unit tests (vitest) | 34 passed |
 | Typecheck (`tsc --noEmit`) | 0 errors |
 | Browser e2e (Playwright) | 6 passed, 2 on-demand skipped (benchmark, compare) |
 | Production build (`vite build`) | OK — JS 1.36 MB (382 KB gzip); `dist/` 229 MB incl. tiles |
 | Performance | see docs/PERFORMANCE.md — M4 Pro only; 3.0 adds ~0–5 ms p99 in tree-heavy views (paired runs under external load), CPU-throttled profile without regression in static views; weak GPUs not measured |
 
-Best before/after pairs (3.0): `docs/img/vf3/web-yards-sw.jpg`, `web-houses-ne.jpg`, `web-lyceum-tower.jpg`,
+Authenticity 3.1: `docs/img/a31/web-synagogue-front.jpg`, `web-synagogue.jpg`. Best before/after pairs (3.0): `docs/img/vf3/web-yards-sw.jpg`, `web-houses-ne.jpg`, `web-lyceum-tower.jpg`,
 `web-park.jpg`, `web-centre.jpg`. Visual Fidelity 2.0: `docs/img/vf2/web-house-close.jpg`, `web-pond-shore.jpg`.
 
 ## Audits

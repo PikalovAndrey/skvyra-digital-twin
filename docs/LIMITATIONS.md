@@ -77,5 +77,6 @@ Honest list of what this reconstruction is **not**, as of 2026-11-14.
 - Species / crown shape (broadleaf, conifer, fruit) is **inferred appearance**, never data.
 - Where the model is not trusted (model-fill plateaus 3.7 km² inside the town, outdated patches 1.19 km², 14 OSM
   orchards/forests without canopy in the model) trees are still rule-based, with invented positions.
-- Only one landmark part is modelled (the lyceum's corner tower); its position, diameter and heights are photo
-  estimates. The kostel has no footprint and is not modelled.
+- Landmarks rebuilt from photos: the lyceum's corner tower and the synagogue (3.1). All their dimensions are photo
+  estimates (scale from door heights), only the street fronts were visible; the synagogue's basement windows,
+  courtyard annexes and rear are not modelled. The kostel has no footprint and is not modelled.
