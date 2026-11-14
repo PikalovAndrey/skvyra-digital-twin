@@ -48,7 +48,7 @@ Earlier realism iteration (20 pairs in `docs/img/compare/`):
 | Terrain | Copernicus GLO-30 (30 m), 181–248 m above sea level |
 | Style rules | docs/ARCHITECTURE_STYLE.md (sources and observations) |
 | Alignment check | OSM vs ML outlines: median 0.82 m apart, no systematic offset |
-| Known gaps | 23 % of residential street length has no building in either source; heights are estimates |
+| Known gaps | 24 % of residential street length has no building outline within 60 m; 11.9 % shows built-up land nearby (probably missing outlines — see the data-quality layer); heights are estimates |
 
 Read [docs/GEOGRAPHIC_ACCURACY.md](docs/GEOGRAPHIC_ACCURACY.md) before trusting any detail.
 
@@ -109,20 +109,20 @@ by the *ID у джерелі* shown in the info panel, e.g.
 Rebuild: only the affected tile changes. Overrides that no longer match a feature are reported in
 `data/processed/overrides_report.json`, never dropped.
 
-## Status (2026-11-14, after Authenticity 3.1)
+## Status (2026-11-14, after Authenticity 3.2)
 
 | Check | Result |
 |---|---|
 | Tile build (`build --force`) | 119 / 119 tiles, 0 failed, 17 s |
 | Geometry QA (`make qa`) | 0 floating, 0 buried, 0 road/building overlaps, 0 trees in buildings, 0 surfaces facing down; 13 low uphill walls (real slopes), 1 height outlier |
-| Python tests | 123 passed (incl. canopy segmentation, trust masks, tower geometry, composite landmark, synthetic CHM end-to-end) |
+| Python tests | 124 passed (incl. canopy segmentation, trust masks, tower geometry, composite landmark, quality layer, synthetic CHM end-to-end) |
 | TypeScript unit tests (vitest) | 34 passed |
 | Typecheck (`tsc --noEmit`) | 0 errors |
-| Browser e2e (Playwright) | 6 passed, 2 on-demand skipped (benchmark, compare) |
+| Browser e2e (Playwright) | 7 passed, 3 on-demand skipped (benchmark, teleport, compare) |
 | Production build (`vite build`) | OK — JS 1.36 MB (382 KB gzip); `dist/` 229 MB incl. tiles |
 | Performance | see docs/PERFORMANCE.md — M4 Pro only; 3.0 adds ~0–5 ms p99 in tree-heavy views (paired runs under external load), CPU-throttled profile without regression in static views; weak GPUs not measured |
 
-Authenticity 3.1: `docs/img/a31/web-synagogue-front.jpg`, `web-synagogue.jpg`. Best before/after pairs (3.0): `docs/img/vf3/web-yards-sw.jpg`, `web-houses-ne.jpg`, `web-lyceum-tower.jpg`,
+Authenticity 3.2: data-quality layer `docs/img/a32/gaps-district.jpg`, `gaps-street.jpg`; unconfirmed landmark match `info-zemska.jpg`. Authenticity 3.1: `docs/img/a31/web-synagogue-front.jpg`, `web-synagogue.jpg`. Best before/after pairs (3.0): `docs/img/vf3/web-yards-sw.jpg`, `web-houses-ne.jpg`, `web-lyceum-tower.jpg`,
 `web-park.jpg`, `web-centre.jpg`. Visual Fidelity 2.0: `docs/img/vf2/web-house-close.jpg`, `web-pond-shore.jpg`.
 
 ## Audits

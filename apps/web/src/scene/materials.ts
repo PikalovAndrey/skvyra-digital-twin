@@ -311,6 +311,9 @@ export const QUALITY_COLORS = {
   treeModel: '#1fa59a',
 } as const
 
+// data-quality layer: probably missing building outlines along residential streets (lines, never buildings)
+export const GAP_COLORS = { suspect_gap_medium: '#c026d3', suspect_gap_low: '#e9a3f0', insufficient: '#9aa3ab', no_signs: '#5b9bd5' } as const
+
 const tmp = new THREE.Color()
 export function linear(hex: string): [number, number, number] {
   tmp.setStyle(hex) // ColorManagement converts sRGB -> linear working space

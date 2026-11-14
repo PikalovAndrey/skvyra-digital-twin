@@ -67,6 +67,10 @@ export class TileManager {
   readonly loadMs: number[] = [] // fetch + parse + prepare per tile (benchmarks)
   readonly parseMs: number[] = [] // main-thread part: glTF parse + material setup
   readonly treeMs: number[] = [] // main-thread tree instancing per tile (benchmarks)
+  /** per-stage timings of each completed tile load (profiling: fetch, GLB decode, prepare, texture upload) */
+  readonly stageMs: { fetch: number; decode: number; prepare: number; texture: number; bytes: number }[] = []
+  /** per update(): wall time and number of tiles whose displayed LOD changed (activations) */
+  readonly updateMs: { ms: number; activated: number; t: number }[] = []
   private clock = 0
   private colorMode: ColorMode = 'realistic'
   private farTrees = new Set<string>()
@@ -85,6 +89,17 @@ export class TileManager {
   /** Call every few frames. Returns true if the scene graph changed. */
   update(camera: THREE.PerspectiveCamera): boolean {
     if (this.disposed) return false
+    const t0 = performance.now()
+    const before = this.activations
+    const changed = this.updateInner(camera)
+    this.updateMs.push({ ms: performance.now() - t0, activated: this.activations - before, t: t0 })
+    if (this.updateMs.length > 4000) this.updateMs.splice(0, 2000)
+    return changed
+  }
+
+  private activations = 0
+
+  private updateInner(camera: THREE.PerspectiveCamera): boolean {
     this.clock++
     const cam = { x: camera.position.x, y: -camera.position.z, z: camera.position.y }
     this.projScreen.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
@@ -178,6 +193,7 @@ export class TileManager {
       const l = this.loaded.get(`${id}:${lod}`)!
       this.root.add(l.group)
       this.shown.set(id, lod)
+      this.activations++
     }
     this.syncExtras(id)
   }
@@ -199,9 +215,14 @@ export class TileManager {
         disposeObject(gltf.scene)
         return
       }
+      const td = performance.now()
       const entry = this.prepare(tile, lod, gltf.scene, buf.byteLength)
+      const tq = performance.now()
       const map = (entry.terrainMesh?.material as THREE.MeshStandardMaterial | undefined)?.map
       if (map && this.renderer) this.renderer.initTexture(map) // upload now, spread over load completions
+      const tt = performance.now()
+      this.stageMs.push({ fetch: tp - t0, decode: td - tp, prepare: tq - td, texture: tt - tq, bytes: buf.byteLength })
+      if (this.stageMs.length > 4000) this.stageMs.splice(0, 2000)
       this.parseMs.push(performance.now() - tp)
       this.loadMs.push(performance.now() - t0)
       this.loaded.set(key, entry)

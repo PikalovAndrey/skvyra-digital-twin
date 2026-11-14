@@ -5,7 +5,18 @@
   {
    "wikidata": "Q122727138",
    "name": "Будівля чоловічої гімназії (Сквирський ліцей)",
-   "heritage": true,
+   "heritage": {
+    "status": "unknown",
+    "status_note": "No State Register entry (decision number/date) was available to check; 'unknown' until an official register record is seen. Statuses reported by secondary sources are kept separately and never shown as official.",
+    "reported_status": "registered monument of local significance (architecture), protection no. 78-Ко",
+    "reported_source": "Wiki Loves Monuments list 'Сквирська громада' (uk.wikipedia, secondary compilation)",
+    "official_mentions": [
+     "Kyiv Oblast State Administration, culture dept., reply No 1708/01-11 of 2017 to a public-information request (wlm.org.ua/docs/local/kiev-obl/1708-01-11-2017.pdf): inventory 'Наявність та дислокація пам'яток архітектури' lists it (category not stated)",
+     "Kyiv Oblast State Administration reply No 428 (2021), list of history monuments (wlm.org.ua/docs/local/kiev-obl/428-2021.pdf): 'Будинок колишньої чотирьохкласної гімназії (нині ліцей)', type 'іст., архіт. - ?'",
+     "not in the national-significance list of the State Register for Kyiv Oblast (Ministry of Culture, as of 20.09.2024)"
+    ],
+    "checked": "2026-11-14"
+   },
    "levels": 2,
    "facade": "historic",
    "roof_shape": "hipped",
@@ -42,12 +53,23 @@
      "dome_colour": "#8e979c",
      "cornice_colour": "#e9e4da"
     }
-   ]
+   ],
+   "wlm_id": "UA-32-240-0007"
   },
   {
    "wikidata": "Q30968245",
    "name": "Костел Святого Яна Непомука",
-   "heritage": true,
+   "heritage": {
+    "status": "unknown",
+    "status_note": "No State Register entry (decision number/date) was available to check; 'unknown' until an official register record is seen. Statuses reported by secondary sources are kept separately and never shown as official.",
+    "reported_status": "newly identified object of cultural heritage ('А-щв'), no protection number",
+    "reported_source": "Wiki Loves Monuments list 'Сквирська громада' (uk.wikipedia, secondary compilation)",
+    "official_mentions": [
+     "Kyiv Oblast State Administration, culture dept., reply No 1708/01-11 of 2017 to a public-information request (wlm.org.ua/docs/local/kiev-obl/1708-01-11-2017.pdf): inventory 'Наявність та дислокація пам'яток архітектури' lists it (category not stated) (cult buildings: 'Костьол св. Іоана Непомнящаго (мур), 1885')",
+     "not in the national-significance list of the State Register for Kyiv Oblast (Ministry of Culture, as of 20.09.2024)"
+    ],
+    "checked": "2026-11-14"
+   },
    "levels": 2,
    "facade": "church",
    "roof_shape": "gabled",
@@ -64,12 +86,23 @@
     29.664638888,
     49.728055555
    ],
-   "note": "Only footprint at the coordinate is a merged Microsoft ML outline (2,279 m2); no OSM footprint exists. Needs mapping in OSM."
+   "note": "Only footprint at the coordinate is a merged Microsoft ML outline (2,279 m2); no OSM footprint exists. Needs mapping in OSM.",
+   "wlm_id": "UA-32-240-0001"
   },
   {
    "wikidata": "Q122300599",
    "name": "Будинок земської управи",
-   "heritage": true,
+   "heritage": {
+    "status": "unknown",
+    "status_note": "No State Register entry (decision number/date) was available to check; 'unknown' until an official register record is seen. Statuses reported by secondary sources are kept separately and never shown as official.",
+    "reported_status": "registered monument of local significance (architecture), protection no. 81-Ко",
+    "reported_source": "Wiki Loves Monuments list 'Сквирська громада' (uk.wikipedia, secondary compilation)",
+    "official_mentions": [
+     "Kyiv Oblast State Administration, culture dept., reply No 1708/01-11 of 2017 to a public-information request (wlm.org.ua/docs/local/kiev-obl/1708-01-11-2017.pdf): inventory 'Наявність та дислокація пам'яток архітектури' lists it (category not stated) ('Будинок земської управи (мур), 1911-1912, просп. Володарського, 8')",
+     "not in the national-significance list of the State Register for Kyiv Oblast (Ministry of Culture, as of 20.09.2024)"
+    ],
+    "checked": "2026-11-14"
+   },
    "levels": 2,
    "facade": "historic",
    "roof_shape": "hipped",
@@ -86,12 +119,24 @@
     49.7308
    ],
    "address": "провулок Каштановий, 10",
-   "address_street": "Каштановий провулок"
+   "address_street": "Каштановий провулок",
+   "wlm_id": "UA-32-240-0002",
+   "identity_audit": "2026-11-14: NOT confirmed. For the ML candidate ms:aa972e1721d8: it fronts пров. Каштановий (address 8(10), official oblast inventory 2017 'просп. Володарського, 8'), a 2019 Commons photo was taken from the lane 17 m away. Against: its lane front is ~35 m with 5-8 m projections, while the photos show a straight front of ~14-16 window axes (~45 m) with shallow risalits; the WLM/Wikidata point lies across the lane in a block that ESA WorldCover classes as built-up, has no tree canopy and no footprint in any source - the real building may be unmapped there. The photo geometry fits both sides. Missing: a mapped outline on the NW side, or a photo with camera bearing / an identifiable landmark of the other side. Not reconstructed."
   },
   {
    "wikidata": "Q122249377",
    "name": "Особняк Бабаєва",
-   "heritage": true,
+   "heritage": {
+    "status": "unknown",
+    "status_note": "No State Register entry (decision number/date) was available to check; 'unknown' until an official register record is seen. Statuses reported by secondary sources are kept separately and never shown as official.",
+    "reported_status": "registered monument of local significance (architecture), protection no. 79-Ко",
+    "reported_source": "Wiki Loves Monuments list 'Сквирська громада' (uk.wikipedia, secondary compilation)",
+    "official_mentions": [
+     "Kyiv Oblast State Administration, culture dept., reply No 1708/01-11 of 2017 to a public-information request (wlm.org.ua/docs/local/kiev-obl/1708-01-11-2017.pdf): inventory 'Наявність та дислокація пам'яток архітектури' lists it (category not stated) ('Особняк Бабаєва (мур), 1911 р., вул. К. Маркса, 32')",
+     "not in the national-significance list of the State Register for Kyiv Oblast (Ministry of Culture, as of 20.09.2024)"
+    ],
+    "checked": "2026-11-14"
+   },
    "levels": 1,
    "facade": "historic",
    "roof_shape": "hipped",
@@ -106,12 +151,23 @@
    "lonlat": [
     29.659637,
     49.729553
-   ]
+   ],
+   "wlm_id": "UA-32-240-0008"
   },
   {
    "wikidata": "Q122249375",
    "name": "Будинок, у якому жив та працював М. Т. Рильський (дитсадок «Світанок»)",
-   "heritage": true,
+   "heritage": {
+    "status": "unknown",
+    "status_note": "No State Register entry (decision number/date) was available to check; 'unknown' until an official register record is seen. Statuses reported by secondary sources are kept separately and never shown as official.",
+    "reported_status": "monument of history of local significance, protection no. 1296",
+    "reported_source": "Wiki Loves Monuments list 'Сквирська громада' (uk.wikipedia, secondary compilation)",
+    "official_mentions": [
+     "Kyiv Oblast State Administration reply No 428 (2021), list of history monuments (wlm.org.ua/docs/local/kiev-obl/428-2021.pdf): 'Будинок, в якому в 1918 році жив і працював академік М.Т.Рильський', on the corner of вул. Максима Рильського (К. Маркса) and Володарського (now пров. Каштановий)",
+     "not in the national-significance list of the State Register for Kyiv Oblast (Ministry of Culture, as of 20.09.2024)"
+    ],
+    "checked": "2026-11-14"
+   },
    "levels": 1,
    "facade": "historic",
    "roof_material": "metal_tile",
@@ -127,12 +183,24 @@
     49.731241
    ],
    "address": "вулиця Рильського, 51",
-   "address_street": "вулиця Максима Рильського"
+   "address_street": "вулиця Максима Рильського",
+   "wlm_id": "UA-32-240-0022",
+   "identity_audit": "2026-11-14: NOT confirmed. Official oblast list (KODA 2021): 'on the corner of вул. Максима Рильського and Володарського' (= пров. Каштановий). The ML candidate ms:c892328fbbee is the only footprint within 60 m of that corner (south corner, 7 m from Рильського, 16 m from Каштановий), but the other corners of this central crossing have no footprint in any source (under-mapped), the WLM point is on the west corner 23 m away, and a KartaView frame showing the «Світанок» plaque at arm's length was taken on пров. Каштановий ~15 m from that point. Commons photos (WestBam 2019) show an L-shaped house; the candidate is a 15 x 23 m rectangle. Missing: a mapped outline of the west-corner building, or a camera bearing for the plaque photos. Not changed."
   },
   {
    "wikidata": "Q9350086",
    "name": "Синагога (Сквира)",
-   "heritage": false,
+   "heritage": {
+    "status": "unknown",
+    "status_note": "No State Register entry (decision number/date) was available to check; 'unknown' until an official register record is seen. Statuses reported by secondary sources are kept separately and never shown as official.",
+    "reported_status": "not protected ('не охороняється') per the WLM 'Jewish heritage' list (ID 99-322-4001)",
+    "reported_source": "Wiki Loves Monuments list 'Сквирська громада' (uk.wikipedia, secondary compilation)",
+    "official_mentions": [
+     "not found in the Kyiv Oblast 2017 architecture inventory (other synagogues of the oblast are listed there)",
+     "not in the national-significance list of the State Register for Kyiv Oblast (Ministry of Culture, as of 20.09.2024)"
+    ],
+    "checked": "2026-11-14"
+   },
    "facade": "historic",
    "evidence": "Identity: Commons category 'Synagogue in Skvyra' is the Wikidata item's P373; a 2025 photo geotag falls inside the OSM footprint; 2007-2025 photos by six authors show the same building (painted pink in 2008, red brick after the renovation of ~2018-2019). Observed: three blocks along a 51 m south front - west block with a south-facing gable and a Star-of-David gable window (2 storeys over a rubble-stone semi-basement; it is the 5.6 m projection of the OSM outline), central two-storey block with a stepped brick attic over the entrance, eastern prayer hall with a door and 8 tall round-arched windows; red brick, grey rubble-stone plinth, dark metal roofs, brick corbel frieze under the eaves, two stone stairs along the facade. Estimated (from frontal photos, scale from door heights): block lengths 9 / 18 / 24 m, eaves 5.9 / 5.6 / 4.5 m, roof rises, attic size, stair and door positions. Not visible / assumed: rear and roof plan behind the front, exact window counts on the north side.",
    "photos": [
@@ -268,7 +336,6 @@
     ]
    },
    "wlm_id": "UA-99-322-4001",
-   "status_note": "Historic building, NOT a protected monument: it is in the Wiki Loves Monuments 'Jewish heritage' list (ID 99-322-4001) with the entry 'охоронний номер: (не охороняється)', and Wikidata has no heritage designation (P1435). Checked 2026-11-14.",
    "wlm_address": "вул. Шолом-Алейхема",
    "photo_credits": [
     "The Skver Beth midrash 01.jpg - Michael Byalsky, 2019-09-06, CC BY-SA 4.0",
@@ -283,7 +350,17 @@
   {
    "wikidata": "Q122249371",
    "name": "Житловий будинок (вул. Київська, 1)",
-   "heritage": true,
+   "heritage": {
+    "status": "unknown",
+    "status_note": "No State Register entry (decision number/date) was available to check; 'unknown' until an official register record is seen. Statuses reported by secondary sources are kept separately and never shown as official.",
+    "reported_status": "listed in WLM as an architectural object",
+    "reported_source": "Wiki Loves Monuments list 'Сквирська громада' (uk.wikipedia, secondary compilation)",
+    "official_mentions": [
+     "Kyiv Oblast State Administration, culture dept., reply No 1708/01-11 of 2017 to a public-information request (wlm.org.ua/docs/local/kiev-obl/1708-01-11-2017.pdf): inventory 'Наявність та дислокація пам'яток архітектури' lists it (category not stated) ('Житловий будинок (мур), 1903 р., вул. Київська, 1')",
+     "not in the national-significance list of the State Register for Kyiv Oblast (Ministry of Culture, as of 20.09.2024)"
+    ],
+    "checked": "2026-11-14"
+   },
    "facade": "historic",
    "evidence": "Listed monument; no photo inspected - only named and given the historic facade style.",
    "photos": [],

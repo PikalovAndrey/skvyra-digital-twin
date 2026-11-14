@@ -3,7 +3,7 @@ import { formatLatLon } from '../geo'
 import { useT, type Key } from '../i18n'
 import { search, type Indexed } from '../search'
 import { useStore } from '../store'
-import { QUALITY_COLORS } from '../scene/materials'
+import { GAP_COLORS, QUALITY_COLORS } from '../scene/materials'
 import type { TileManager } from '../tiles/TileManager'
 import type { ColorMode, Quality, TileIndex } from '../types'
 
@@ -187,15 +187,49 @@ export function ControlPanel() {
   )
 }
 
+function GapPanel() {
+  const t = useT()
+  const st = useStore((s) => s.gapStats)
+  const pct = (v: number) => `${(v * 100).toFixed(1)} %`
+  const rows: [string, Key, string][] = st
+    ? [[GAP_COLORS.suspect_gap_medium, 'gaps.suspectMedium', `${pct(st.suspect_gap_share)} · ${st.suspect_gap_km} km`], [GAP_COLORS.suspect_gap_low, 'gaps.suspectLow', ''],
+       [GAP_COLORS.insufficient, 'gaps.insufficient', `${pct(st.insufficient_share)} · ${st.insufficient_km} km`],
+       [GAP_COLORS.no_signs, 'gaps.noSigns', `${pct(st.no_signs_share)} · ${st.no_signs_km} km`]]
+    : []
+  return (
+    <div className={`${panel} max-w-[19rem] px-2.5 py-2 text-[11px]`} data-testid="gaps-panel">
+      <div className="mb-0.5 font-medium">{t('gaps.title')}</div>
+      {st ? (
+        <>
+          <div className="text-slate-300">{t('gaps.checked')}: {st.residential_street_km} km · {t('gaps.covered')}: {pct(st.covered_share)}</div>
+          {rows.map(([c, k, v]) => (
+            <div key={k} className="flex items-center gap-2 py-0.5">
+              <span className="inline-block h-1.5 w-4 rounded-sm" style={{ background: c }} />
+              <span>{t(k)}</span>
+              <span className="ml-auto text-slate-400">{v}</span>
+            </div>
+          ))}
+          <div className="mt-1 text-slate-400">{t('gaps.note')}</div>
+        </>
+      ) : (
+        <div className="text-slate-400">…</div>
+      )}
+    </div>
+  )
+}
+
 export function Legend() {
   const t = useT()
   const mode = useStore((s) => s.colorMode)
-  if (mode === 'realistic') return null
+  const gaps = useStore((s) => s.layers.gaps)
+  if (mode === 'realistic') return gaps ? <GapPanel /> : null
   const rows: [string, Key][] =
     mode === 'geometry'
       ? [[QUALITY_COLORS.verified, 'legend.verified'], [QUALITY_COLORS.source, 'legend.source'], [QUALITY_COLORS.inferred, 'legend.inferred'], [QUALITY_COLORS.missing, 'legend.missing'], [QUALITY_COLORS.treeModel, 'legend.treeModel']]
       : [[QUALITY_COLORS.hOverride, 'legend.hOverride'], [QUALITY_COLORS.hSource, 'legend.hSource'], [QUALITY_COLORS.hGhsl, 'legend.hGhsl'], [QUALITY_COLORS.hDefault, 'legend.hDefault'], [QUALITY_COLORS.missing, 'legend.missing']]
   return (
+    <>
+    {gaps && <GapPanel />}
     <div className={`${panel} px-2.5 py-2 text-[11px]`} data-testid="legend">
       <div className="mb-0.5 font-medium">{t('legend')}</div>
       {rows.map(([c, k]) => (
@@ -205,6 +239,7 @@ export function Legend() {
         </div>
       ))}
     </div>
+    </>
   )
 }
 
@@ -223,7 +258,7 @@ export function InfoPanel({ index }: { index: TileIndex }) {
       ['f.ghsl', b.ghsl?.anbh != null ? <>{b.ghsl.anbh.toFixed(1)} {t('m')} <Hint>{t('ghslNote')}{b.ghsl.share != null ? ` · ${Math.round(b.ghsl.share * 100)}%` : ''}</Hint></> : null],
       ['f.levels', b.lv != null ? <>{b.lv} <Hint>{b.hM === 'source_levels' || b.hM === 'override' ? t('observed') : t('inferred')}</Hint></> : null],
       ['f.roof', <>{t(`roof.${b.roof}` as Key)}{b.parts ? ` (${b.parts} ${t('roofParts')})` : ''}{b.roofMat ? `, ${t(`roofMat.${b.roofMat}` as Key)}` : ''} <Hint>{t(`roofM.${b.roofM}` as Key)}</Hint></>],
-      ['f.landmark', b.landmark ? <span>{b.landmark.name}{b.landmark.heritage ? ` · ${t('heritage')}` : ''}<br /><Hint>{b.landmark.evidence}</Hint>{(b.landmark.photos ?? []).map((u, i) => <a key={u} className="ml-1 text-sky-300 underline" href={u} target="_blank" rel="noreferrer">{t('photo')} {i + 1}</a>)}{b.landmark.license ? <Hint> {b.landmark.license}</Hint> : null}{' '}<a className="text-sky-300 underline" href={`https://www.wikidata.org/wiki/${b.landmark.wikidata}`} target="_blank" rel="noreferrer">{b.landmark.wikidata}</a></span> : null],
+      ['f.landmark', b.landmark ? <span>{b.landmark.name}{b.landmark.match === 'probable' ? <Hint> ({t('landmark.probable')})</Hint> : null}{b.landmark.heritage && b.landmark.heritage.status !== 'unknown' ? ` · ${t(`heritage.${b.landmark.heritage.status}` as Key)}` : ''}<br />{b.landmark.identity_audit ? <Hint>{b.landmark.identity_audit}<br /></Hint> : null}{b.landmark.heritage?.reported_status ? <Hint>{t('heritage.reported')}: {b.landmark.heritage.reported_status} ({b.landmark.heritage.checked})<br /></Hint> : null}<Hint>{b.landmark.evidence}</Hint>{(b.landmark.photos ?? []).map((u, i) => <a key={u} className="ml-1 text-sky-300 underline" href={u} target="_blank" rel="noreferrer">{t('photo')} {i + 1}</a>)}{b.landmark.license ? <Hint> {b.landmark.license}</Hint> : null}{' '}<a className="text-sky-300 underline" href={`https://www.wikidata.org/wiki/${b.landmark.wikidata}`} target="_blank" rel="noreferrer">{b.landmark.wikidata}</a></span> : null],
       ['f.area', `${b.area.toFixed(0)} ${t('m2')}`],
       ['f.confidence', <Conf c={b.conf} />],
       ['f.source', t(`src.${b.src}` as Key)],

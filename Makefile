@@ -64,8 +64,8 @@ test-web:         ## TypeScript unit tests + strict typecheck
 	$(WEB) npx vitest run && npx tsc --noEmit -p .
 e2e:              ## browser end-to-end tests (uses installed Google Chrome)
 	$(WEB) npx playwright test
-bench:            ## reproducible browser performance route -> benchmarks/results/
-	$(WEB) BENCH=1 npx playwright test benchmark
+bench:            ## frame-time route (uncapped) + camera jumps (normal pacing) -> benchmarks/results/
+	$(WEB) BENCH=1 npx playwright test benchmark teleport
 
 clean-generated:  ## remove generated tiles (source data and overrides are kept)
 	rm -rf assets/generated/tiles assets/generated/search.json

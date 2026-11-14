@@ -145,3 +145,69 @@ nothing is copied into textures, and the photo/model comparison image stays outs
 * Before/after: `docs/img/a31/web-synagogue-front.jpg` (street view, new viewpoint), `web-synagogue.jpg` (district view).
 * Tests: 123 Python (new: composite landmark cut + outward-facing details), 34 vitest, tsc 0, e2e 6; `make qa` 0 defects.
 * Benchmark tree build time per tile is now recorded (`treeBuildMs`); paired 2.0 vs 3.1 runs: see PERFORMANCE.md.
+
+---
+
+# Authenticity 3.2 (2026-11-14) — heritage audit, identity checks, camera jumps, missing-outline layer
+
+## Phase 0 — heritage status audit
+
+`config/landmarks.json → heritage` now has `status` ∈ {registered_monument, newly_identified, not_registered,
+unknown}, the status *reported* by secondary sources, the official documents that mention the object, and the
+check date. Official sources found and read: the Ministry of Culture list of national-significance monuments of
+Kyiv Oblast (state 20.09.2024 — no Skvyra building), the Kyiv Oblast State Administration's 2017 inventory of
+architectural monuments (lyceum, Babaev mansion, zemstvo building, kostel, Київська 1 — category not stated) and
+its 2021 list of history monuments (Rylskyi house, lyceum). No State Register decision (number/date) for any
+local object was available, so **every official status is `unknown`**; protection numbers (78/79/81-Ко, 1296) and
+the kostel's "newly identified" (А-щв) come only from the Wiki Loves Monuments list and are shown as "reported by
+secondary sources, not officially verified". The synagogue's WLM id is not a protection number. The viewer shows
+an official badge only for confirmed statuses (none at the moment).
+
+## Phase 1 — zemstvo building: identity NOT confirmed → not reconstructed
+
+For the ML candidate: it fronts пров. Каштановий (address 8(10); the 2017 inventory gives "просп. Володарського,
+8" = the same lane), and a geotagged 2019 Commons photo was taken on the lane 17 m away. Against: the candidate's
+lane front is ~35 m with 5–8 m projections, while photos show a straight ~45 m front (14–16 window axes) with
+shallow risalits; the WLM/Wikidata point lies across the lane in a block that ESA WorldCover classes as built-up,
+without tree canopy and without any footprint in OSM or Microsoft — the real building may be unmapped there; the
+photo geometry fits both sides (dusk, no shadows). Kept as `probable`; the viewer now labels such matches
+"probable match, not confirmed" and shows the audit. Needed: a mapped outline on the NW side, or a photo with a
+camera bearing / a landmark of the other side.
+
+## Phase 4 — Rylskyi house: identity NOT confirmed → unchanged
+
+The official 2021 list places it "on the corner of вул. Максима Рильського and Володарського" (= пров.
+Каштановий). The ML candidate is the only outline within 60 m of that crossing (south corner), but the crossing's
+other corners have no outline in any source although they are in the town centre; the WLM point is on the west
+corner, and the KartaView frame with the «Світанок» plaque at arm's length was taken on the lane ~15 m from that
+point. The photos show an L-shaped house, the candidate is a 15 × 23 m rectangle. Unchanged; the evidence that is
+missing is recorded in `identity_audit`.
+
+## Phase 2 — camera jumps: profiled, the 300–700 ms stall is a benchmark artefact
+
+Per-stage instrumentation (`stageMs`: fetch, GLB decode, prepare, texture upload; `updateMs`: activations per
+update) plus WebGL call timing during 8 jumps:
+
+* GLB parsing is asynchronous and not the cause (prepare < 1 ms per tile).
+* The entire stall was **one `texSubImage2D` of a 1024² ground texture** (380–1,230 ms), the first upload after a
+  jump. Uploading raw pixels decoded in a Web Worker instead of an ImageBitmap changed nothing (530–990 ms) →
+  removed again.
+* It is a **GPU-queue wait**: `benchmark.spec.ts` runs Chrome with `--disable-gpu-vsync --disable-frame-rate-limit`,
+  so the CPU queues frames far ahead of the GPU (and other processes were using the GPU); the first upload waits
+  for that backlog. With normal browser frame pacing (what users get) the same jumps cost **18–35 ms**.
+* New `e2e/teleport.spec.ts` (BENCH=1) measures jumps with normal pacing; paired on an idle machine
+  (9b6b330 code vs current, ×2): worst frame after a jump p50 18.2–18.9 ms, p95/max 32.7–35.4 ms (one 72 ms
+  outlier in one current run). The p99 < 50 ms target holds; no loader rewrite was justified.
+
+## Phase 3 — data-quality layer: probably missing building outlines
+
+`pipeline/skvyra/quality.py` samples the 87.3 km of residential streets in the boundary every 20 m: covered (an
+outline within 60 m) 75.8 %; **probable gap 11.9 % (10.4 km)** — no outline but ESA WorldCover built-up ≥ 20 %
+within 40 m (confidence medium ≥ 40 %), often under tree canopy; insufficient information 4.8 %; no signs of
+buildings in 10 m land cover 7.5 % (not proof of absence). Viewer: layer "Якість даних: де, ймовірно, бракує
+контурів будівель" (off by default) draws coloured lines along the streets — never buildings — and a panel with
+the statistics and the method. Alternatives checked: Overture Maps 2026-10-21.0 buildings over Skvyra (read as 30
+vector tiles, 1.4 MB) contain the same OSM + Microsoft outlines — 1 extra OSM building, closing 8 of 1,063 empty
+sample points; GlobalBuildingAtlas not downloaded (1 GB, CC BY-NC).
+
+Images: `docs/img/a32/gaps-district.jpg`, `gaps-street.jpg`, `info-zemska.jpg`.

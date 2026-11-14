@@ -1,5 +1,13 @@
 # Progress — 2026-11-14
 
+## Iteration 7 — Authenticity 3.2 (2026-11-14)
+
+Heritage statuses restructured with official sources (all `unknown` officially; reported statuses kept
+separately); zemstvo and Rylskyi identities checked → not confirmed, not modelled, probable matches labelled in the
+viewer; camera-jump stall traced to the uncapped benchmark mode (normal pacing: p95 ~33 ms), new jump benchmark;
+missing-outline quality layer with statistics (probable gaps 11.9 % of residential streets); Overture checked.
+Tests 124 / 34 / tsc 0 / e2e 7, QA 0 defects.
+
 ## Iteration 6 — Authenticity 3.1 (2026-11-14)
 
 Synagogue rebuilt from 30+ Commons photos on its real OSM outline (three blocks, stepped attic, Star-of-David

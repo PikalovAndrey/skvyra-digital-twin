@@ -644,3 +644,14 @@ def test_composite_landmark_cuts_real_footprint_and_details_face_outward():
     nrm = np.cross(door[:, 1] - door[:, 0], door[:, 2] - door[:, 0])
     assert len(door) and ((nrm * (door.mean(axis=1) - c)).sum(axis=1) > 0).all()     # every face points out of the box
     assert abs(c[1] - 5.6) < 0.1 and abs(c[0] - 16.0) < 0.1                           # on the front of the central block
+
+
+def test_quality_layer_flags_suspicions_never_facts():
+    from skvyra import quality as Q
+    assert Q.classify(0.9, True, 0.9)[0] == "covered"                    # an outline nearby wins
+    cls, conf, why = Q.classify(0.5, False, 0.3)
+    assert cls == "suspect_gap" and conf == "medium" and any("trees" in r for r in why)
+    assert Q.classify(0.25, False, 0.0)[:2] == ("suspect_gap", "low")
+    assert Q.classify(0.1, False, 0.0)[0] == "insufficient"
+    cls, conf, why = Q.classify(0.0, False, 0.0)
+    assert cls == "no_signs" and conf == "low" and any("can be missed" in r for r in why)  # never 'confirmed empty'

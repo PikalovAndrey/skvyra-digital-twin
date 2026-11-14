@@ -1,15 +1,15 @@
 import { Environment, Line, MapControls, Sky } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import type { MapControls as MapControlsImpl } from 'three-stdlib'
 import { localToGeo } from '../geo'
 import { nearestStreet, type SearchItem } from '../search'
-import { useStore } from '../store'
+import { useStore, type GapStats } from '../store'
 import { TileManager } from '../tiles/TileManager'
 import type { TileIndex } from '../types'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
-import { MAT, terrainMaterial, uniforms } from './materials'
+import { GAP_COLORS, MAT, terrainMaterial, uniforms } from './materials'
 
 const SUN_DIR = new THREE.Vector3(-0.42, 0.62, 0.66).normalize() // afternoon sun from the south-west
 const NIGHT = false
@@ -297,6 +297,7 @@ function SceneContent({ index, baseUrl, streets, onManager }: Props) {
         <meshStandardMaterial color="#8a8a5c" roughness={1} />
       </mesh>
       {layers.boundary && <Line points={boundaryPts} color="#d6453d" lineWidth={2.5} dashed dashSize={20} gapSize={12} />}
+      {layers.gaps && <QualityGaps baseUrl={baseUrl} />}
       {cameraMode === 'orbit' ? (
         <MapControls
           ref={controls}
@@ -448,4 +449,41 @@ function FlyControls() {
     camera.position.y += upDown
   })
   return null
+}
+
+/** Data-quality overlay: street lines where outlines are probably incomplete. Lines only - never buildings. */
+type GapRun = { cls: 'suspect_gap' | 'insufficient' | 'no_signs'; conf: string; pts: [number, number, number][] }
+function QualityGaps({ baseUrl }: { baseUrl: string }) {
+  const [runs, setRuns] = useState<GapRun[] | null>(null)
+  useEffect(() => {
+    const ctrl = new AbortController()
+    fetch(`${baseUrl}quality_gaps.json`, { signal: ctrl.signal })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then((d: { stats: GapStats; runs: GapRun[] }) => {
+        setRuns(d.runs)
+        useStore.getState().set({ gapStats: d.stats })
+      })
+      .catch(() => undefined)
+    return () => ctrl.abort()
+  }, [baseUrl])
+  const groups = useMemo(() => {
+    const g: Record<string, THREE.Vector3[]> = {}
+    for (const r of runs ?? []) {
+      const key = r.cls === 'suspect_gap' ? `suspect_gap_${r.conf}` : r.cls
+      const arr = (g[key] ??= [])
+      for (let i = 0; i + 1 < r.pts.length; i++) {
+        const [a, b] = [r.pts[i], r.pts[i + 1]]
+        arr.push(new THREE.Vector3(a[0], a[2], -a[1]), new THREE.Vector3(b[0], b[2], -b[1]))
+      }
+    }
+    return g
+  }, [runs])
+  return (
+    <group name="quality: probable missing outlines (not buildings)">
+      {Object.entries(groups).map(([k, pts]) => (
+        <Line key={k} points={pts} segments color={GAP_COLORS[k as keyof typeof GAP_COLORS]} lineWidth={k.startsWith('suspect') ? 5 : 3}
+          dashed={k === 'insufficient'} dashSize={6} gapSize={4} />
+      ))}
+    </group>
+  )
 }

@@ -196,3 +196,16 @@ test('data-quality colouring is not black (regression: 16-bit vertex colours)', 
   })
   expect(sample).toBeGreaterThan(0.3)
 })
+
+test('data-quality layer: probable missing outlines, off by default, with statistics', async ({ page }) => {
+  const errors: string[] = []
+  page.on('pageerror', (e) => errors.push(String(e)))
+  await page.goto('/')
+  await streamingIdle(page, 40)
+  await expect(page.getByTestId('gaps-panel')).toHaveCount(0) // off by default
+  await page.evaluate(() => (window as unknown as { __skvyraStore: { getState(): { toggleLayer(k: string): void } } }).__skvyraStore.getState().toggleLayer('gaps'))
+  const panel = page.getByTestId('gaps-panel')
+  await expect(panel).toContainText('km')
+  await expect(panel).toContainText('%')
+  expect(errors).toEqual([])
+})

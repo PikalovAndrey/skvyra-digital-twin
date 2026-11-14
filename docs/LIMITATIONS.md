@@ -67,6 +67,14 @@ Honest list of what this reconstruction is **not**, as of 2026-11-14.
   town looks sparser in trees than it is.
 - Ground beyond ~200 m is the 10 m Sentinel-2 colour and looks blurry from low angles.
 
+## Heritage status and landmark identity (Authenticity 3.2)
+
+- No official State Register record was available for any Skvyra building: every official status is `unknown`;
+  protection numbers are shown only as "reported by secondary sources" (WLM).
+- The zemstvo building and the Rylskyi house are matched to outlines only as *probable*; the evidence against is
+  recorded and shown. Both buildings may be missing from all footprint sources.
+- The missing-outline layer is a suspicion built from 10 m land cover; it cannot locate or count missing houses.
+
 ## Trees (Realism & Authenticity 3.0)
 
 - Tree tops come from an **ML canopy height model** (Meta/WRI v2) of Maxar imagery from **2015-06-24** (84 % of

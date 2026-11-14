@@ -29,13 +29,26 @@ export type Selection =
   | { type: 'issue'; issue: Issue; tile: string }
   | null
 
+/** data-quality layer: residential streets where building outlines are probably incomplete (quality_gaps.json) */
+export interface GapStats {
+  residential_street_km: number
+  covered_share: number
+  suspect_gap_share: number
+  insufficient_share: number
+  no_signs_share: number
+  suspect_gap_km: number
+  insufficient_km: number
+  no_signs_km: number
+}
+
 interface State {
   lang: Lang
   quality: Quality
   colorMode: ColorMode
   cameraMode: 'orbit' | 'fly'
   flySpeed: number
-  layers: { buildings: boolean; roads: boolean; water: boolean; trees: boolean; decorativeTrees: boolean; terrain: boolean; issues: boolean; boundary: boolean }
+  layers: { buildings: boolean; roads: boolean; water: boolean; trees: boolean; decorativeTrees: boolean; terrain: boolean; issues: boolean; boundary: boolean; gaps: boolean }
+  gapStats: GapStats | null
   index: TileIndex | null
   fatal: string | null
   stats: Stats
@@ -56,7 +69,8 @@ export const useStore = create<State>((set) => ({
   colorMode: 'realistic',
   cameraMode: 'orbit',
   flySpeed: 40,
-  layers: { buildings: true, roads: true, water: true, trees: true, decorativeTrees: true, terrain: true, issues: true, boundary: true },
+  layers: { buildings: true, roads: true, water: true, trees: true, decorativeTrees: true, terrain: true, issues: true, boundary: true, gaps: false },
+  gapStats: null,
   index: null,
   fatal: null,
   stats: { fps: 0, frameMs: 0, calls: 0, triangles: 0, activeTiles: 0, loading: 0, queued: 0, failed: 0, cachedMB: 0, heapMB: null, transferredMB: 0, lodCounts: [0, 0, 0] },

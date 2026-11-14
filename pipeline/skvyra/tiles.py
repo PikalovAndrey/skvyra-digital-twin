@@ -368,7 +368,7 @@ def build_tile(ix, iy, force=False) -> dict:
             "inb": bool(p.get("in_boundary")), "poi": p.get("poi"),
             # GHSL cell value shown as context for every building (not only where it set the height)
             "ghsl": {k: ev[k] for k in ("anbh", "share") if ev.get(k) is not None} or None,
-            "landmark": {k: lm[k] for k in ("name", "wikidata", "evidence", "photos", "license", "match_distance_m", "match", "address", "heritage", "features") if lm.get(k) not in (None, "", [])} if lm else None,
+            "landmark": {k: lm[k] for k in ("name", "wikidata", "evidence", "photos", "license", "match_distance_m", "match", "address", "heritage", "features", "identity_audit") if lm.get(k) not in (None, "", [])} if lm else None,
             "name": tags.get("name"), "addr": " ".join(x for x in (tags.get("addr:street"), tags.get("addr:housenumber")) if x) or None,
             "ll": [round(float(lon), 6), round(float(lat), 6)], "area": p["area_m2"], "ts": p.get("source_timestamp"),
             "flags": p.get("flags"), "note": ov.get("note") if ov else None,
@@ -637,6 +637,10 @@ def write_index(cfg, frame, results, boundary, partial=False, context=None):
            "counts": norm["counts"], "context": context}
     path.write_text(json.dumps(idx, ensure_ascii=False, separators=(",", ":")))
     write_search(frame)
+    from . import quality
+    dem = dem_path()
+    ter = Terrain(dem, frame, step=LODS[0]["step"], verbose=False) if dem.exists() else FlatTerrain()
+    quality.build(cfg, frame, ter.z)
 
 
 def boundary_line(boundary, frame):

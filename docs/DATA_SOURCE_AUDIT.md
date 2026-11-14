@@ -69,6 +69,8 @@ Researched and **not usable**:
 | ESA WorldCover 2021 v200 | public S3 COG, tile N48E027, window | 51 KB | CC BY 4.0 | trust check of the canopy model only |
 | Sentinel-2 L2A, 7 extra scenes (2025-06-08 … 2026-08-29) | earth-search STAC, range reads | ~14 MB | free and open | tested as a median composite and **rejected** (see REALISM_3.md) |
 | Panoramax / KartaView / Mapillary | public APIs | — | per item / not stated / CC BY-SA | 0 pictures / 134 photos: CC BY-SA 4.0 per the official terms, but the sequence is deleted and has no author name (see REALISM_3.md, 3.1) / unknown without a token — none used |
+| Overture Maps buildings 2026-10-21.0 | `overturemaps-extras-us-west-2/tiles/…/buildings.pmtiles`, 30 z14 tiles by range requests | 1.4 MB | ODbL / CDLA mix | checked only: over Skvyra = OSM 1,905 + Microsoft ML 6,012 outlines, 1 outline not in our data |
+| Official heritage lists | MinCult national list (20.09.2024); Kyiv OSA 2017 architecture inventory and 2021 history list (public-information replies on wlm.org.ua) | 9 MB PDFs (read, not stored) | public documents | heritage status audit (REALISM_3.md, 3.2) |
 | GlobalBuildingAtlas LoD1 | Hugging Face `vitrobot/GBA.LoD1` | 1.02 GB tile (monolithic JSON) | CC BY-NC 4.0 | **not downloaded** (size; would be comparison-only, outside the pipeline) |
 
 ## 3. Measured coverage (inside the boundary)

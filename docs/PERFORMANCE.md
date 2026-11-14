@@ -67,6 +67,16 @@ process > 40 % CPU, heavy-check queue empty; order 2.0 → 3.1 → 2.0 → 3.1; 
 Reproduce: `make bench` (add `THROTTLE=4` for the CPU profile). Re-measure on an idle machine before quoting
 absolute numbers.
 
+## Camera jumps (2026-11-14, Authenticity 3.2)
+
+The 90–700 ms "teleport stalls" reported above and in earlier runs come from the measurement mode: with vsync and
+the frame-rate limit disabled, the CPU queues frames ahead of the GPU and the first texture upload after a jump
+(`texSubImage2D`, one 1024² ground texture) waits for the whole backlog — 380–1,230 ms under background GPU load.
+With normal browser frame pacing (`e2e/teleport.spec.ts`, 16 jumps, idle machine, paired with commit 9b6b330):
+worst frame after a jump **p50 18–19 ms, p95 33–35 ms** for both versions (one 72 ms outlier in one run). GLB
+parsing is asynchronous; a Web Worker texture decode was prototyped, measured and removed (no effect). Stage
+timings are exposed as `__skvyra.stageMs` / `updateMs` for future profiling.
+
 ## Fast camera movement
 
 - Continuous 18 s flight across town at 120 m (≈ 9,300 frames, 14 tile loads while moving): p50 2.0, p95
