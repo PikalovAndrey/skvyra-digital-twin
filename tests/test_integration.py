@@ -73,7 +73,7 @@ def test_normalization_counts_and_quarantine(built):
 def test_every_building_is_in_exactly_one_tile(built):
     idx = json.loads((tiles_dir(built) / "index.json").read_text())
     ids = [b["id"] for t in idx["tiles"] for b in json.loads((tiles_dir(built) / f"{t['id']}.json").read_text())["buildings"]]
-    assert len(ids) == len(set(ids)) == 8
+    assert len(ids) == len(set(ids)) == 9  # 8 from the sources + 1 confirmed local outline
     assert not idx["failed"]
 
 
@@ -232,3 +232,61 @@ def test_canopy_trees_reach_tiles_and_model_fill_is_untrusted(built):
     assert len(chm) == 1 and abs(chm[0][0] + 300) < 3 and chm[0][7] in (1, 2)
     # the OSM forest around (250, 250) has < 10 % CHM canopy -> newer mapping than the imagery: land-cover rule
     assert any(r[6] == 1 and 150 <= r[0] <= 350 and 175 <= r[1] <= 325 for r in rows)
+
+
+def test_local_outlines_enter_tiles_only_when_confirmed(built):
+    rep = json.loads((built / "data" / "processed" / "footprints_report.json").read_text())
+    assert rep["applied"] == ["local:synthetic-confirmed"] and rep["review"] == ["local:synthetic-draft"]
+    idx = json.loads((tiles_dir(built) / "index.json").read_text())
+    metas = [b for t in idx["tiles"] for b in json.loads((tiles_dir(built) / f"{t['id']}.json").read_text())["buildings"]]
+    local = [b for b in metas if b["src"] == "local"]
+    assert [b["sid"] for b in local] == ["local:synthetic-confirmed"] and local[0]["conf"] == "verified"
+    assert local[0]["local"]["method"].startswith("SYNTHETIC")
+    review = json.loads((built / "data" / "processed" / "review_footprints.geojson").read_text())["features"]
+    assert [f["properties"]["id"] for f in review] == ["local:synthetic-draft"]
+
+
+def test_review_workflow_dry_run_apply_and_revert(built, tmp_path):
+    """Workbench change set -> CLI dry run (diff, validation) -> --yes (backup) -> rebuild -> revert."""
+    root = tmp_path / "w"
+    shutil.copytree(built, root)
+    sys.path.insert(0, str(REPO / "tests" / "fixtures"))
+    from make_fixture import ll, rect  # same synthetic frame as the fixture
+
+    def feat(fid, ring, status="confirmed"):
+        return {"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [[[ll(*p)["lon"], ll(*p)["lat"]] for p in ring]]},
+                "properties": {"id": fid, "status": status, "confidence": "high", "method": "SYNTHETIC review test",
+                               "date": "2026-11-14", "evidence": [{"url": "https://example.org/x", "license": "test only"}]}}
+    fp = root / "data" / "overrides" / "footprints.geojson"
+    before = fp.read_bytes()
+    good = root / "good.json"
+    direct = root / "direct.json"  # the workbench cannot confirm: a confirmed add is refused
+    direct.write_text(json.dumps({"version": 1, "changes": [{"op": "add_outline", "feature": feat("local:review-new", rect(-260, 230, 10, 8))}]}))
+    p = cli(root, "review", "apply", str(direct), "--yes", check=False)
+    assert p.returncode == 1 and "approve_outline" in p.stdout and fp.read_bytes() == before
+    noappr = root / "noappr.json"  # approval without who/basis/checks is refused
+    noappr.write_text(json.dumps({"version": 1, "changes": [
+        {"op": "add_outline", "feature": feat("local:review-new", rect(-260, 230, 10, 8), "approximate")},
+        {"op": "approve_outline", "id": "local:review-new", "approval": {"by": "x"}}]}))
+    p = cli(root, "review", "apply", str(noappr), "--yes", check=False)
+    assert p.returncode == 1 and "evidence link is not enough" in p.stdout and fp.read_bytes() == before
+    good.write_text(json.dumps({"version": 1, "changes": [
+        {"op": "add_outline", "feature": feat("local:review-new", rect(-260, 230, 10, 8), "approximate")},
+        {"op": "approve_outline", "id": "local:review-new",
+         "approval": {"by": "test", "date": "2026-11-14", "basis": "site_survey", "checks": "synthetic"}}]}))
+    p = cli(root, "review", "apply", str(good))
+    assert "+ add outline local:review-new" in p.stdout and "! approve outline" in p.stdout and "Dry run" in p.stdout and fp.read_bytes() == before
+    bad = root / "bad.json"
+    bad.write_text(json.dumps({"version": 1, "changes": [{"op": "add_outline", "feature": feat(
+        "local:review-bow", [(-300, 230), (-290, 240), (-290, 230), (-300, 240), (-300, 230)], "approximate")}]}))
+    p = cli(root, "review", "apply", str(bad), "--yes", check=False)
+    assert p.returncode == 1 and "Self-intersection" in p.stdout and fp.read_bytes() == before
+    cli(root, "review", "apply", str(good), "--yes")
+    assert any((root / "data" / "overrides" / "history").iterdir())
+    cli(root, "normalize")
+    cli(root, "build")
+    idx = json.loads((tiles_dir(root) / "index.json").read_text())
+    sids = {b["sid"] for t in idx["tiles"] for b in json.loads((tiles_dir(root) / f"{t['id']}.json").read_text())["buildings"]}
+    assert "local:review-new" in sids
+    cli(root, "review", "revert")
+    assert fp.read_bytes() == before

@@ -29,7 +29,8 @@ export interface TileIndex {
 export interface BuildingMeta {
   id: string
   sid: string
-  src: 'osm' | 'ms_ml'
+  src: 'osm' | 'ms_ml' | 'local'
+  local?: { confidence: string; method: string; date: string; author?: string; note?: string; evidence?: { url: string; license?: string; author?: string }[] }
   conf: 'verified' | 'source' | 'inferred'
   kind: string
   kindM: string

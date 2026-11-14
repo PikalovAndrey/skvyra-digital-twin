@@ -211,3 +211,73 @@ vector tiles, 1.4 MB) contain the same OSM + Microsoft outlines — 1 extra OSM 
 sample points; GlobalBuildingAtlas not downloaded (1 GB, CC BY-NC).
 
 Images: `docs/img/a32/gaps-district.jpg`, `gaps-street.jpg`, `info-zemska.jpg`.
+
+---
+
+# Authenticity 3.3 (2026-11-14) — geographic overrides, review workbench, central gaps
+
+## Local building outlines (geometry overrides)
+
+The existing override system (`data/overrides/`, `pipeline/skvyra/overrides.py`) was extended rather than duplicated:
+attribute corrections stay in `overrides.json` (keyed by source id, re-matched by anchor); **outlines** go to
+`footprints.geojson` because they have no source id to attach to.
+
+| Rule | Implementation |
+|---|---|
+| Separate from sources | own file; OSM / Microsoft downloads and `buildings` from them are never edited |
+| Format | GeoJSON FeatureCollection, RFC 7946 (WGS84 lon/lat is the CRS of record); Polygon, MultiPolygon, holes |
+| Provenance | stable `local:<slug>` id, status, confidence, method, date, author, evidence (url, licence, author) |
+| Confirmed vs approximate | only `confirmed` + evidence (url and licence each) + `approval {by, date, basis, checks}` enters the model (source `local`, colour "verified" when confidence is high); `approximate` goes to `processed/review_footprints.geojson` for the workbench only |
+| Checks | schema; GEOS validity (self-intersection), plausible area; duplicates between local outlines; overlap with source outlines (> 1 m², unless listed in `replaces`); crossing a road centre line |
+| Source updates | `replaces` entries re-match by anchor when ids change; if OSM later maps the building (> 50 % overlap), the OSM outline wins and the local one is reported as superseded — the file is kept |
+| Approval | the workbench exports only `approximate`; `review apply` refuses a `confirmed` add; promotion is a separate `approve_outline` change naming who checked, the basis of the geometry (`site_survey` / `licensed_imagery` / `official_document` / `open_dataset` — a photo or a point is not a basis) and what was compared |
+| Landmarks | `wikidata` on a confirmed outline binds the landmark (`confirmed_local`); `overrides.json → landmark_matches` rejects wrong candidates |
+| Tiles, LOD, Blender | local outlines enter at the normalize stage like OSM / ML, so tiles (LOD0-2), QA, search and the Blender scene (built from tiles) need no special case |
+
+Report: `data/processed/footprints_report.json` (applied, review-only, conflicts, superseded, replaced).
+
+## Mapping review workbench
+
+`review.html` (served with the viewer): priority list → per item a north-up 2D map with OSM / Microsoft / local
+outlines, the candidate highlighted, streets, WLM/Wikidata points, photo camera geotags and missing-outline lines;
+address, why the match is unconfirmed, what is needed, photo links. A reviewer can draw an outline (in-browser
+checks: self-intersection, area, overlaps, required method; the outline is always exported as approximate), reject a candidate match,
+review the pending change set, undo entries and download it. Nothing is written from the browser:
+`skvyra review apply changes.json` validates with GEOS against the current data and prints the diff (dry run);
+`--yes` writes with a timestamped backup in `data/overrides/history/`; `skvyra review revert` restores it.
+
+Prototype verified on synthetic data (integration test): dry run (no write) → invalid bow-tie refused → `--yes` →
+rebuild → the confirmed outline is in the tiles → revert restores the file. On the real city only a dry run was
+made (rejecting the zemstvo candidate, not written): no unconfirmed building was added.
+
+## Priority list: geographic gaps in central Skvyra
+
+| # | Object | Likely location | Confirmed references | Photos | Existing candidates | Why not confirmed | Needed |
+|---|---|---|---|---|---|---|---|
+| 1 | Zemstvo building (1911-12) | пров. Каштановий 8(10): either the ML candidate SE of the lane or an unmapped building NW of it (WLM point) | the lane (OSM), address in WLM and the 2017 oblast inventory, 2019 camera geotag on the lane | 16 (5 authors, 2007-2025) | ms:aa972e1721d8 | front ~35 m with 5-8 m projections vs ~45 m straight front; WLM point in an unmapped built-up block | an outline of the real building (survey / OSM mapping from licensed imagery) or a photo with bearing |
+| 2 | Rylskyi house | corner of вул. М. Рильського and пров. Каштановий (official 2021 list) | both streets (OSM), the crossing | 3 (WestBam 2019, camera geotags) | ms:c892328fbbee (south corner) | the other corners have no outline at all; WLM point and plaque frame point to the west corner; L shape vs rectangle | outlines of the west-corner buildings |
+| 3 | Kostel (1885) | вул. Богачевського 9 (WLM, 6-decimal point) | the street, the point inside the blob | 8 (3 authors) | ms:1ca1695635ed (2,279 m² merged blob) | blob merges the nave with annexes / neighbours | an outline of the nave alone |
+| 4 | Babaev mansion | вул. М. Рильського 32 | point inside the outline | 1 (identification doubtful) | ms:4801e63e6c77 | identity, not geometry | an independent second photo |
+| 5-9 | Longest probable gaps within 1.2 km of the main square: вул. Ольшевського (292 m), Захисників України (215 m), Карла Болсуновського (200 m), Співоча (185 m), М. Рильського (180 m) | along these streets | streets (OSM) | — | none | no outline within 60 m, built-up land cover nearby | outlines from a legal source or survey |
+
+No outline was created from a single Wikidata point or from 10 m land cover.
+
+## Additional sources (bounded search, 2026-11-14)
+
+| Source | Finding | Use |
+|---|---|---|
+| Historical town plans on Commons (ДАКО 1542-1-1972/1973: 1815, 1826; public domain) | street layout of the early 19th century | predate the zemstvo (1911) and the kostel (1885): cannot verify their outlines; possible later use for street history only |
+| General plan of Skvyra (urban-planning documentation, public by law) | not found online (only a 2013 council decision referenced on e-construction.gov.ua) | — |
+| data.gov.ua / Skvyra community open data | no building or address datasets found | — |
+| Public cadastral map | land parcels, not buildings; access limited and licence unclear | not used |
+No new usable outline source; the search was stopped there. (OSM, Microsoft, Overture, GlobalBuildingAtlas were not re-examined.)
+
+## Camera jumps: 100-jump verification
+
+`e2e/teleport.spec.ts` now jumps to 50 deterministic spots over the town and its edges (cold: nothing loaded or
+cached) and then revisits them (warm), with normal browser frame pacing; started after an idle check (load 2.2).
+Worst frame after a jump: **all 100: p50 17.8, p95 23.1, p99 37.2, max 37.2 ms, none > 50 ms**; cold (50): p95
+30.3, p99 37.2 ms; warm (50): p99 18.4 ms (`benchmarks/results/2026-11-14-19-19-47-teleport.json`). Another
+session started a video encode near the end of the run; the warm round, run during it, stayed at 18 ms. With 100
+samples p99 equals the single worst jump, so "p99 < 50 ms" holds for this sample on this machine, not as a
+guarantee. No optimisation was started. The uncapped `benchmark.spec.ts` stays the render-cost comparison only.

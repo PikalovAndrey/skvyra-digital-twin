@@ -75,6 +75,13 @@ Honest list of what this reconstruction is **not**, as of 2026-11-14.
   recorded and shown. Both buildings may be missing from all footprint sources.
 - The missing-outline layer is a suspicion built from 10 m land cover; it cannot locate or count missing houses.
 
+## Local outlines and review (Authenticity 3.3)
+
+- No real local outline exists yet: the workflow is verified on synthetic data; the city model is unchanged.
+- The workbench's in-browser checks are approximate (vertex/edge tests); the authoritative validation is the GEOS
+  check in `skvyra review apply`. The workbench draws in local metres on a 2D map without imagery (no legal
+  high-resolution imagery is available), so it is for recording outlines obtained elsewhere, not for tracing.
+
 ## Trees (Realism & Authenticity 3.0)
 
 - Tree tops come from an **ML canopy height model** (Meta/WRI v2) of Maxar imagery from **2015-06-24** (84 % of

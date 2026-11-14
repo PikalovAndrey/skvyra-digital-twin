@@ -9,6 +9,6 @@ export default defineConfig({
   base: './',
   server: { port: 5199, strictPort: true },
   preview: { port: 5198, strictPort: true },
-  build: { chunkSizeWarningLimit: 1500, copyPublicDir: true },
+  build: { chunkSizeWarningLimit: 1500, copyPublicDir: true, rollupOptions: { input: { main: 'index.html', review: 'review.html' } } },
   test: { include: ['src/**/*.test.ts'], environment: 'node' },
 })

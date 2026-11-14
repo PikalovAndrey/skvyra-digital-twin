@@ -1,0 +1,152 @@
+{
+ "about": "Mapping review priorities for central Skvyra (Authenticity 3.3). Curated from the 3.1/3.2 audits; every point is a reference location only - no outline may be created from a single point or from 10 m land cover. Positions WGS84 lon/lat.",
+ "checked": "2026-11-14",
+ "items": [
+  {
+   "id": "zemstvo-building",
+   "title": "Будинок земської управи (1911-1912)",
+   "wikidata": "Q122300599",
+   "priority": 1,
+   "address": "пров. Каштановий, 8 (10) (колишня вул./просп. Володарського, 8)",
+   "points": [
+    {
+     "kind": "wlm_point",
+     "lonlat": [
+      29.6549,
+      49.7308
+     ],
+     "note": "Wikidata/WLM coordinate, 4 decimals (~5-10 m); lies NW of the lane in an unmapped built-up block"
+    },
+    {
+     "kind": "camera",
+     "lonlat": [
+      29.655437,
+      49.730862
+     ],
+     "note": "Commons photo IMG 20191122 155305 (WestBam, CC BY-SA 4.0): camera geotag, bearing unknown"
+    }
+   ],
+   "candidates": [
+    "ms:aa972e1721d8"
+   ],
+   "photos": [
+    "https://commons.wikimedia.org/wiki/Category:10_Kashtanovyi_Lane,_Skvyra",
+    "https://commons.wikimedia.org/wiki/File:Будинок_колишньої_земської_управи_1.jpg",
+    "https://commons.wikimedia.org/wiki/File:Будинок_земської_управи_IMG_20191122_155305.jpg"
+   ],
+   "photo_note": "16 files: Xsandriel 2025 (11), Kiyanka 2025 (2), WestBam 2019 (1, camera geotag), Ростислав Маленков 2007 (1), Олекса-Київ 2014 (1, CC BY-SA 3.0); all street fronts",
+   "why_unconfirmed": "Candidate front along the lane ~35 m with 5-8 m projections vs a straight ~45 m front with shallow risalits on the photos; the WLM point is across the lane in a block with built-up land cover, no tree canopy and no outline in any source; photo geometry fits both sides.",
+   "needed": "An outline of the real building traced from legally usable imagery or measured on site (e.g. mapped in OSM by a local mapper, or a GNSS walk-around), or a photo with camera bearing / a landmark identifying the side of the lane."
+  },
+  {
+   "id": "rylskyi-house",
+   "title": "Будинок, у якому жив та працював М. Т. Рильський (дитсадок «Світанок»)",
+   "wikidata": "Q122249375",
+   "priority": 2,
+   "address": "ріг вул. Максима Рильського та пров. Каштанового (Володарського); WLM: вул. Максима Рильського, 51",
+   "points": [
+    {
+     "kind": "wlm_point",
+     "lonlat": [
+      29.655688,
+      49.731241
+     ],
+     "note": "Wikidata/WLM coordinate, west corner of the crossing"
+    },
+    {
+     "kind": "camera",
+     "lonlat": [
+      29.656347,
+      49.730901
+     ],
+     "note": "Commons WestBam 2019 photo geotag"
+    },
+    {
+     "kind": "camera",
+     "lonlat": [
+      29.655608,
+      49.731031
+     ],
+     "note": "Commons WestBam 2019 photo geotag"
+    },
+    {
+     "kind": "camera",
+     "lonlat": [
+      29.655753,
+      49.731341
+     ],
+     "note": "Commons WestBam 2019 photo geotag"
+    },
+    {
+     "kind": "camera",
+     "lonlat": [
+      29.655744,
+      49.731106
+     ],
+     "note": "KartaView 2019 frame with the «Світанок» plaque at arm's length (deleted sequence, not used in the model)"
+    }
+   ],
+   "candidates": [
+    "ms:c892328fbbee"
+   ],
+   "photos": [
+    "https://commons.wikimedia.org/wiki/Category:51_Rylskoho_Street,_Skvyra"
+   ],
+   "photo_note": "3 files by WestBam 2019 (CC BY-SA 4.0) with camera geotags; they show an L-shaped one-storey house",
+   "why_unconfirmed": "The ML candidate (15 x 23 m rectangle, south corner) is the only outline within 60 m of the crossing, but the other corners of this central crossing have no outline in any source; the WLM point and the plaque photo point to the west corner.",
+   "needed": "Outlines of the buildings on the west corner (none exist today), then a check of the L shape against the photos."
+  },
+  {
+   "id": "kostel",
+   "title": "Костел Святого Яна Непомука (1885)",
+   "wikidata": "Q30968245",
+   "priority": 3,
+   "address": "вул. Богачевського, 9",
+   "points": [
+    {
+     "kind": "wlm_point",
+     "lonlat": [
+      29.664652,
+      49.728044
+     ],
+     "note": "WLM coordinate (6 decimals)"
+    }
+   ],
+   "candidates": [
+    "ms:1ca1695635ed"
+   ],
+   "photos": [
+    "https://commons.wikimedia.org/wiki/Category:Saint_John_of_Nepomuk_church,_Skvyra"
+   ],
+   "photo_note": "8 files (Xsandriel 2025 x5, Kiyanka 2025, Олекса-Київ 2014/2016): gable facade, side facade with later brick annexes; no tower",
+   "why_unconfirmed": "The only outline is a 2,279 m2 Microsoft ML blob with 25 vertices that merges the church with neighbouring buildings; no OSM outline.",
+   "needed": "An outline of the nave alone (single-volume hall) separated from the annexes; a footprint split cannot be invented from the blob."
+  },
+  {
+   "id": "babaev-mansion",
+   "title": "Особняк Бабаєва",
+   "wikidata": "Q122249377",
+   "priority": 4,
+   "address": "вул. Максима Рильського, 32",
+   "points": [
+    {
+     "kind": "wlm_point",
+     "lonlat": [
+      29.659637,
+      49.729553
+     ],
+     "note": "WLM coordinate (6 decimals), inside an ML outline"
+    }
+   ],
+   "candidates": [
+    "ms:4801e63e6c77"
+   ],
+   "photos": [
+    "https://commons.wikimedia.org/wiki/File:Особняк_Бабаєва.JPG"
+   ],
+   "photo_note": "1 file (Олекса-Київ 2014, CC BY-SA 3.0); its description marks the identification as doubtful",
+   "why_unconfirmed": "Outline position is plausible but the only photo's identification is doubtful.",
+   "needed": "A second, independently identified photo of the building."
+  }
+ ]
+}

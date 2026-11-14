@@ -655,3 +655,69 @@ def test_quality_layer_flags_suspicions_never_facts():
     assert Q.classify(0.1, False, 0.0)[0] == "insufficient"
     cls, conf, why = Q.classify(0.0, False, 0.0)
     assert cls == "no_signs" and conf == "low" and any("can be missed" in r for r in why)  # never 'confirmed empty'
+
+
+# ---------------------------------------------------------------------------------------------------
+# local building outlines (geometry overrides, Authenticity 3.3)
+# ---------------------------------------------------------------------------------------------------
+def _fp_doc(features):
+    return {"type": "FeatureCollection", "features": features}
+
+
+def _fp(fid, ring_local, status="confirmed", **props):
+    ll = [list(FRAME.to_geo(x, y)) for x, y in ring_local]
+    ll = [[float(a), float(b)] for a, b in ll]
+    p = {"id": fid, "status": status, "confidence": props.pop("confidence", "high"), "method": "synthetic test",
+         "date": "2026-11-14", "evidence": [{"url": "https://example.org/test", "license": "test"}], **props}
+    if status == "confirmed":
+        p.setdefault("approval", {"by": "test", "date": "2026-11-14", "basis": "site_survey", "checks": "synthetic"})
+    return {"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [ll]}, "properties": p}
+
+
+def _sq(cx, cy, s):
+    return [(cx - s, cy - s), (cx + s, cy - s), (cx + s, cy + s), (cx - s, cy + s), (cx - s, cy - s)]
+
+
+def test_local_outlines_validate_apply_and_never_leak_approximate(tmp_path, monkeypatch):
+    from skvyra import overrides as OVR
+    monkeypatch.setattr(C, "PROCESSED", tmp_path)
+    src = [(shapely.Polygon(_sq(0, 0, 5)), {"source_id": "osm:way/1", "source": "osm", "id": "a"}),
+           (shapely.Polygon(_sq(100, 0, 5)), {"source_id": "ms:abc", "source": "ms_ml", "id": "b"})]
+    bowtie = [(200, 0), (210, 10), (210, 0), (200, 10), (200, 0)]
+    path = tmp_path / "footprints.geojson"
+    path.write_text(json.dumps(_fp_doc([
+        _fp("local:gap", _sq(50, 50, 6)),                                    # empty spot -> applied
+        _fp("local:draft", _sq(-50, 50, 6), status="approximate", confidence="low", evidence=[]),  # review only
+        _fp("local:bow", bowtie),                                            # self-intersection -> conflict
+        _fp("local:over", _sq(7, 0, 5)),                                     # partly overlaps osm:way/1 -> conflict
+        _fp("local:dup", _sq(50.5, 50, 6)),                                  # duplicates local:gap -> conflict
+        _fp("local:repl", _sq(100, 0, 6), replaces=[{"source_id": "ms:abc", "anchor": list(map(float, FRAME.to_geo(100, 0)))}]),
+    ])))
+    out, rep = OVR.apply_footprints(src, FRAME, shapely.Polygon(_sq(0, 0, 1000)), [], lambda s: s, path)
+    sids = {p["source_id"] for _, p in out}
+    assert rep["applied"] == ["local:gap", "local:repl"] and rep["review"] == ["local:draft"]
+    assert "local:draft" not in sids and "ms:abc" not in sids and "osm:way/1" in sids  # explicit replacement only
+    reasons = {c["id"]: c["reason"] for c in rep["conflicts"]}
+    assert "Self-intersection" in reasons["local:bow"] and "osm:way/1" in reasons["local:over"] and "duplicates" in reasons["local:dup"]
+    assert json.loads((tmp_path / "review_footprints.geojson").read_text())["features"][0]["properties"]["id"] == "local:draft"
+    # after a source update the replaced ML outline has a new id: re-matched by anchor, local edit kept
+    src2 = [src[0], (shapely.Polygon(_sq(100.3, 0, 5)), {"source_id": "ms:new", "source": "ms_ml", "id": "c"})]
+    out2, rep2 = OVR.apply_footprints(src2, FRAME, shapely.Polygon(_sq(0, 0, 1000)), [], lambda s: s, path)
+    assert "local:repl" in rep2["applied"] and "ms:new" not in {p["source_id"] for _, p in out2}
+    # if someone maps the building in OSM, the human-mapped source wins and the local outline is reported
+    src3 = src + [(shapely.Polygon(_sq(50, 50, 6)), {"source_id": "osm:way/9", "source": "osm", "id": "d"})]
+    _, rep3 = OVR.apply_footprints(src3, FRAME, shapely.Polygon(_sq(0, 0, 1000)), [], lambda s: s, path)
+    assert rep3["superseded"][0]["id"] == "local:gap"
+
+
+def test_local_outline_schema_errors(tmp_path):
+    from skvyra import overrides as OVR
+    path = tmp_path / "f.geojson"
+    for bad, msg in ((_fp("bad id", _sq(0, 0, 5)), "local:"), (_fp("local:xx", _sq(0, 0, 5), status="maybe"), "status"),
+                     (_fp("local:yy", _sq(0, 0, 5), evidence=[]), "evidence"),
+                     (_fp("local:zz", _sq(0, 0, 5), evidence=[{"url": "https://example.org/x"}]), "license"),
+                     (_fp("local:link-only", _sq(0, 0, 5), approval={}), "approval"),
+                     (_fp("local:photo", _sq(0, 0, 5), approval={"by": "x", "date": "2026-11-14", "basis": "photo", "checks": "x"}), "basis")):
+        path.write_text(json.dumps(_fp_doc([bad])))
+        with pytest.raises(ValueError, match=msg):
+            OVR.load_footprints(path)

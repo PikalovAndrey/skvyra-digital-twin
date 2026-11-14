@@ -1,5 +1,12 @@
 # Progress — 2026-11-14
 
+## Iteration 8 — Authenticity 3.3 (2026-11-14)
+
+Local building outlines (`data/overrides/footprints.geojson`) with validation, confirmed/approximate separation (confirmation needs a separate approval: who, basis of the geometry, checks),
+source-update handling and landmark binding/rejection; review workbench `review.html` + `skvyra review apply/revert`;
+priority list of central gaps; bounded search for new sources (none usable); jump benchmark with 100 jumps
+(cold + warm). City model unchanged (no confirmed real outline yet).
+
 ## Iteration 7 — Authenticity 3.2 (2026-11-14)
 
 Heritage statuses restructured with official sources (all `unknown` officially; reported statuses kept

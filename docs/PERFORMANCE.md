@@ -77,6 +77,9 @@ worst frame after a jump **p50 18–19 ms, p95 33–35 ms** for both versions (o
 parsing is asynchronous; a Web Worker texture decode was prototyped, measured and removed (no effect). Stage
 timings are exposed as `__skvyra.stageMs` / `updateMs` for future profiling.
 
+**100-jump run (Authenticity 3.3)**: 50 cold + 50 warm jumps, normal pacing: p50 17.8, p95 23.1, p99 = max
+37.2 ms, none above 50 ms (cold p95 30.3 / p99 37.2 ms; warm p99 18.4 ms). One machine, one run.
+
 ## Fast camera movement
 
 - Continuous 18 s flight across town at 120 m (≈ 9,300 frames, 14 tile loads while moving): p50 2.0, p95

@@ -71,6 +71,7 @@ Researched and **not usable**:
 | Panoramax / KartaView / Mapillary | public APIs | — | per item / not stated / CC BY-SA | 0 pictures / 134 photos: CC BY-SA 4.0 per the official terms, but the sequence is deleted and has no author name (see REALISM_3.md, 3.1) / unknown without a token — none used |
 | Overture Maps buildings 2026-10-21.0 | `overturemaps-extras-us-west-2/tiles/…/buildings.pmtiles`, 30 z14 tiles by range requests | 1.4 MB | ODbL / CDLA mix | checked only: over Skvyra = OSM 1,905 + Microsoft ML 6,012 outlines, 1 outline not in our data |
 | Official heritage lists | MinCult national list (20.09.2024); Kyiv OSA 2017 architecture inventory and 2021 history list (public-information replies on wlm.org.ua) | 9 MB PDFs (read, not stored) | public documents | heritage status audit (REALISM_3.md, 3.2) |
+| Historical plans of Skvyra (ДАКО 1542-1-1972/1973, 1815 / 1826, Commons) | Commons API | not downloaded | public domain | none: they predate the buildings in question |
 | GlobalBuildingAtlas LoD1 | Hugging Face `vitrobot/GBA.LoD1` | 1.02 GB tile (monolithic JSON) | CC BY-NC 4.0 | **not downloaded** (size; would be comparison-only, outside the pipeline) |
 
 ## 3. Measured coverage (inside the boundary)

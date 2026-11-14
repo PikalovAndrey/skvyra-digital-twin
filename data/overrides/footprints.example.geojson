@@ -1,0 +1,22 @@
+{
+ "type": "FeatureCollection",
+ "name": "EXAMPLE ONLY - copy to footprints.geojson; RFC 7946 WGS84 lon/lat",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {"type": "Polygon", "coordinates": [[[29.66001, 49.73001], [29.66016, 49.73001], [29.66016, 49.73010], [29.66001, 49.73010], [29.66001, 49.73001]]]},
+   "properties": {
+    "id": "local:example-house",
+    "status": "approximate",
+    "confidence": "low",
+    "method": "EXAMPLE - e.g. 'GNSS walk-around 2026-11-20', 'traced in OSM-licensed imagery', 'measured tape survey'",
+    "date": "2026-11-14",
+    "author": "",
+    "evidence": [{"url": "https://example.org/your-legal-source", "license": "state the licence", "author": "", "date": ""}],
+    "note": "approximate outlines are shown only in review.html; to confirm, apply an approve_outline change with approval {by, date, basis, checks} - see README",
+    "replaces": [],
+    "tags": {"building": "house", "building:levels": "1"}
+   }
+  }
+ ]
+}

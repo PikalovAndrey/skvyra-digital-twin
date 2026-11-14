@@ -109,16 +109,32 @@ by the *ID у джерелі* shown in the info panel, e.g.
 Rebuild: only the affected tile changes. Overrides that no longer match a feature are reported in
 `data/processed/overrides_report.json`, never dropped.
 
-## Status (2026-11-14, after Authenticity 3.2)
+**Missing or wrong outlines** go to `data/overrides/footprints.geojson` (GeoJSON, WGS84; format and rules in
+`pipeline/skvyra/overrides.py`, example `footprints.example.geojson`): each outline has a stable `local:` id,
+status `confirmed` / `approximate`, confidence, method, date and evidence. Only `confirmed` outlines
+enter the model; `approximate` ones are review-only. Sources are never edited; source outlines are replaced only
+when listed in `replaces`, and an outline later mapped in OSM is reported instead of duplicated. Review tool:
+`make web-dev` → http://127.0.0.1:5199/review.html (priority places in the centre, draw / reject, export a change
+set), then `PYTHONPATH=pipeline .venv/bin/python -m skvyra.cli review apply changes.json` (validation + diff;
+`--yes` writes with a backup) and `... review revert`.
+
+**Approval of a real outline.** A source link never confirms geometry by itself. Outlines drawn in `review.html`
+are always exported as `approximate`; `skvyra review apply` refuses a `confirmed` add. To confirm one, a person
+adds a separate `approve_outline` change with `approval {by, date, basis, checks}`: `basis` is what the geometry
+itself comes from (`site_survey`, `licensed_imagery`, `official_document`, `open_dataset`; photos and WLM points
+can only support a check), `checks` says what was compared (e.g. "L shape and 23 m front match the WestBam photos").
+Every evidence entry needs a url and a licence. The change goes through the same dry run → `--yes` (backup) → revert.
+
+## Status (2026-11-14, after Authenticity 3.3)
 
 | Check | Result |
 |---|---|
 | Tile build (`build --force`) | 119 / 119 tiles, 0 failed, 17 s |
 | Geometry QA (`make qa`) | 0 floating, 0 buried, 0 road/building overlaps, 0 trees in buildings, 0 surfaces facing down; 13 low uphill walls (real slopes), 1 height outlier |
-| Python tests | 124 passed (incl. canopy segmentation, trust masks, tower geometry, composite landmark, quality layer, synthetic CHM end-to-end) |
-| TypeScript unit tests (vitest) | 34 passed |
+| Python tests | 128 passed (incl. canopy segmentation, trust masks, tower geometry, composite landmark, quality layer, local outlines + review apply/revert, synthetic CHM end-to-end) |
+| TypeScript unit tests (vitest) | 36 passed |
 | Typecheck (`tsc --noEmit`) | 0 errors |
-| Browser e2e (Playwright) | 7 passed, 3 on-demand skipped (benchmark, teleport, compare) |
+| Browser e2e (Playwright) | 8 passed (incl. review workbench), 3 on-demand skipped (benchmark, teleport, compare) |
 | Production build (`vite build`) | OK — JS 1.36 MB (382 KB gzip); `dist/` 229 MB incl. tiles |
 | Performance | see docs/PERFORMANCE.md — M4 Pro only; 3.0 adds ~0–5 ms p99 in tree-heavy views (paired runs under external load), CPU-throttled profile without regression in static views; weak GPUs not measured |
 

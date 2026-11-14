@@ -24,9 +24,18 @@ def match(buildings, frame, max_dist: float = 30.0, streets=None) -> dict:
     if not CATALOGUE.exists():
         return {}
     cat = json.loads(CATALOGUE.read_text())["landmarks"]
+    from .overrides import landmark_rejections
+    rejected = landmark_rejections()
     tree = shapely.STRtree([g for g, _ in buildings])
     out, report = {}, []
     for lm in cat:
+        bound = [i for i, (_, p) in enumerate(buildings) if (p.get("local") or {}).get("wikidata") == lm["wikidata"]]
+        if bound:  # a confirmed local outline explicitly bound to this landmark wins over proximity
+            sid = buildings[bound[0]][1]["source_id"]
+            out[sid] = {**lm, "match_distance_m": 0.0, "match": "confirmed_local"}
+            report.append({"wikidata": lm["wikidata"], "name": lm["name"], "matched": sid, "match": "confirmed_local"})
+            continue
+        rej = rejected.get(lm["wikidata"], set())
         x, y = frame.to_local(*lm["lonlat"])
         pt = shapely.Point(float(x), float(y))
         inside = [i for i in tree.query(pt, predicate="within")]
@@ -53,6 +62,10 @@ def match(buildings, frame, max_dist: float = 30.0, streets=None) -> dict:
             d, tier = buildings[i][0].distance(pt), "probable"
         g, props = buildings[i]
         sid = props["source_id"]
+        if sid in rej:  # rejected by a reviewer (overrides.json "landmark_matches")
+            report.append({"wikidata": lm["wikidata"], "name": lm["name"], "matched": None, "rejected": sid,
+                           "reason": "candidate rejected in review (data/overrides/overrides.json)"})
+            continue
         complexity = g.length / (4 * g.area ** 0.5)  # 1.0 for a square; merged ML blobs score high
         if props["source"] == "ms_ml" and (g.area > lm.get("max_area_m2", 1500) or (complexity > 1.6 and g.area > 800)):
             report.append({"wikidata": lm["wikidata"], "name": lm["name"], "matched": None,

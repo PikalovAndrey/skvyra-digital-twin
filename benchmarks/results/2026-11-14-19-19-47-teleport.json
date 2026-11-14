@@ -1,0 +1,1130 @@
+{
+  "date": "2026-11-14T19:19:47.892Z",
+  "mode": "vsync on (normal browser pacing)",
+  "jumps": [
+    {
+      "spot": [
+        989,
+        1055
+      ],
+      "round": 1,
+      "maxFrameMs": 30.299999237060547,
+      "over50": 0,
+      "tiles": 9,
+      "textureMaxMs": 21.69999998807907
+    },
+    {
+      "spot": [
+        1525,
+        1088
+      ],
+      "round": 1,
+      "maxFrameMs": 17.700000762939453,
+      "over50": 0,
+      "tiles": 3,
+      "textureMaxMs": 0.5999999940395355
+    },
+    {
+      "spot": [
+        1152,
+        1549
+      ],
+      "round": 1,
+      "maxFrameMs": 17.899999618530273,
+      "over50": 0,
+      "tiles": 1,
+      "textureMaxMs": 0.5
+    },
+    {
+      "spot": [
+        235,
+        -1266
+      ],
+      "round": 1,
+      "maxFrameMs": 23.100000381469727,
+      "over50": 0,
+      "tiles": 8,
+      "textureMaxMs": 9.599999994039536
+    },
+    {
+      "spot": [
+        -1192,
+        332
+      ],
+      "round": 1,
+      "maxFrameMs": 32.70000076293945,
+      "over50": 0,
+      "tiles": 8,
+      "textureMaxMs": 16.399999976158142
+    },
+    {
+      "spot": [
+        460,
+        1033
+      ],
+      "round": 1,
+      "maxFrameMs": 17.700000762939453,
+      "over50": 0,
+      "tiles": 7,
+      "textureMaxMs": 0.5
+    },
+    {
+      "spot": [
+        1504,
+        261
+      ],
+      "round": 1,
+      "maxFrameMs": 18.100000381469727,
+      "over50": 0,
+      "tiles": 4,
+      "textureMaxMs": 0.4000000059604645
+    },
+    {
+      "spot": [
+        -147,
+        -456
+      ],
+      "round": 1,
+      "maxFrameMs": 19.299999237060547,
+      "over50": 0,
+      "tiles": 7,
+      "textureMaxMs": 6.600000023841858
+    },
+    {
+      "spot": [
+        118,
+        10
+      ],
+      "round": 1,
+      "maxFrameMs": 18.100000381469727,
+      "over50": 0,
+      "tiles": 5,
+      "textureMaxMs": 0.5999999940395355
+    },
+    {
+      "spot": [
+        -1349,
+        113
+      ],
+      "round": 1,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 3,
+      "textureMaxMs": 0.5
+    },
+    {
+      "spot": [
+        1219,
+        407
+      ],
+      "round": 1,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        246,
+        920
+      ],
+      "round": 1,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 1,
+      "textureMaxMs": 0.20000001788139343
+    },
+    {
+      "spot": [
+        -213,
+        15
+      ],
+      "round": 1,
+      "maxFrameMs": 18,
+      "over50": 0,
+      "tiles": 2,
+      "textureMaxMs": 0.09999999403953552
+    },
+    {
+      "spot": [
+        1529,
+        -221
+      ],
+      "round": 1,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 6,
+      "textureMaxMs": 0.699999988079071
+    },
+    {
+      "spot": [
+        -1399,
+        1596
+      ],
+      "round": 1,
+      "maxFrameMs": 37.20000076293945,
+      "over50": 0,
+      "tiles": 7,
+      "textureMaxMs": 15.800000011920929
+    },
+    {
+      "spot": [
+        -1455,
+        965
+      ],
+      "round": 1,
+      "maxFrameMs": 17.700000762939453,
+      "over50": 0,
+      "tiles": 2,
+      "textureMaxMs": 0.5
+    },
+    {
+      "spot": [
+        -1009,
+        -620
+      ],
+      "round": 1,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 7,
+      "textureMaxMs": 0.5
+    },
+    {
+      "spot": [
+        -1389,
+        384
+      ],
+      "round": 1,
+      "maxFrameMs": 17.899999618530273,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -1568,
+        301
+      ],
+      "round": 1,
+      "maxFrameMs": 17.899999618530273,
+      "over50": 0,
+      "tiles": 1,
+      "textureMaxMs": 0.19999998807907104
+    },
+    {
+      "spot": [
+        1779,
+        733
+      ],
+      "round": 1,
+      "maxFrameMs": 17.700000762939453,
+      "over50": 0,
+      "tiles": 3,
+      "textureMaxMs": 0.5999999940395355
+    },
+    {
+      "spot": [
+        933,
+        1237
+      ],
+      "round": 1,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        1298,
+        -1225
+      ],
+      "round": 1,
+      "maxFrameMs": 28.5,
+      "over50": 0,
+      "tiles": 7,
+      "textureMaxMs": 20.299999982118607
+    },
+    {
+      "spot": [
+        1222,
+        -898
+      ],
+      "round": 1,
+      "maxFrameMs": 17.899999618530273,
+      "over50": 0,
+      "tiles": 1,
+      "textureMaxMs": 0.10000002384185791
+    },
+    {
+      "spot": [
+        -1529,
+        1167
+      ],
+      "round": 1,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 1,
+      "textureMaxMs": 0.19999998807907104
+    },
+    {
+      "spot": [
+        -1207,
+        -208
+      ],
+      "round": 1,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        515,
+        1507
+      ],
+      "round": 1,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -757,
+        -1026
+      ],
+      "round": 1,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 4,
+      "textureMaxMs": 0.5
+    },
+    {
+      "spot": [
+        232,
+        -348
+      ],
+      "round": 1,
+      "maxFrameMs": 17.700000762939453,
+      "over50": 0,
+      "tiles": 1,
+      "textureMaxMs": 0.6000000238418579
+    },
+    {
+      "spot": [
+        619,
+        1189
+      ],
+      "round": 1,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 1,
+      "textureMaxMs": 0.09999999403953552
+    },
+    {
+      "spot": [
+        630,
+        -332
+      ],
+      "round": 1,
+      "maxFrameMs": 17.600000381469727,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        1419,
+        -66
+      ],
+      "round": 1,
+      "maxFrameMs": 17.700000762939453,
+      "over50": 0,
+      "tiles": 1,
+      "textureMaxMs": 0.09999999403953552
+    },
+    {
+      "spot": [
+        -1213,
+        460
+      ],
+      "round": 1,
+      "maxFrameMs": 17.899999618530273,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -760,
+        212
+      ],
+      "round": 1,
+      "maxFrameMs": 17.700000762939453,
+      "over50": 0,
+      "tiles": 1,
+      "textureMaxMs": 0.5999999940395355
+    },
+    {
+      "spot": [
+        980,
+        811
+      ],
+      "round": 1,
+      "maxFrameMs": 18,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -1259,
+        -722
+      ],
+      "round": 1,
+      "maxFrameMs": 17.600000381469727,
+      "over50": 0,
+      "tiles": 1,
+      "textureMaxMs": 0.09999999403953552
+    },
+    {
+      "spot": [
+        -698,
+        -608
+      ],
+      "round": 1,
+      "maxFrameMs": 17.200000762939453,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        850,
+        1317
+      ],
+      "round": 1,
+      "maxFrameMs": 17.200000762939453,
+      "over50": 0,
+      "tiles": 1,
+      "textureMaxMs": 0.20000001788139343
+    },
+    {
+      "spot": [
+        1097,
+        1296
+      ],
+      "round": 1,
+      "maxFrameMs": 17.5,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        626,
+        459
+      ],
+      "round": 1,
+      "maxFrameMs": 17.100000381469727,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -1051,
+        -1574
+      ],
+      "round": 1,
+      "maxFrameMs": 17.5,
+      "over50": 0,
+      "tiles": 7,
+      "textureMaxMs": 0.5
+    },
+    {
+      "spot": [
+        -437,
+        469
+      ],
+      "round": 1,
+      "maxFrameMs": 17.100000381469727,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        1045,
+        -282
+      ],
+      "round": 1,
+      "maxFrameMs": 17,
+      "over50": 0,
+      "tiles": 2,
+      "textureMaxMs": 0.10000002384185791
+    },
+    {
+      "spot": [
+        -1024,
+        -60
+      ],
+      "round": 1,
+      "maxFrameMs": 17.899999618530273,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        574,
+        -516
+      ],
+      "round": 1,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        381,
+        -1001
+      ],
+      "round": 1,
+      "maxFrameMs": 18,
+      "over50": 0,
+      "tiles": 1,
+      "textureMaxMs": 0.29999998211860657
+    },
+    {
+      "spot": [
+        -60,
+        -970
+      ],
+      "round": 1,
+      "maxFrameMs": 17.700000762939453,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        1771,
+        399
+      ],
+      "round": 1,
+      "maxFrameMs": 17.600000381469727,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        1252,
+        -1244
+      ],
+      "round": 1,
+      "maxFrameMs": 17.700000762939453,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -887,
+        379
+      ],
+      "round": 1,
+      "maxFrameMs": 17.700000762939453,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        1256,
+        72
+      ],
+      "round": 1,
+      "maxFrameMs": 17.5,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        989,
+        1055
+      ],
+      "round": 2,
+      "maxFrameMs": 17.700000762939453,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        1525,
+        1088
+      ],
+      "round": 2,
+      "maxFrameMs": 17.600000381469727,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        1152,
+        1549
+      ],
+      "round": 2,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        235,
+        -1266
+      ],
+      "round": 2,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -1192,
+        332
+      ],
+      "round": 2,
+      "maxFrameMs": 17.700000762939453,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        460,
+        1033
+      ],
+      "round": 2,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        1504,
+        261
+      ],
+      "round": 2,
+      "maxFrameMs": 18,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -147,
+        -456
+      ],
+      "round": 2,
+      "maxFrameMs": 17.899999618530273,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        118,
+        10
+      ],
+      "round": 2,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -1349,
+        113
+      ],
+      "round": 2,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        1219,
+        407
+      ],
+      "round": 2,
+      "maxFrameMs": 17.600000381469727,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        246,
+        920
+      ],
+      "round": 2,
+      "maxFrameMs": 17.899999618530273,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -213,
+        15
+      ],
+      "round": 2,
+      "maxFrameMs": 18,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        1529,
+        -221
+      ],
+      "round": 2,
+      "maxFrameMs": 17.899999618530273,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -1399,
+        1596
+      ],
+      "round": 2,
+      "maxFrameMs": 18.100000381469727,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -1455,
+        965
+      ],
+      "round": 2,
+      "maxFrameMs": 17.899999618530273,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -1009,
+        -620
+      ],
+      "round": 2,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -1389,
+        384
+      ],
+      "round": 2,
+      "maxFrameMs": 17.600000381469727,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -1568,
+        301
+      ],
+      "round": 2,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        1779,
+        733
+      ],
+      "round": 2,
+      "maxFrameMs": 17.600000381469727,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        933,
+        1237
+      ],
+      "round": 2,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        1298,
+        -1225
+      ],
+      "round": 2,
+      "maxFrameMs": 17.700000762939453,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        1222,
+        -898
+      ],
+      "round": 2,
+      "maxFrameMs": 17.5,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -1529,
+        1167
+      ],
+      "round": 2,
+      "maxFrameMs": 17.899999618530273,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -1207,
+        -208
+      ],
+      "round": 2,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        515,
+        1507
+      ],
+      "round": 2,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -757,
+        -1026
+      ],
+      "round": 2,
+      "maxFrameMs": 18,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        232,
+        -348
+      ],
+      "round": 2,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        619,
+        1189
+      ],
+      "round": 2,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        630,
+        -332
+      ],
+      "round": 2,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        1419,
+        -66
+      ],
+      "round": 2,
+      "maxFrameMs": 17.600000381469727,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -1213,
+        460
+      ],
+      "round": 2,
+      "maxFrameMs": 17.5,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -760,
+        212
+      ],
+      "round": 2,
+      "maxFrameMs": 18,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        980,
+        811
+      ],
+      "round": 2,
+      "maxFrameMs": 17.700000762939453,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -1259,
+        -722
+      ],
+      "round": 2,
+      "maxFrameMs": 17.899999618530273,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -698,
+        -608
+      ],
+      "round": 2,
+      "maxFrameMs": 17.700000762939453,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        850,
+        1317
+      ],
+      "round": 2,
+      "maxFrameMs": 17.700000762939453,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        1097,
+        1296
+      ],
+      "round": 2,
+      "maxFrameMs": 17.899999618530273,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        626,
+        459
+      ],
+      "round": 2,
+      "maxFrameMs": 17.700000762939453,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -1051,
+        -1574
+      ],
+      "round": 2,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -437,
+        469
+      ],
+      "round": 2,
+      "maxFrameMs": 17.700000762939453,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        1045,
+        -282
+      ],
+      "round": 2,
+      "maxFrameMs": 18,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -1024,
+        -60
+      ],
+      "round": 2,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        574,
+        -516
+      ],
+      "round": 2,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        381,
+        -1001
+      ],
+      "round": 2,
+      "maxFrameMs": 18.399999618530273,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -60,
+        -970
+      ],
+      "round": 2,
+      "maxFrameMs": 17.700000762939453,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        1771,
+        399
+      ],
+      "round": 2,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        1252,
+        -1244
+      ],
+      "round": 2,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        -887,
+        379
+      ],
+      "round": 2,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    },
+    {
+      "spot": [
+        1256,
+        72
+      ],
+      "round": 2,
+      "maxFrameMs": 17.799999237060547,
+      "over50": 0,
+      "tiles": 0,
+      "textureMaxMs": 0
+    }
+  ],
+  "worstFrameAfterJumpMs": {
+    "n": 100,
+    "p50": 17.8,
+    "p95": 23.1,
+    "p99": 37.2,
+    "max": 37.20000076293945,
+    "over50": 0
+  },
+  "cold": {
+    "n": 50,
+    "p50": 17.8,
+    "p95": 30.3,
+    "p99": 37.2,
+    "max": 37.20000076293945,
+    "over50": 0
+  },
+  "warm": {
+    "n": 50,
+    "p50": 17.8,
+    "p95": 18,
+    "p99": 18.4,
+    "max": 18.399999618530273,
+    "over50": 0
+  }
+}

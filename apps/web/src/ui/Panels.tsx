@@ -265,6 +265,7 @@ export function InfoPanel({ index }: { index: TileIndex }) {
       ['f.updated', b.ts?.slice(0, 10)],
       ['f.coords', formatLatLon(b.ll[0], b.ll[1])],
       ['f.id', <code>{b.id}</code>],
+      ['f.localOutline', b.local ? <span>{b.local.method} · {b.local.confidence} · {b.local.date}{(b.local.evidence ?? []).map((e, i) => <a key={i} className="ml-1 text-sky-300 underline" href={e.url} target="_blank" rel="noreferrer">[{i + 1}{e.license ? ` ${e.license}` : ''}]</a>)}</span> : null],
       ['f.sid', b.src === 'osm' ? <a className="text-sky-300 underline" href={`https://www.openstreetmap.org/${b.sid.replace('osm:', '').split('#')[0]}`} target="_blank" rel="noreferrer">{b.sid}</a> : <code>{b.sid}</code>],
       ['f.note', b.note],
     )

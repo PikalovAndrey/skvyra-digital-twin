@@ -317,6 +317,8 @@ def door_edge(g, attrs, i):
 def confidence(props, ov) -> str:
     if ov and ov.get("verified"):
         return "verified"
+    if props["source"] == "local":  # confirmed local outline (approximate ones never reach the model)
+        return "verified" if props.get("local", {}).get("confidence") == "high" else "source"
     return "source" if props["source"] == "osm" else "inferred"
 
 
@@ -371,7 +373,7 @@ def build_tile(ix, iy, force=False) -> dict:
             "landmark": {k: lm[k] for k in ("name", "wikidata", "evidence", "photos", "license", "match_distance_m", "match", "address", "heritage", "features", "identity_audit") if lm.get(k) not in (None, "", [])} if lm else None,
             "name": tags.get("name"), "addr": " ".join(x for x in (tags.get("addr:street"), tags.get("addr:housenumber")) if x) or None,
             "ll": [round(float(lon), 6), round(float(lat), 6)], "area": p["area_m2"], "ts": p.get("source_timestamp"),
-            "flags": p.get("flags"), "note": ov.get("note") if ov else None,
+            "flags": p.get("flags"), "note": ov.get("note") if ov else None, "local": p.get("local"),
             "model": ov.get("model") if ov else None,
             "ml_conf": p.get("ml_confidence") if p["source"] == "ms_ml" and (p.get("ml_confidence") or -1) >= 0 else None,
         }.items() if v is not None}
@@ -641,6 +643,8 @@ def write_index(cfg, frame, results, boundary, partial=False, context=None):
     dem = dem_path()
     ter = Terrain(dem, frame, step=LODS[0]["step"], verbose=False) if dem.exists() else FlatTerrain()
     quality.build(cfg, frame, ter.z)
+    from . import review
+    review.build(cfg, frame)
 
 
 def boundary_line(boundary, frame):

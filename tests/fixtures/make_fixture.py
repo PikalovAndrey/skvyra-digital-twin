@@ -167,6 +167,20 @@ def main():
                        crs="EPSG:4326", transform=fo(LON0 - 0.03, LAT0 + 0.02, wres, wres)) as dst:
         dst.write(np.full((480, 720), 30, np.uint8), 1)  # grassland everywhere
 
+    # local outlines (geometry overrides): one confirmed (enters the model), one approximate (review only)
+    ov_dir = ROOT / "data" / "overrides"
+    ov_dir.mkdir(parents=True, exist_ok=True)
+    def fpf(fid, ring, status, conf):
+        return {"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [[[ll(*p)["lon"], ll(*p)["lat"]] for p in ring]]},
+                "properties": {"id": fid, "status": status, "confidence": conf, "method": "SYNTHETIC test outline",
+                               "date": "2026-11-14", "evidence": [{"url": "https://example.org/synthetic", "license": "test only"}],
+                               "tags": {"building": "house", "building:levels": "1"},
+                               **({"approval": {"by": "test", "date": "2026-11-14", "basis": "site_survey", "checks": "synthetic"}}
+                                  if status == "confirmed" else {})}}
+    (ov_dir / "footprints.geojson").write_text(json.dumps({"type": "FeatureCollection", "features": [
+        fpf("local:synthetic-confirmed", rect(-200, 200, 12, 9), "confirmed", "high"),
+        fpf("local:synthetic-draft", rect(-220, -150, 10, 8), "approximate", "low")]}))
+
     from skvyra import acquire
     for nm in ("chm_meta_v2.tif", "chm_meta_v2_dates.geojson", "worldcover_2021.tif"):
         acquire.record(nm, raw / nm, source="SYNTHETIC fixture", license="test only")

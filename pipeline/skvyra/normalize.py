@@ -292,6 +292,13 @@ def run(cfg: dict) -> dict:
             kept.append((p, props))
         buildings = kept
 
+    # local outlines (data/overrides/footprints.geojson): confirmed ones join the model, approximate ones only the
+    # review layer; sources stay untouched (see overrides.py)
+    from . import overrides as OV
+    buildings, fp_report = OV.apply_footprints(buildings, frame, bnd_p, road_lines, internal_id)
+    stats["local_outlines_applied"] = len(fp_report["applied"])
+    stats["local_outlines_review_only"] = len(fp_report["review"])
+
     # shops / services inside a building (points) -> facade hint
     if commercial_points:
         btree = shapely.STRtree([p for p, _ in buildings])
@@ -326,6 +333,7 @@ def run(cfg: dict) -> dict:
     report = {"osm_source_timestamp": osm_ts, "counts": {
         "buildings": len(buildings), "buildings_osm": sum(1 for _, p in buildings if p["source"] == "osm"),
         "buildings_ms": sum(1 for _, p in buildings if p["source"] == "ms_ml"),
+        "buildings_local": sum(1 for _, p in buildings if p["source"] == "local"),
         "buildings_in_boundary": sum(1 for _, p in buildings if p["in_boundary"]),
         "roads": len(roads), "railways": len(rails), "waterways": len(waterways), "areas": len(areas),
         "trees": len(trees), "pois": len(pois), "quarantined": len(quarantine)}, "stats": dict(sorted(stats.items()))}

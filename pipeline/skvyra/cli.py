@@ -63,7 +63,29 @@ def stage_build(cfg, args):
 STAGES = {"acquire": stage_acquire, "normalize": stage_normalize, "audit": stage_audit, "build": stage_build}
 
 
+def review_main(argv) -> int:
+    """skvyra review apply CHANGES.json [--yes] | revert"""
+    from . import review
+    from .geo import Frame
+    p = argparse.ArgumentParser(prog="skvyra review")
+    p.add_argument("action", choices=["apply", "revert"])
+    p.add_argument("changes", nargs="?")
+    p.add_argument("--yes", action="store_true", help="write the files (default: dry run with diff and validation)")
+    p.add_argument("--config", default=str(C.ROOT / "config" / "city.json"))
+    a = p.parse_args(argv)
+    cfg = C.load(a.config)
+    if a.action == "revert":
+        return review.revert()
+    if not a.changes:
+        p.error("apply needs a change-set file (exported from review.html)")
+    return review.apply(a.changes, Frame(cfg["crs_metric"], cfg["origin_utm"]), yes=a.yes)
+
+
 def main(argv=None):
+    import sys
+    argv = sys.argv[1:] if argv is None else argv
+    if argv and argv[0] == "review":
+        return review_main(argv[1:])
     p = argparse.ArgumentParser(prog="skvyra")
     p.add_argument("stage", choices=[*STAGES, "all"])
     p.add_argument("--offline", action="store_true", help="never touch the network; fail if data is not cached")
