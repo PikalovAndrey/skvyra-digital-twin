@@ -43,9 +43,11 @@ KINDS = {
     "outbuilding": {"garage", "garages", "shed", "hut", "roof", "carport", "toilets"},
     "house": {"house", "detached", "semidetached_house", "bungalow", "terrace", "farm"},
 }
-FACADE = {"none": 0, "house": 1, "apartments": 2, "commercial": 3, "public": 4, "industrial": 5, "church": 6, "historic": 7}
+FACADE = {"none": 0, "house": 1, "apartments": 2, "commercial": 3, "public": 4, "industrial": 5, "church": 6, "historic": 7,
+          "tiled_arched": 8,  # tile-clad, rectangular ground-floor windows, tall upper windows with arched fanlights
+          "tiled": 9}         # tile-clad, rectangular windows (photo-observed cladding, landmarks only)
 ROOF_MAT = {"bitumen": 0, "metal_tile": 1, "slate": 2, "corrugated": 3, "seam": 4}
-FLOOR_H = {"public": 3.8, "historic": 4.0, "apartments": 2.9, "commercial": 3.3, "church": 4.5}
+FLOOR_H = {"public": 3.8, "historic": 4.0, "apartments": 2.9, "commercial": 3.3, "church": 4.5, "tiled_arched": 5.5, "tiled": 4.2}
 PALETTE = {  # sRGB hex with weights; tuned on licensed photos of Skvyra (docs/ARCHITECTURE_STYLE.md)
     "house_wall": [("#efece6", 6), ("#e8dcc0", 5), ("#ead79c", 2), ("#e6b99a", 2), ("#cfcac2", 3), ("#c3d2dc", 2),
                    ("#cdd8bd", 1), ("#b0553f", 1), ("#9c4f3c", 2), ("#dcd8cc", 3), ("#d8c3a5", 3)],
@@ -138,8 +140,10 @@ def resolve(props: dict, area: float, aspect: float, fill: float, cover: str | N
     o, ev, lm = override or {}, ev or {}, landmark or {}
     if lm.get("match") == "probable":  # location uncertain: name only, no change of appearance
         lm = {}
+    if lm.get("kind"):  # use seen on the landmark photos (e.g. a school annex, not a warehouse)
+        kind, kind_how = lm["kind"], "photo_estimate"
     facade = lm.get("facade") or ("none" if kind == "outbuilding" else kind)
-    fh = FLOOR_H.get(facade, FLOOR_H.get(kind, cfg["floor_height_m"]))
+    fh = lm.get("floor_h") or FLOOR_H.get(facade, FLOOR_H.get(kind, cfg["floor_height_m"]))
 
     # --- roof shape ---------------------------------------------------------------------------------
     roof, roof_method = None, "inferred"
@@ -253,7 +257,8 @@ def resolve(props: dict, area: float, aspect: float, fill: float, cover: str | N
             "trim_color": srgb_to_linear(hex_rgb(r.choice(["#f2f0ea", "#ede8dc", "#5a3a2b", "#7a7a76"]))).tolist(),
             "door_color": srgb_to_linear(hex_rgb(r.choice(["#4a2f1e", "#5c3a22", "#3b3f45", "#6b6e70", "#7a4a2a"]))).tolist(),
             "chimney": kind == "house" and roof != "flat" and r.random() < 0.7, "rand": r.random(),
-            "rand2": r.random(), "decompose": kind in ("house", "public", "commercial", "outbuilding", "church") and roof != "flat"}
+            "rand2": r.random(), "bay_m": lm.get("bay_m", 3.0), "window_base_m": lm.get("window_base_m", 0.0),
+            "decompose": kind in ("house", "public", "commercial", "outbuilding", "church") and roof != "flat"}
 
 
 # ------------------------------------------------------------------------------------------------------
@@ -446,7 +451,7 @@ def plan(p: Polygon, attrs: dict):
         pc, pu, pv, pL, pW = obb(g)
         d = main.c - pc
         ds, dt = d @ pu / pL, d @ pv / pW
-        if small and shape != "flat" and r.random() < 0.6:
+        if small and shape != "flat" and not attrs.get("no_lean_to") and r.random() < 0.6:
             # lean-to extension rising towards the main body, its high side just under the main eave
             slope = (math.copysign(1.0, ds), 0.0) if abs(ds) > abs(dt) else (0.0, math.copysign(1.0, dt))
             probe = Part(g, "shed", eave, min(pitch, 16.0), 2.2, slope)
@@ -739,6 +744,143 @@ def box_tris(c, u, v, hu, hv, z0, z1):
     return out
 
 
+def pediment_tris(base, u, n, e, f: dict, tym):
+    """Gable crowning a facade, standing on the eave line e at `base` (2D, on the wall), u along the wall, n outward.
+    f: width_m, rise_m, shape "triangle" (classical pediment) or "ogee" (curved baroque attic with a flat top),
+    cornice_colour, oculus_r (round / arched window). Tympanum, raking cornice following the outline, base cornice.
+    Sizes are photo estimates. -> (tris, colours)."""
+    lin = lambda h: srgb_to_linear(hex_rgb(h)).tolist()
+    w2, rise = f["width_m"] / 2, f["rise_m"]
+    if f.get("shape") == "ogee":  # concave foot, convex shoulder, flat top a fifth of the width
+        prof = [(-1.0, 0.0), (-0.85, 0.08), (-0.7, 0.3), (-0.55, 0.62), (-0.38, 0.86), (-0.2, 1.0),
+                (0.2, 1.0), (0.38, 0.86), (0.55, 0.62), (0.7, 0.3), (0.85, 0.08), (1.0, 0.0)]
+    else:
+        prof = [(-1.0, 0.0), (0.0, 1.0), (1.0, 0.0)]
+    cc = lin(f.get("cornice_colour", "#e8e2d8"))
+    u3, n3 = np.array([*u, 0.0]), np.array([*n, 0.0])
+    o3 = np.array([*(base + n * 0.06), e])
+    P = [o3 + u3 * (a * w2) + np.array([0, 0, b * rise]) for a, b in prof]
+    tris, cols = [], []
+    for k in range(len(P) - 1):  # fan from the base centre (both outlines are star-shaped from there)
+        tris.append([o3.tolist(), P[k + 1].tolist(), P[k].tolist()])                                       # faces n
+        tris.append([(o3 - n3 * 0.04).tolist(), (P[k] - n3 * 0.04).tolist(), (P[k + 1] - n3 * 0.04).tolist()])  # back
+        cols += [tym, tym]
+    kd = 0.3  # cornice depth (m), projecting from the tympanum
+    for p0, p1 in zip(P[:-1], P[1:]):
+        d3 = p1 - p0
+        if np.linalg.norm(d3) < 1e-6:
+            continue
+        d3 = d3 / np.linalg.norm(d3)
+        nrm = np.cross(n3, d3)
+        nrm = nrm if nrm[2] >= 0 else -nrm
+        a0, a1, b0, b1 = p0 + nrm * 0.12, p1 + nrm * 0.12, p0 - nrm * 0.2, p1 - nrm * 0.2
+        fo = n3 * kd
+        tris += [[b0 + fo, b1 + fo, a1 + fo], [b0 + fo, a1 + fo, a0 + fo], [a0, a0 + fo, a1 + fo], [a0, a1 + fo, a1]]
+        cols += [cc] * 4
+    tris += box_tris(base + n * (0.06 + kd / 2), u, -n, w2 + 0.3, kd / 2, e - 0.25, e + 0.08)
+    cols += [cc] * 10
+    if f.get("oculus_r"):
+        r_ = f["oculus_r"]
+        c3 = o3 + n3 * 0.01 + np.array([0, 0, rise * f.get("oculus_at", 0.45)])
+        up3 = np.array([0.0, 0.0, 1.0])
+        for rr, colr, dz in ((r_ + 0.12, cc, 0.0), (r_, lin("#23272c"), 0.01)):
+            c_ = c3 + n3 * dz
+            pts = [c_ + rr * (math.cos(t) * u3 + math.sin(t) * up3) for t in np.linspace(0, 2 * math.pi, 15)]
+            for q in range(14):
+                tris.append([c_.tolist(), pts[q].tolist(), pts[q + 1].tolist()])
+                cols.append(colr)
+    return [np.asarray(t, float).tolist() for t in tris], cols
+
+
+def wall_frame(p: Polygon, xy):
+    """Nearest exterior wall to a point: (point on the wall, unit u along it, outward normal n)."""
+    ring = np.asarray(shapely.orient_polygons(p, exterior_cw=False).exterior.coords)
+    best = None
+    for a, b in zip(ring[:-1], ring[1:]):
+        d = b - a
+        ln = float(np.hypot(*d))
+        if ln < 1e-6:
+            continue
+        t = float(np.clip((np.asarray(xy) - a) @ d / ln ** 2, 0, 1))
+        q = a + t * d
+        dist = float(np.hypot(*(np.asarray(xy) - q)))
+        if best is None or dist < best[0]:
+            best = (dist, q, d / ln)
+    _, q, u = best
+    return q, u, np.array([u[1], -u[0]])
+
+
+def facade_features(p: Polygon, feats, to_local, ground, eave: float, wall_rgb, lod: int):
+    """Facade features of a plain (non-composite) landmark, placed on the wall nearest to "at_lonlat":
+    pediment (triangle / ogee attic), band (horizontal band around the whole outline). -> (tris, colours)."""
+    lin = lambda h: srgb_to_linear(hex_rgb(h)).tolist()
+    ext = np.asarray(p.exterior.coords)
+    z0 = float(np.mean(ground(ext[:, 0], ext[:, 1])))
+    tris, cols = [], []
+    for f in feats:
+        if f["type"] == "pediment" and lod < 2:
+            base, u, n = wall_frame(p, to_local(*f["at_lonlat"]))
+            t, c = pediment_tris(base, u, n, z0 + eave, f, lin(f["colour"]) if f.get("colour") else list(wall_rgb))
+            tris += t
+            cols += c
+        elif f["type"] == "band" and lod < 2:
+            ring = np.asarray(shapely.segmentize(shapely.orient_polygons(p, exterior_cw=False).exterior, 2.0).coords)
+            c = lin(f["colour"])
+            za, zb = z0 + eave - f["below_eave_m"][0], z0 + eave - f["below_eave_m"][1]
+            for a, b in zip(ring[:-1], ring[1:]):
+                d = b - a
+                ln = float(np.hypot(*d))
+                if ln < 1e-6:
+                    continue
+                o = np.array([d[1], -d[0]]) / ln * f.get("proud_m", 0.06)
+                A, B_ = a + o, b + o
+                tris += [[(*A, za), (*B_, za), (*B_, zb)], [(*A, za), (*B_, zb), (*A, zb)]]
+                cols += [c, c]
+    return np.array(tris, float).reshape(-1, 3, 3), np.array(cols, float).reshape(-1, 3)
+
+
+def frustum_tris(c, u, v, h0, h1, z0, z1):
+    """Truncated pyramid (bottom half-sizes h0=(hu, hv), top h1) with outward faces and a top cap."""
+    q = lambda hu, hv: [c - hu * u - hv * v, c + hu * u - hv * v, c + hu * u + hv * v, c - hu * u + hv * v]
+    lo, hi = q(*h0), q(*h1)
+    out = []
+    for k in range(4):
+        A, B, C, D = (*lo[k], z0), (*lo[(k + 1) % 4], z0), (*hi[(k + 1) % 4], z1), (*hi[k], z1)
+        out += [[A, B, C], [A, C, D]]
+    t = [(*p_, z1) for p_ in hi]
+    return out + [[t[0], t[1], t[2]], [t[0], t[2], t[3]]]
+
+
+def monument_mesh(cx, cy, z_ground, spec: dict, lod: int):
+    """Free-standing monument from photos (config/landmarks.json "monuments"): a stack of blocks (steps, plinth,
+    pillar) rising from the lowest ground point, optionally topped by a bust. Every size is a photo estimate.
+    -> (tris, colours). Local coords; spec["facing_deg"] = azimuth the front faces (0 = north, 90 = east)."""
+    az = math.radians(spec.get("facing_deg", 0.0))
+    v = np.array([math.sin(az), math.cos(az)])        # towards the front
+    u = np.array([v[1], -v[0]])                        # (u, v) as box_tris expects: faces point outward
+    c = np.array([cx, cy])
+    lin = lambda h: srgb_to_linear(hex_rgb(h)).tolist()
+    tris, cols = [], []
+    z = z_ground
+    for b in spec["stack"]:
+        t = box_tris(c, u, v, b["w"] / 2, b["d"] / 2, z - (0.4 if z == z_ground else 0.0), z + b["h"])
+        tris += t
+        cols += [lin(b["colour"])] * len(t)
+        z += b["h"]
+    bust = spec.get("bust")
+    if bust and lod == 0:
+        col = lin(bust.get("colour", "#3b3a36"))
+        w, h = bust["w"], bust["h"]
+        parts = [frustum_tris(c, u, v, (w / 2, w * 0.28), (w * 0.36, w * 0.22), z, z + h * 0.42),            # chest, shoulders
+                 box_tris(c, u, v, w * 0.1, w * 0.1, z + h * 0.42, z + h * 0.52),                         # neck
+                 frustum_tris(c, u, v, (w * 0.16, w * 0.18), (w * 0.17, w * 0.19), z + h * 0.52, z + h * 0.82),  # head
+                 frustum_tris(c, u, v, (w * 0.18, w * 0.2), (w * 0.08, w * 0.1), z + h * 0.82, z + h)]          # cap / helmet
+        for t in parts:
+            tris += t
+            cols += [col] * len(t)
+    return np.array(tris, float).reshape(-1, 3, 3), np.array(cols, float).reshape(-1, 3)
+
+
 def rotunda_mesh(cx, cy, z_bot, z_ground, spec: dict, eave: float, floor_h: float, n: int = 32):
     """Domed corner tower of a landmark (photo-estimated, see config/landmarks.json "features"): cylinder wall
     centred on the footprint corner (three quarters stand outside the building), set-back drum with round
@@ -874,10 +1016,17 @@ def composite_details(p: Polygon, spec: dict, ground, lod: int, wall_rgb):
         z0 = zg[id(ps)]
         o = out * 0.04
         if ps.get("plinth_m"):
-            quad(a + o, b + o, z_bot, z_bot, z0 + ps["plinth_m"], z0 + ps["plinth_m"], stone)
-        if lod == 0 and ps.get("frieze", True):
+            quad(a + o, b + o, z_bot, z_bot, z0 + ps["plinth_m"], z0 + ps["plinth_m"], lin(ps["plinth_colour"]) if ps.get("plinth_colour") else stone)
+        for z_a, z_b, c in ps.get("bands", []):  # painted / clad horizontal bands seen on the photos, metres above ground
+            quad(a + out * 0.05, b + out * 0.05, z0 + z_a, z0 + z_a, z0 + z_b, z0 + z_b, lin(c))
+        if lod < 2 and ps.get("frieze", True):
             e = z0 + ps["eave_m"]
-            quad(a + out * 0.08, b + out * 0.08, e - 0.55, e - 0.55, e - 0.1, e - 0.1, frieze)
+            fc = lin(ps["frieze_colour"]) if ps.get("frieze_colour") else frieze
+            quad(a + out * 0.08, b + out * 0.08, e - 0.55, e - 0.55, e - 0.1, e - 0.1, fc)
+            if ps.get("frieze_colour"):  # a cornice that projects: top face (normal up) so it reads from above too
+                tris.extend([[(*a, e - 0.1), (*(a + out * 0.3), e - 0.1), (*(b + out * 0.3), e - 0.1)],
+                             [(*a, e - 0.1), (*(b + out * 0.3), e - 0.1), (*b, e - 0.1)]])
+                cols.extend([fc, fc])
     for f in spec.get("features", []):
         g, ps = parts[f["part"]]
         z0 = zg[id(ps)]
@@ -908,6 +1057,11 @@ def composite_details(p: Polygon, spec: dict, ground, lod: int, wall_rgb):
                     pts = [c3 + np.array([*(n * 0.01), 0.0]) + 0.8 * r * (math.cos(t) * uu + math.sin(t) * up) for t in a3]
                     tris.append([q.tolist() for q in pts])
                     cols.append(lin("#e9e6df"))
+        elif f["type"] == "pediment":
+            tym = lin(f.get("colour") or ps.get("wall_colour")) if (f.get("colour") or ps.get("wall_colour")) else list(wall_rgb)
+            pt, pc = pediment_tris(base, u, n, z0 + ps["eave_m"], f, tym)
+            tris.extend(pt)
+            cols.extend(pc)
         elif f["type"] == "door":
             z_a = z0 + f.get("sill_m", 0.0)
             box(base + n * 0.02, f.get("width_m", 1.2) / 2, 0.03, z_a, z_a + f.get("height_m", 2.3), lin(f.get("colour", "#5a3b26")))

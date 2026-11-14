@@ -17,20 +17,20 @@
     ],
     "checked": "2026-11-14"
    },
-   "levels": 2,
-   "facade": "historic",
-   "roof_shape": "hipped",
+   "facade": "tiled_arched",
    "roof_material": "seam",
-   "wall_colour": "#c8916a",
-   "roof_colour": "#9da2a4",
-   "evidence": "Two tall storeys of ochre-salmon tile-clad brick, grey sheet-metal hipped roofs with pediments (pediments not modelled). Domed corner tower modelled from photos: three-quarter cylinder on the south-west corner of the south wing (position inferred from the tower close-up - both adjoining walls recede symmetrically, so it stands on a convex corner - and from a geotagged 2019 photo taken 5 m from that corner showing the adjoining facades); diameter ~7 m from 5 window bays on the visible half-circumference; white drum with ~8 round windows, ribbed grey metal dome. All tower dimensions are estimates.",
+   "wall_colour": "#ceb5a0",
+   "roof_colour": "#a3a8aa",
+   "evidence": "Layout read against the OSM outline (way 952914329): the photos from the garden (south) show, west to east, a two-storey pedimented wing with an oculus and the entrance (OSM: the 13 m west-end projection), a two-storey link with six window axes (21 m), the tall main block whose south risalit carries a pediment over three window axes (OSM risalit: 16 m south face, 24 m west face with six arched axes) and the domed tower on its south-EAST corner, then a two-storey pedimented east wing (9.3 m). 3.4 correction: the tower stands on the risalit's south-east corner, not the south-west one (3.0) - every view from the south and south-west shows the three-axis pediment face to the LEFT of the tower and the six-axis face receding further left, and only a sliver plus the east wing to its right. Main block: two storeys (as OSM building:levels=2) - rectangular ground-floor windows, a tall upper storey whose windows are rectangles with a separate arched fanlight, broken-tile mosaic panels above them, lighter tile pilasters between the bays; whole complex clad in small ceramic tiles (pink/beige patchwork on the main block, orange-pink on the wings), grey stone plinth, pink cornice bands, light-grey sheet-metal roofs. West wing: blue and yellow painted band above the plinth, door right of centre. Estimates (scale from door and window heights): eaves 12.3 m (main), 10 m (end wings), 8.8 m (link); pediment rises 2-2.6 m. Not modelled: the street (north) facade with its four-column portico (position along the facade not determinable from the photos), door canopies, mosaic motifs (drawn as generic speckle), plaques.",
    "photos": [
     "https://commons.wikimedia.org/wiki/File:Skvyra_lyceum_(1).jpg",
-    "https://commons.wikimedia.org/wiki/File:Skvyra_lyceum_(4).jpg",
-    "https://commons.wikimedia.org/wiki/File:Skvyra_lyceum_(5).jpg",
-    "https://commons.wikimedia.org/wiki/File:Будівля_чоловічої_гімназії_IMG_20191122_154741.jpg"
+    "https://commons.wikimedia.org/wiki/File:Skvyra_lyceum_(12).jpg",
+    "https://commons.wikimedia.org/wiki/File:Skvyra_lyceum_(6).jpg",
+    "https://commons.wikimedia.org/wiki/File:Skvyra_lyceum_(13).jpg",
+    "https://commons.wikimedia.org/wiki/File:Будівля_чоловічої_гімназії_(Сквирський_ліцей)_03.jpg",
+    "https://commons.wikimedia.org/wiki/File:Будівля_чоловічої_гімназії_IMG_20191122_154745.jpg"
    ],
-   "license": "CC BY-SA 4.0, Wikimedia Commons - photos by Xsandriel (2025, 3 files) and WestBam (2019); referenced, not redistributed",
+   "license": "CC BY-SA 4.0, Wikimedia Commons - Xsandriel (2025: Skvyra lyceum (1), (6), (12), (13), (4)), Kiyanka (2025: ... 03), WestBam (2019-11-22: IMG 20191122 154745); 27 files of the category viewed for identity and details; referenced, not redistributed",
    "lonlat": [
     29.652008,
     49.736667
@@ -40,8 +40,8 @@
      "type": "rotunda",
      "method": "photo_estimate",
      "centre_lonlat": [
-      29.6518798,
-      49.7363261
+      29.652102,
+      49.7363273
      ],
      "diameter_m": 7.0,
      "wall_above_eave_m": 0.6,
@@ -51,10 +51,179 @@
      "oculi": 8,
      "drum_colour": "#e6e2d8",
      "dome_colour": "#8e979c",
-     "cornice_colour": "#e9e4da"
+     "cornice_colour": "#e9e4da",
+     "position_note": "south-east corner of the south risalit (3.4; was south-west in 3.0)"
     }
    ],
-   "wlm_id": "UA-32-240-0007"
+   "wlm_id": "UA-32-240-0007",
+   "composite": {
+    "method": "photo_estimate",
+    "axis_from": "west",
+    "front": "south",
+    "split_m": [
+     13.33,
+     34.09,
+     70.78
+    ],
+    "plinth_colour": "#a39a8b",
+    "parts": [
+     {
+      "name": "west pedimented wing",
+      "roof": "gabled",
+      "eave_m": 10.0,
+      "rise_m": 2.4,
+      "floor_h": 4.5,
+      "bay_m": 4.4,
+      "window_base_m": 0.9,
+      "facade": "tiled",
+      "plinth_m": 1.4,
+      "wall_colour": "#c58862",
+      "frieze_colour": "#e9e2d7",
+      "roof_colour": "#a3a8aa",
+      "roof_material": "seam",
+      "bands": [
+       [
+        1.4,
+        2.0,
+        "#5a8ccf"
+       ],
+       [
+        2.0,
+        2.12,
+        "#e2cf78"
+       ]
+      ]
+     },
+     {
+      "name": "two-storey link",
+      "roof": "hipped",
+      "eave_m": 8.8,
+      "rise_m": 2.0,
+      "floor_h": 4.0,
+      "bay_m": 3.4,
+      "window_base_m": 0.8,
+      "facade": "tiled",
+      "plinth_m": 0.8,
+      "wall_colour": "#c99777",
+      "frieze_colour": "#e9e2d7",
+      "roof_colour": "#a3a8aa",
+      "roof_material": "seam"
+     },
+     {
+      "name": "main block with the south risalit",
+      "roof": "gabled",
+      "decompose": true,
+      "pitch_deg": 18,
+      "eave_m": 12.3,
+      "rise_m": 2.8,
+      "floor_h": 5.5,
+      "bay_m": 3.8,
+      "window_base_m": 0.9,
+      "facade": "tiled_arched",
+      "plinth_m": 0.9,
+      "wall_colour": "#ceb5a0",
+      "frieze_colour": "#d49a86",
+      "roof_colour": "#a3a8aa",
+      "roof_material": "seam"
+     },
+     {
+      "name": "east pedimented wing",
+      "roof": "gabled",
+      "eave_m": 10.0,
+      "rise_m": 2.0,
+      "floor_h": 4.5,
+      "bay_m": 3.1,
+      "window_base_m": 0.9,
+      "facade": "tiled",
+      "plinth_m": 0.9,
+      "wall_colour": "#c58862",
+      "frieze_colour": "#e9e2d7",
+      "roof_colour": "#a3a8aa",
+      "roof_material": "seam"
+     }
+    ],
+    "features": [
+     {
+      "type": "pediment",
+      "part": 0,
+      "at_m": 6.67,
+      "width_m": 13.3,
+      "rise_m": 2.4,
+      "oculus_r": 0.45,
+      "cornice_colour": "#ece6dc"
+     },
+     {
+      "type": "door",
+      "part": 0,
+      "at_m": 9.2,
+      "sill_m": 0.0,
+      "width_m": 1.5,
+      "height_m": 2.6,
+      "colour": "#5a2a22"
+     },
+     {
+      "type": "pediment",
+      "part": 2,
+      "at_m": 42.1,
+      "width_m": 16.0,
+      "rise_m": 2.6,
+      "cornice_colour": "#d8a08c"
+     },
+     {
+      "type": "door",
+      "part": 2,
+      "at_m": 48.6,
+      "sill_m": 0.2,
+      "width_m": 1.2,
+      "height_m": 2.3,
+      "colour": "#6b4a33"
+     },
+     {
+      "type": "pediment",
+      "part": 3,
+      "at_m": 75.4,
+      "width_m": 9.3,
+      "rise_m": 2.0,
+      "oculus_r": 0.4,
+      "cornice_colour": "#ece6dc"
+     }
+    ]
+   }
+  },
+  {
+   "wikidata": "Q122727138",
+   "name": "Сквирський ліцей: одноповерхова прибудова",
+   "part_of": "Будівля чоловічої гімназії (Сквирський ліцей)",
+   "heritage": {
+    "status": "unknown",
+    "status_note": "No State Register entry (decision number/date) was available to check; 'unknown' until an official register record is seen. Statuses reported by secondary sources are kept separately and never shown as official.",
+    "reported_status": "registered monument of local significance (architecture), protection no. 78-Ко",
+    "reported_source": "Wiki Loves Monuments list 'Сквирська громада' (uk.wikipedia, secondary compilation)",
+    "official_mentions": [
+     "Kyiv Oblast State Administration, culture dept., reply No 1708/01-11 of 2017 to a public-information request (wlm.org.ua/docs/local/kiev-obl/1708-01-11-2017.pdf): inventory 'Наявність та дислокація пам'яток архітектури' lists it (category not stated)",
+     "Kyiv Oblast State Administration reply No 428 (2021), list of history monuments (wlm.org.ua/docs/local/kiev-obl/428-2021.pdf): 'Будинок колишньої чотирьохкласної гімназії (нині ліцей)', type 'іст., архіт. - ?'",
+     "not in the national-significance list of the State Register for Kyiv Oblast (Ministry of Culture, as of 20.09.2024)"
+    ],
+    "checked": "2026-11-14"
+   },
+   "levels": 1,
+   "facade": "tiled",
+   "roof_shape": "hipped",
+   "wall_colour": "#cdb08f",
+   "roof_colour": "#3e6db5",
+   "evidence": "Lyceum annex (OSM way 952914328). Seen at the left edge of the garden view Skvyra lyceum (1): one storey, beige tile cladding like the lyceum, a row of windows, low-pitched blue sheet-metal roof. Its west side behind the Olshevskyi bust (2025 photos) is re-clad in yellow corrugated sheet with a blue band - one colour per building is modelled, the beige of the lyceum side is used. Eave ~4.4 m and roof form are photo estimates.",
+   "photos": [
+    "https://commons.wikimedia.org/wiki/File:Пам'ятник_Герою_Радянського_Союзу_М._М._Ольшевському,_Сквира_02.jpg",
+    "https://commons.wikimedia.org/wiki/File:Skvyra_lyceum_(1).jpg"
+   ],
+   "license": "CC BY-SA 4.0, Wikimedia Commons - Kiyanka (2025), Xsandriel (2025); referenced, not redistributed",
+   "lonlat": [
+    29.6510154,
+    49.7364331
+   ],
+   "floor_h": 4.0,
+   "kind": "public",
+   "roof_material": "seam"
   },
   {
    "wikidata": "Q30968245",
@@ -361,14 +530,102 @@
     ],
     "checked": "2026-11-14"
    },
-   "facade": "historic",
-   "evidence": "Listed monument; no photo inspected - only named and given the historic facade style.",
-   "photos": [],
-   "license": "",
+   "facade": "public",
+   "evidence": "Street front (2014 and 2017 photos): one tall storey of whitewashed brick (lime wash peeling on the left, the right two bays painted white), six windows with plastered surrounds in a 17.5 m front - this matches the south-east edge of the Microsoft ML outline (17.5 m, six 2.9 m bays) facing вул. Київська; central curved (ogee) brick attic with a small arched niche, its outline in exposed red brick, over windows 3-4; a band of dentils and rosettes under the eaves; low hipped roof of grey asbestos-cement slate; a later porch annex and a two-storey neighbour with a green roof adjoin on the left (not part of this outline). Estimates (scale from the 2.9 m bays): eave ~4.6 m, windows ~2.3 m tall, attic ~4.9 m wide, rises ~1.7 m above the eave. Not visible / not modelled: side and rear facades (drawn with the same windows), chimney ornament, the street fence.",
+   "photos": [
+    "https://commons.wikimedia.org/wiki/File:Вул._Київська,_1.jpg",
+    "https://commons.wikimedia.org/wiki/File:Київська,1-Сквира.JPG"
+   ],
+   "license": "Basil Tsymbaliuk (2017-04-17, CC BY-SA 4.0), Олекса-Київ (2014-03-10, CC BY-SA 3.0), Wikimedia Commons; referenced, not redistributed",
    "lonlat": [
     29.667004,
     49.73606
-   ]
+   ],
+   "levels": 1,
+   "floor_h": 4.2,
+   "bay_m": 2.9,
+   "roof_shape": "hipped",
+   "roof_material": "slate",
+   "wall_colour": "#e2dacb",
+   "roof_colour": "#8f8d87",
+   "features": [
+    {
+     "type": "pediment",
+     "shape": "ogee",
+     "method": "photo_estimate",
+     "at_lonlat": [
+      29.6670165,
+      49.7360053
+     ],
+     "width_m": 4.9,
+     "rise_m": 1.7,
+     "colour": "#ddcfba",
+     "cornice_colour": "#b0624a",
+     "oculus_r": 0.28,
+     "oculus_at": 0.55
+    },
+    {
+     "type": "band",
+     "method": "photo_estimate",
+     "below_eave_m": [
+      0.95,
+      0.35
+     ],
+     "colour": "#eee8dc",
+     "proud_m": 0.08
+    }
+   ],
+   "street_door": false
+  }
+ ],
+ "monuments": [
+  {
+   "wikidata": "Q122579664",
+   "name": "Пам'ятник Герою Радянського Союзу М. М. Ольшевському",
+   "lonlat": [
+    29.650555,
+    49.736598
+   ],
+   "facing_deg": 270,
+   "method": "photo_estimate",
+   "location_note": "Wikidata/WLM coordinate (6 decimals). Consistent with the photos: the large building clad in yellow and blue sheet behind the bust is the lyceum annex (OSM way 952914328) 23 m to the east, so the front faces west; the lyceum's own plaque says Olshevskyi studied there.",
+   "evidence": "Black granite pillar with the inscription and a gold star, on a lower black granite block and a two-step base of rough black stone; dark bronze bust in a tank helmet. Scale from the head (~0.4 m): pillar ~0.6 x 2.6 m, block ~0.8 x 1.2 m, steps ~2.4 / 2.0 m, bust ~0.8 m wide, ~0.95 m tall; total ~5.3 m. Depths not visible (assumed square-ish). Sculpture drawn as a simple blocky bust - no likeness.",
+   "photos": [
+    "https://commons.wikimedia.org/wiki/File:Пам'ятник_Герою_Радянського_Союзу_М._М._Ольшевському,_Сквира_02.jpg",
+    "https://commons.wikimedia.org/wiki/File:Bust_of_Mykola_Olshevskyi.jpg"
+   ],
+   "license": "CC BY-SA 4.0, Wikimedia Commons - Kiyanka (2025-07-27, also 2015), Xsandriel (2025-07-27); referenced, not redistributed",
+   "stack": [
+    {
+     "w": 2.4,
+     "d": 2.4,
+     "h": 0.35,
+     "colour": "#2f2f2e"
+    },
+    {
+     "w": 2.0,
+     "d": 2.0,
+     "h": 0.25,
+     "colour": "#363635"
+    },
+    {
+     "w": 0.8,
+     "d": 0.7,
+     "h": 1.2,
+     "colour": "#1d1e1f"
+    },
+    {
+     "w": 0.62,
+     "d": 0.55,
+     "h": 2.6,
+     "colour": "#1f2021"
+    }
+   ],
+   "bust": {
+    "w": 0.8,
+    "h": 0.95,
+    "colour": "#3d3f3a"
+   }
   }
  ]
 }

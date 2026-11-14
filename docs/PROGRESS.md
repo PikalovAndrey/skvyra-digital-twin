@@ -1,4 +1,11 @@
-# Progress — 2026-11-14
+# Progress — 2026-11-15
+
+## Iteration 9 — Historic Centre Visual Authenticity 3.4 (2026-11-15)
+
+Lyceum rebuilt from 27 photos on the unchanged OSM outline (four blocks, pediments, tile-clad facade, tower moved
+to the correct south-east corner); lyceum annex, 1 Kyivska St (one storey, ogee attic) and the Olshevskyi bust from
+photos; museum, Afghan and WWII memorials documented but not rebuilt (location or appearance unconfirmed). No new
+tools; paired benchmark without regression.
 
 ## Iteration 8 — Authenticity 3.3 (2026-11-14)
 

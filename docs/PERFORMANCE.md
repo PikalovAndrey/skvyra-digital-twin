@@ -80,6 +80,22 @@ timings are exposed as `__skvyra.stageMs` / `updateMs` for future profiling.
 **100-jump run (Authenticity 3.3)**: 50 cold + 50 warm jumps, normal pacing: p50 17.8, p95 23.1, p99 = max
 37.2 ms, none above 50 ms (cold p95 30.3 / p99 37.2 ms; warm p99 18.4 ms). One machine, one run.
 
+## Historic Centre 3.4 (2026-11-15): paired A/B/A/B
+
+3.3 code (3c353f7) vs 3.4 working tree, interleaved twice, best of two per view (another Claude session was rendering
+in Blender the whole time, so absolute numbers are noisy; the flight and tile-load numbers vary 3x between runs of
+the same code and are not compared). New `lyceum 120 m` still in the route.
+
+| View | p95 before / after (ms) | p99 before / after (ms) | Triangles before / after |
+|---|---|---|---|
+| overview (medium) | 3.6 / 3.6 | 4.8 / 4.5 | 229 k / 229 k |
+| centre 350 m (medium) | 3.2 / 3.4 | 4.7 / 5.0 | 823 k / 823 k |
+| centre low angle 10° (high) | 4.8 / 4.7 | 6.2 / 6.1 | 3.62 M / 3.62 M |
+| lyceum 120 m (medium) | 3.1 / 3.1 | 4.0 / 4.1 | 206 k / 210 k |
+| lyceum 120 m (high) | 3.3 / 3.2 | 5.0 / 4.5 | 411 k / 415 k |
+
+Tiles: +0.36 MB of 188 MB; the lyceum tile LOD0 802 → 959 KB, LOD1 217 → 372 KB (composite details, cornices at LOD1).
+
 ## Fast camera movement
 
 - Continuous 18 s flight across town at 120 m (≈ 9,300 frames, 14 tile loads while moving): p50 2.0, p95

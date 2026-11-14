@@ -125,20 +125,20 @@ itself comes from (`site_survey`, `licensed_imagery`, `official_document`, `open
 can only support a check), `checks` says what was compared (e.g. "L shape and 23 m front match the WestBam photos").
 Every evidence entry needs a url and a licence. The change goes through the same dry run → `--yes` (backup) → revert.
 
-## Status (2026-11-14, after Authenticity 3.3)
+## Status (2026-11-15, after Historic Centre 3.4)
 
 | Check | Result |
 |---|---|
-| Tile build (`build --force`) | 119 / 119 tiles, 0 failed, 17 s |
-| Geometry QA (`make qa`) | 0 floating, 0 buried, 0 road/building overlaps, 0 trees in buildings, 0 surfaces facing down; 13 low uphill walls (real slopes), 1 height outlier |
-| Python tests | 128 passed (incl. canopy segmentation, trust masks, tower geometry, composite landmark, quality layer, local outlines + review apply/revert, synthetic CHM end-to-end) |
+| Tile build (`build --force`) | 119 / 119 tiles, 0 failed, 19 s |
+| Geometry QA (`make qa`) | 0 floating, 0 buried, 0 road/building overlaps, 0 trees in buildings, 0 surfaces facing down; 13 low uphill walls (real slopes), 0 height outliers |
+| Python tests | 132 passed (incl. frieze + door at LOD1, pediment / monument geometry, landmark photo overrides, canopy segmentation, trust masks, tower geometry, composite landmark, quality layer, local outlines + review apply/revert, synthetic CHM end-to-end) |
 | TypeScript unit tests (vitest) | 36 passed |
 | Typecheck (`tsc --noEmit`) | 0 errors |
 | Browser e2e (Playwright) | 8 passed (incl. review workbench), 3 on-demand skipped (benchmark, teleport, compare) |
-| Production build (`vite build`) | OK — JS 1.36 MB (382 KB gzip); `dist/` 229 MB incl. tiles |
+| Production build (`vite build`) | OK — JS 1.37 MB (388 KB gzip); `dist/` 229 MB incl. tiles |
 | Performance | see docs/PERFORMANCE.md — M4 Pro only; 3.0 adds ~0–5 ms p99 in tree-heavy views (paired runs under external load), CPU-throttled profile without regression in static views; weak GPUs not measured |
 
-Authenticity 3.2: data-quality layer `docs/img/a32/gaps-district.jpg`, `gaps-street.jpg`; unconfirmed landmark match `info-zemska.jpg`. Authenticity 3.1: `docs/img/a31/web-synagogue-front.jpg`, `web-synagogue.jpg`. Best before/after pairs (3.0): `docs/img/vf3/web-yards-sw.jpg`, `web-houses-ne.jpg`, `web-lyceum-tower.jpg`,
+Historic Centre 3.4: before/after `docs/img/a34/lyceum-garden-before-after.jpg`, `lyceum-west-before-after.jpg`, `kyivska-1-before-after.jpg`, `olshevskyi-before-after.jpg`; demo `lyceum-ensemble.jpg`, `historic-centre.jpg` (+ `*-provenance.jpg`). Authenticity 3.2: data-quality layer `docs/img/a32/gaps-district.jpg`, `gaps-street.jpg`; unconfirmed landmark match `info-zemska.jpg`. Authenticity 3.1: `docs/img/a31/web-synagogue-front.jpg`, `web-synagogue.jpg`. Best before/after pairs (3.0): `docs/img/vf3/web-yards-sw.jpg`, `web-houses-ne.jpg`, `web-lyceum-tower.jpg`,
 `web-park.jpg`, `web-centre.jpg`. Visual Fidelity 2.0: `docs/img/vf2/web-house-close.jpg`, `web-pond-shore.jpg`.
 
 ## Audits

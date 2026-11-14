@@ -2,7 +2,8 @@
 // how many tiles are loaded; only terrain needs a per-tile material because each tile has its own texture.
 // All facade / roof / ground detail is procedural in the shader (decorative, see docs/GEOGRAPHIC_ACCURACY.md):
 //   walls  _style = facade type (0 none, 1 house, 2 apartments, 3 commercial, 4 public, 5 industrial,
-//                   6 church, 7 historic); uv = (metres along wall / 3 m bay, floors above ground)
+//                   6 church, 7 historic, 8 tile-clad with arched upper windows, 9 tile-clad - landmark styles read
+//                   from photos); uv = (metres along wall / bay, floors above ground)
 //   roofs  _style = roof material (0 bitumen, 1 metal tile, 2 slate, 3 corrugated, 4 standing seam);
 //                   uv = metres (u along the eave, v up the slope)
 // Surface relief is a procedural height field turned into a normal perturbation (bump from screen-space
@@ -72,14 +73,19 @@ const WALL_FRAG = /* glsl */ `
   float near = (1.0 - smoothstep(25.0, 140.0, dist)) * uWindows;
   // wall finish: reddish, saturated walls read as brick, the rest as plaster (decorative inference)
   float sat = max(base.r, max(base.g, base.b)) - min(base.r, min(base.g, base.b));
-  float brick = step(0.12, sat) * step(base.g, base.r * 0.55) * step(0.5, float(st));   // clearly red walls only
-  vec2 wm = vec2(uv.x * 3.0, uv.y * 3.0);                       // ~metres on the wall
+  float tiled = step(7.5, float(st));                           // landmark tile cladding (photos)
+  float brick = max(step(0.12, sat) * step(base.g, base.r * 0.55) * step(0.5, float(st)), tiled);   // clearly red walls only
+  vec2 wm = st == 8 ? vec2(uv.x * 3.6, uv.y * 5.5) : st == 9 ? vec2(uv.x * 3.2, uv.y * 4.4) : vec2(uv.x * 3.0, uv.y * 3.0); // ~metres
   float row = floor(wm.y / 0.075);
-  vec2 bc = vec2(wm.x / 0.25 + 0.5 * mod(row, 2.0), wm.y / 0.075);
+  vec2 bc = tiled > 0.5 ? wm / vec2(0.15, 0.25) : vec2(wm.x / 0.25 + 0.5 * mod(row, 2.0), wm.y / 0.075);
   vec2 bf = fract(bc);
   float mortar = 1.0 - skBox(bf, vec2(0.04, 0.08), vec2(0.96, 0.92), fwidth(bc));
   float plaster = skFbm(vSkWorld.xz * 2.5 + vSkWorld.y * 3.1);
-  base *= mix(0.94 + 0.1 * plaster, 0.9 + 0.18 * skHash(floor(bc)) - 0.25 * mortar, brick * near);
+  base *= mix(0.94 + 0.1 * plaster, 0.9 + 0.18 * skHash(floor(bc)) - mix(0.25, 0.12, tiled) * mortar, brick * near);
+  if (tiled > 0.5) {  // patchwork of pink and beige tiles (repairs over decades)
+    float patchy = skHash(floor(wm / vec2(1.35, 0.95)) + vec2(vFid, 2.3));
+    base *= mix(vec3(1.0), patchy < 0.5 ? vec3(1.05, 0.95, 0.93) : vec3(0.97, 1.0, 1.02), smoothstep(0.25, 0.0, abs(patchy - 0.5) - 0.2));
+  }
   base *= 0.93 + 0.12 * skNoise(vSkWorld.xz * 0.35 + vSkWorld.y * 0.2);   // weathering
   skH = mix(plaster * 0.004, (1.0 - mortar) * 0.006, brick) * near;
   vec2 cell = floor(uv);
@@ -93,13 +99,21 @@ const WALL_FRAG = /* glsl */ `
   if (st == 4) { ww = 0.16; y0 = 0.22; wh = 0.55; }
   if (st == 7) { ww = 0.14 + 0.03 * seed; y0 = 0.2; wh = 0.6; }
   if (st == 6) { ww = 0.12; y0 = 0.16; wh = 0.68; }
+  if (st == 8) { ww = 0.18; y0 = 0.2; wh = 0.45; if (cell.y > 0.5) { ww = 0.17; y0 = 0.06; wh = 0.66; } }
+  if (st == 9) { ww = 0.23; y0 = 0.2; wh = 0.55; }
   float win = skBox(f, vec2(0.5 - ww, y0), vec2(0.5 + ww, y0 + wh), aa);
   float fr = skBox(f, vec2(0.5 - ww - 0.03, y0 - 0.04), vec2(0.5 + ww + 0.03, y0 + wh + 0.03), aa) - win;
   float sill = skBox(f, vec2(0.5 - ww - 0.06, y0 - 0.075), vec2(0.5 + ww + 0.06, y0 - 0.035), aa);
   float mullion = skBox(f, vec2(0.497, y0), vec2(0.503, y0 + wh), aa) + skBox(f, vec2(0.5 - ww, y0 + wh * 0.68), vec2(0.5 + ww, y0 + wh * 0.68 + 0.01), aa);
-  if (st == 6 || st == 7) {
+  if (st == 6 || st == 7 || (st == 8 && cell.y > 0.5)) {
     vec2 c = vec2(0.5, y0 + wh - ww);
     win *= mix(1.0, 1.0 - smoothstep(ww - aa.x, ww + aa.x, length(f - c)), step(c.y, f.y));
+  }
+  float mosaic = 0.0, pilaster = 0.0;
+  if (st == 8) {
+    if (cell.y > 1.5) { win = 0.0; fr = 0.0; sill = 0.0; mullion = 0.0; }   // two storeys: nothing above the upper row
+    if (cell.y > 0.5 && cell.y < 1.5) mosaic = skBox(f, vec2(0.5 - ww - 0.03, y0 + wh + 0.035), vec2(0.5 + ww + 0.03, 0.985), aa);
+    pilaster = 1.0 - skBox(f, vec2(0.09, -1.0), vec2(0.91, 2.0), aa);
   }
   if ((st == 1 || st == 3) && skHash(cell + vec2(vFid * 0.37, 1.7)) < 0.2) { win = 0.0; fr = 0.0; sill = 0.0; mullion = 0.0; }
   if (st == 3 && cell.y < 0.5) {
@@ -119,6 +133,13 @@ const WALL_FRAG = /* glsl */ `
   base = mix(base, frameCol, clamp(fr + mullion, 0.0, 1.0) * on * (st == 2 ? 0.5 : 1.0));
   base = mix(base, vec3(0.78, 0.78, 0.76), sill * on);
   base = mix(base, base * 1.12 + 0.04, balcony * valid * fade);
+  // broken-tile mosaic panels over the arched windows, lighter tile pilasters between the bays (lyceum photos)
+  if (st == 8) {
+    vec3 chip = vec3(skHash(floor(vSkWorld.xz * 9.0 + vSkWorld.y * 9.0)), skHash(floor(vSkWorld.zx * 9.0 - vSkWorld.y * 7.0) + 3.1),
+                     skHash(floor(vSkWorld.xz * 9.0 + vSkWorld.y * 5.0) + 7.7));
+    base = mix(base, mix(base * 1.08 + 0.03, chip * 0.7 + 0.2, 0.45 * near), mosaic * valid * fade);
+    base = mix(base, base * 1.1 + 0.05, pilaster * valid * 0.7);
+  }
   float ao = 0.62 + 0.38 * smoothstep(-0.05, 0.45, uv.y);         // contact darkening at the foot
   base *= mix(1.0, ao, step(-0.5, uv.y));
   diffuseColor.rgb = mix(base, glass, skWin);
@@ -171,7 +192,7 @@ const ROOF_FRAG = /* glsl */ `
 function walls(withWindows: boolean) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.88, metalness: 0, flatShading: true })
   if (!withWindows) return m
-  return patch(m, 'skvyra-walls-2', {
+  return patch(m, 'skvyra-walls-3', {
     varyings: 'varying vec2 vFacadeUv;\nvarying float vStyle;\nvarying float vFid;\nvarying vec3 vSkWorld;',
     vert: 'vFacadeUv = uv;\nvStyle = _style;\nvFid = _feature_id;',
     frag: WALL_FRAG,

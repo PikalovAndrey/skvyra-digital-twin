@@ -15,7 +15,8 @@ test('compare screenshots', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 900 })
   await page.goto('/?clean=1')
   await page.waitForFunction(() => !!(window as unknown as W).__skvyra)
-  await page.evaluate(() => (window as unknown as W).__skvyraStore.getState().set({ quality: 'high' }))
+  await page.evaluate((c) => (window as unknown as W).__skvyraStore.getState().set({ quality: 'high', ...(c ? { colorMode: c } : {}) }),
+    process.env.COLOR ?? '') // COLOR=geometry: provenance colouring
   const only = process.env.VPS ? new Set(process.env.VPS.split(',')) : null
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(String(e)))

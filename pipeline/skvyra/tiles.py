@@ -106,9 +106,11 @@ def init_ctx(cfg):
         if p.get("name"):
             streets.setdefault(p["name"], []).append(g)
     landmarks = LM.match(bld, frame, streets={k: shapely.union_all(v) for k, v in streets.items()})
+    monuments = LM.monuments(frame)
     # no invented (decorative) fences around landmarks rebuilt from photos: the photos show what is there
     lm_keepout = shapely.union_all([g.buffer(12.0) for g, p in bld if (landmarks.get(p["source_id"]) or {}).get("composite")
-                                    or (landmarks.get(p["source_id"]) or {}).get("features")])
+                                    or (landmarks.get(p["source_id"]) or {}).get("features")]
+                                   + [shapely.Point(x, y).buffer(6.0) for x, y, _ in monuments])
     s2 = None
     s2_path = C.RAW / "sentinel2_tci.tif"
     if s2_path.exists():
@@ -139,7 +141,7 @@ def init_ctx(cfg):
     area_tree = shapely.STRtree([g for g, _ in areas])
     _CTX.update(cfg=cfg, frame=frame, terrains=terrains, bld=bld, roads=roads, areas=areas, water=water,
                 rail_polys=rail_polys, trees=trees, canopy=canopy, quarantine=quarantine, overrides=ov, ov_report=ov_report,
-                evidence=evidence, landmarks=landmarks, lm_keepout=lm_keepout, s2=s2, still_water=still,
+                evidence=evidence, landmarks=landmarks, monuments=monuments, lm_keepout=lm_keepout, s2=s2, still_water=still,
                 s2_sha=acquire.load_manifest().get("sentinel2_tci.tif", {}).get("sha256"),
                 bld_tree=shapely.STRtree([g.representative_point() for g, _ in bld]),
                 bld_geom_tree=shapely.STRtree([g for g, _ in bld]),
@@ -170,11 +172,14 @@ def composite_mesh(soups, g, attrs, comp, ter, floor_h, lod, fi):
     """A landmark rebuilt from photos: the real footprint cut into blocks, each with its measured eave, roof and
     materials, plus facade details (config/landmarks.json "composite")."""
     for gp, ps in B.composite_parts(g, comp):
-        a = {**attrs, "roof": ps["roof"], "eave_height": ps["eave_m"], "roof_height": ps["rise_m"], "decompose": False,
+        a = {**attrs, "roof": ps["roof"], "eave_height": ps["eave_m"], "roof_height": ps["rise_m"],
+             "decompose": ps.get("decompose", False), "no_lean_to": True, "pitch": ps.get("pitch_deg", attrs.get("pitch")),
+             "window_base_m": ps.get("window_base_m", ps.get("plinth_m", 0.0) if ps.get("plinth_m", 0) > 1 else 0.0),
              "floor_h": ps.get("floor_h", attrs["floor_h"]), "bay_m": ps.get("bay_m", 3.0), "door": None, "chimney": False,
              "facade": ps.get("facade", attrs["facade"]), "overhang": ps.get("overhang_m", 0.35),
-             "roof_mat": ps.get("roof_material", attrs["roof_mat"]), "window_base_m": ps.get("plinth_m", 0.0) if ps.get("plinth_m", 0) > 1 else 0.0,
-             "gable_windows": False}
+             "roof_mat": ps.get("roof_material", attrs["roof_mat"]), "gable_windows": False}
+        if ps.get("wall_colour"):
+            a["wall_color"] = srgb_to_linear(hex_rgb(ps["wall_colour"])).tolist()
         if ps.get("roof_colour"):
             a["roof_color"] = srgb_to_linear(hex_rgb(ps["roof_colour"])).tolist()
         m = B.building_mesh(gp, a, ter.z, floor_h, lod)
@@ -184,6 +189,33 @@ def composite_mesh(soups, g, attrs, comp, ter, floor_h, lod, fi):
         soups["roofs"].add(m["roof"][0], a["roof_color"], m["roof"][1], fid=fi, style=B.ROOF_MAT[a["roof_mat"]])
     if lod < 2:
         dt, dc = B.composite_details(g, comp, ter.z, lod, attrs["wall_color"])
+        soups["details"].add(dt, dc, fid=fi)
+
+
+def landmark_extras(soups, g, attrs, lm, ter, lod, fi, comp=None):
+    """Photo-estimated landmark parts (config/landmarks.json "features"): domed corner towers (rotunda) - on a
+    composite landmark the tower takes the eave, storey height and facade of the block it stands on - and, on plain
+    landmarks, pediments / attics and bands placed on the wall nearest to their point."""
+    if lod >= 2:
+        return
+    if not comp:  # pediments / bands on the wall nearest to a point (plain landmarks)
+        ft, fc = B.facade_features(g, [f for f in lm.get("features", []) if f["type"] != "rotunda"], _CTX["frame"].to_local,
+                                   ter.z, attrs["eave_height"], attrs["wall_color"], lod)
+        soups["details"].add(ft, fc, fid=fi)
+    for fs in lm.get("features", []):
+        if fs["type"] != "rotunda":
+            continue
+        cx, cy = _CTX["frame"].to_local(*fs["centre_lonlat"])
+        ext_ = np.asarray(g.exterior.coords)
+        gz = ter.z(ext_[:, 0], ext_[:, 1])
+        eave, fh, facade, wall = attrs["eave_height"], attrs["floor_h"], attrs["facade"], attrs["wall_color"]
+        if comp:
+            gp, ps = min(B.composite_parts(g, comp), key=lambda q: q[0].distance(shapely.Point(cx, cy)))
+            eave, fh, facade = ps["eave_m"], ps.get("floor_h", fh), ps.get("facade", facade)
+            wall = srgb_to_linear(hex_rgb(ps["wall_colour"])).tolist() if ps.get("wall_colour") else wall
+        wt, wu, dt, dc = B.rotunda_mesh(float(cx), float(cy), float(gz.min()) - 0.5, float(gz.mean()), fs,
+                                        eave, fh, n=32 if lod == 0 else 16)
+        soups["walls"].add(wt, wall, wu, fid=fi, style=B.FACADE[facade])
         soups["details"].add(dt, dc, fid=fi)
 
 
@@ -209,6 +241,9 @@ def tile_hash(ix, iy, b, bidx, ridx, aidx) -> str:
         for i in _CTX["canopy"]["tree"].query(box(*b)):
             g, p = _CTX["canopy"]["pts"][i]
             h.update(shapely.to_wkb(g) + json.dumps(p, sort_keys=True).encode())
+    for x, y, m in _CTX["monuments"]:
+        if b[0] <= x < b[2] and b[1] <= y < b[3]:
+            h.update(json.dumps(m, sort_keys=True).encode())
     for i in bidx:
         g, p = _CTX["bld"][i]
         h.update(shapely.to_wkb(g) + json.dumps(p, sort_keys=True).encode())
@@ -350,7 +385,7 @@ def build_tile(ix, iy, force=False) -> dict:
         attrs = B.resolve(p, g.area, L / max(W, 1e-3), g.area / max(obb_area, 1e-9),
                           cover_at(g.representative_point()), cfg, ov, ev=ev, landmark=lm)
         parts = B.plan(shapely.orient_polygons(g, exterior_cw=False), attrs)
-        attrs["door"] = door_edge(g, attrs, i)
+        attrs["door"] = None if (lm or {}).get("street_door") is False else door_edge(g, attrs, i)  # photos: no street door
         ridge = max(pt.eave + pt.rh for pt in parts[0])
         comp = lm.get("composite") if lm and lm.get("match") != "probable" else None
         if comp:  # photo-measured blocks replace the generic roof plan (see composite_mesh below)
@@ -486,6 +521,7 @@ def build_tile(ix, iy, force=False) -> dict:
             comp = lm.get("composite") if lm and lm.get("match") != "probable" else None
             if comp:
                 composite_mesh(soups, g, attrs, comp, ter, floor_h, lod, fi)
+                landmark_extras(soups, g, attrs, lm, ter, lod, fi, comp)
                 continue
             m = B.building_mesh(g, attrs, ter.z, floor_h, lod, parts=None if lod == 2 else parts)
             if m is None:
@@ -494,19 +530,13 @@ def build_tile(ix, iy, force=False) -> dict:
             soups["roofs"].add(m["roof"][0], attrs["roof_color"], m["roof"][1], fid=fi, style=B.ROOF_MAT[attrs["roof_mat"]])
             if len(m["extra"]):
                 soups["details"].add(m["extra"], m["extra_col"], fid=fi)
-            lm = _CTX["landmarks"].get(p["source_id"])
-            if lod < 2 and lm and lm.get("match") != "probable":
-                for fs in lm.get("features", []):  # photo-estimated landmark parts (towers, domes)
-                    if fs["type"] != "rotunda":
-                        continue
-                    cx, cy = _CTX["frame"].to_local(*fs["centre_lonlat"])
-                    ext_ = np.asarray(g.exterior.coords)
-                    gz = ter.z(ext_[:, 0], ext_[:, 1])
-                    wt, wu, dt, dc = B.rotunda_mesh(float(cx), float(cy), float(gz.min()) - 0.5, float(gz.mean()), fs,
-                                                    attrs["eave_height"], attrs["floor_h"], n=32 if lod == 0 else 16)
-                    soups["walls"].add(wt, attrs["wall_color"], wu, fid=fi, style=B.FACADE[attrs["facade"]])
-                    soups["details"].add(dt, dc, fid=fi)
+            if lm and lm.get("match") != "probable":
+                landmark_extras(soups, g, attrs, lm, ter, lod, fi)
         if lod < 2:
+            for x, y, m in _CTX["monuments"]:  # free-standing monuments from photos (no footprint, no picking)
+                if b[0] <= x < b[2] and b[1] <= y < b[3]:
+                    mt, mc = B.monument_mesh(x, y, float(ter.z(np.array([x]), np.array([y]))[0]), m, lod)
+                    soups["details"].add(mt, mc)
             off = OFFSET[lod]
             for k, mat in (("paved", "road_paved"), ("unpaved", "road_unpaved"), ("foot", "road_foot"), ("shoulder", "road_shoulder")):
                 if k in road_polys and not (k == "shoulder" and lod > 0):  # shoulders: mesh close up, texture beyond
@@ -742,6 +772,8 @@ def write_search(frame):
         p = f["properties"]
         out.append({"name": p["name"], **({"name_en": p["name_en"]} if p.get("name_en") else {}),
                     "kind": p["kind"], "x": round(g.x, 1), "y": round(g.y, 1)})
+    for x, y, m in (_CTX.get("monuments") or LM.monuments(frame)):
+        out.append({"name": m["name"], "kind": "historic=memorial", "x": round(x, 1), "y": round(y, 1)})
     for g, p in (_CTX.get("bld") or _load_layer("buildings.geojson", frame)):
         t = p.get("tags", {})
         if t.get("addr:housenumber") or t.get("name"):

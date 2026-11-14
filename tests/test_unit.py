@@ -632,8 +632,8 @@ def test_composite_landmark_cuts_real_footprint_and_details_face_outward():
     # synagogue-like outline: 51 x 12 m block with a 9 m wide projection to the south at the west end
     fp = Polygon([(0, 0), (9, 0), (9, 5.6), (51, 5.6), (51, 17.8), (0, 17.8)])
     spec = {"axis_from": "west", "front": "south", "split_m": [9.0, 27.0],
-            "parts": [{"roof": "gabled", "eave_m": 5.9, "rise_m": 2.8}, {"roof": "hipped", "eave_m": 5.6, "rise_m": 2.2},
-                      {"roof": "hipped", "eave_m": 4.5, "rise_m": 2.0}],
+            "parts": [{"roof": "gabled", "eave_m": 5.9, "rise_m": 2.8, "frieze": False}, {"roof": "hipped", "eave_m": 5.6, "rise_m": 2.2, "frieze": False},
+                      {"roof": "hipped", "eave_m": 4.5, "rise_m": 2.0, "frieze": False}],  # friezes off: isolate the door
             "features": [{"type": "door", "part": 1, "at_m": 16.0, "sill_m": 2.1}]}
     parts = B.composite_parts(fp, spec)
     assert len(parts) == 3 and abs(sum(g.area for g, _ in parts) - fp.area) < 1e-6  # real outline kept exactly
@@ -721,3 +721,89 @@ def test_local_outline_schema_errors(tmp_path):
         path.write_text(json.dumps(_fp_doc([bad])))
         with pytest.raises(ValueError, match=msg):
             OVR.load_footprints(path)
+
+
+# ---------------------------------------------------------------------------------------------------
+# Authenticity 3.4: photo-estimated landmark parts (pediments / attics, bands, free-standing monuments)
+# ---------------------------------------------------------------------------------------------------
+def _outward_share(tris, centre_xy):
+    """Share of triangles whose normal points away from the vertical axis through centre_xy (or up)."""
+    t = np.asarray(tris, float)
+    n = np.cross(t[:, 1] - t[:, 0], t[:, 2] - t[:, 0])
+    c = t.mean(1)
+    radial = n[:, 0] * (c[:, 0] - centre_xy[0]) + n[:, 1] * (c[:, 1] - centre_xy[1])
+    return float(np.mean((radial > 1e-9) | (n[:, 2] > 1e-9)))
+
+
+def test_monument_and_pediment_faces_point_outward():
+    from skvyra import buildings as B
+    for facing in (0, 90, 215):
+        t, c = B.monument_mesh(5.0, 7.0, 100.0, {"facing_deg": facing, "stack": [
+            {"w": 2.4, "d": 2.4, "h": 0.35, "colour": "#333333"}, {"w": 0.6, "d": 0.55, "h": 2.6, "colour": "#222222"}],
+            "bust": {"w": 0.8, "h": 0.95}}, lod=0)
+        assert len(t) == len(c) and _outward_share(t, (5.0, 7.0)) == 1.0
+        assert t[..., 2].max() == pytest.approx(100.0 + 0.35 + 2.6 + 0.95)
+        t1, _ = B.monument_mesh(5.0, 7.0, 100.0, {"stack": [{"w": 1, "d": 1, "h": 1, "colour": "#333333"}], "bust": {"w": 0.8, "h": 0.9}}, lod=1)
+        assert t1[..., 2].max() == pytest.approx(101.0)  # no bust beyond LOD0
+    # a pediment on a south wall: the tympanum faces south, nothing faces down, the apex is at eave + rise
+    for shape_ in ("triangle", "ogee"):
+        t, c = B.pediment_tris(np.array([0.0, 0.0]), np.array([1.0, 0.0]), np.array([0.0, -1.0]), 10.0,
+                               {"width_m": 8, "rise_m": 2, "shape": shape_, "oculus_r": 0.4}, [1, 1, 1])
+        t = np.asarray(t)
+        n = np.cross(t[:, 1] - t[:, 0], t[:, 2] - t[:, 0])
+        assert (n[:, 2] < -1e-9).sum() == 0 and (n[:, 1] < -1e-9).sum() > (n[:, 1] > 1e-9).sum()
+        assert t[..., 2].max() == pytest.approx(12.0 + 0.12, abs=0.05)
+
+
+def test_wall_frame_and_facade_features_follow_the_nearest_wall():
+    from skvyra import buildings as B
+    sq = shapely.Polygon([(0, 0), (20, 0), (20, 10), (0, 10)])
+    base, u, n = B.wall_frame(sq, (10.0, -3.0))           # point in front of the south wall
+    assert base == pytest.approx([10.0, 0.0]) and n == pytest.approx([0.0, -1.0])
+    base, u, n = B.wall_frame(sq, (24.0, 5.0))            # east wall
+    assert base == pytest.approx([20.0, 5.0]) and n == pytest.approx([1.0, 0.0])
+    feats = [{"type": "pediment", "at_lonlat": [10.0, -3.0], "width_m": 6, "rise_m": 1.5},
+             {"type": "band", "below_eave_m": [0.9, 0.3], "colour": "#eeeeee"}]
+    t, c = B.facade_features(sq, feats, lambda x, y: (x, y), lambda x, y: np.zeros_like(np.asarray(x, float)), 4.0, [1, 1, 1], lod=1)
+    assert len(t) == len(c) > 0 and t[..., 2].max() == pytest.approx(4.0 + 1.5 + 0.12, abs=0.05)
+    t2, _ = B.facade_features(sq, feats, lambda x, y: (x, y), lambda x, y: np.zeros_like(np.asarray(x, float)), 4.0, [1, 1, 1], lod=2)
+    assert len(t2) == 0  # overview LOD: no details
+
+
+def test_landmark_photo_overrides_use_floor_bay_and_kind():
+    from skvyra import buildings as B
+    cfg = {"seed": 1, "floor_height_m": 3.0}
+    props = {"id": "x", "tags": {"building": "yes"}}
+    a = B.resolve(props, 900.0, 2.0, 0.95, None, cfg, landmark={"kind": "public", "levels": 1, "floor_h": 4.0, "bay_m": 2.9,
+                                                                 "facade": "tiled", "match": "exact"})
+    assert a["kind"] == "public" and a["kind_method"] == "photo_estimate" and a["floor_h"] == 4.0 and a["bay_m"] == 2.9
+    assert a["eave_height"] == pytest.approx(4.4) and B.FACADE[a["facade"]] == 9
+    p = B.resolve(props, 900.0, 2.0, 0.95, None, cfg, landmark={"kind": "public", "levels": 1, "match": "probable"})
+    assert p["kind_method"] != "photo_estimate"  # an unconfirmed match never changes the appearance
+
+
+def test_composite_frieze_and_door_render_together_at_lod1():
+    # regression (3.4): friezes now render at LOD1 too; the door at the same height as a frieze edge must still be
+    # emitted, distinguishable by colour, and every frieze / cornice / door face must point out of the building
+    fp = Polygon([(0, 0), (30, 0), (30, 12), (0, 12)])
+    spec = {"axis_from": "west", "front": "south", "split_m": [15.0],
+            "parts": [{"roof": "gabled", "eave_m": 4.5, "rise_m": 2.0, "frieze_colour": "#ff0000"},
+                      {"roof": "hipped", "eave_m": 4.5, "rise_m": 2.0}],
+            "features": [{"type": "door", "part": 0, "at_m": 7.0, "sill_m": 2.1, "width_m": 1.2, "height_m": 2.3, "colour": "#00ff00"}]}
+    for lod in (0, 1):
+        tris, cols = B.composite_details(fp, spec, lambda x, y: np.zeros(np.shape(x)), lod=lod, wall_rgb=[0.5, 0.5, 0.5])
+        lin = lambda h: np.asarray(B.srgb_to_linear(B.hex_rgb(h)))
+        is_red = np.all(np.isclose(cols, lin("#ff0000"), atol=1e-6), axis=1)
+        is_green = np.all(np.isclose(cols, lin("#00ff00"), atol=1e-6), axis=1)
+        assert is_red.sum() > 0 and is_green.sum() == 10           # frieze + projecting cornice; door box (4 sides + top)
+        door = tris[is_green]
+        assert door[..., 2].max() == pytest.approx(2.1 + 2.3) and door[..., 2].min() == pytest.approx(2.1)
+        assert abs(door[..., 0].mean() - 7.0) < 0.1 and door[..., 1].mean() < 0.1      # on the south front
+        fr = tris[is_red]
+        n = np.cross(fr[:, 1] - fr[:, 0], fr[:, 2] - fr[:, 0])
+        c = fr.mean(axis=1)
+        out2 = np.column_stack([np.where(c[:, 0] < 0.2, -1, np.where(c[:, 0] > 29.8, 1, 0)),
+                                np.where(c[:, 1] < 0.2, -1, np.where(c[:, 1] > 11.8, 1, 0))])
+        side = (n[:, :2] * out2).sum(axis=1) > 0
+        assert (side | (n[:, 2] > 1e-9)).all()                    # outward walls of the band, cornice tops face up
+        assert fr[..., 2].min() == pytest.approx(4.5 - 0.55) and fr[..., 2].max() == pytest.approx(4.5 - 0.1)

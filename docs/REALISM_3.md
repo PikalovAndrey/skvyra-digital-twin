@@ -281,3 +281,62 @@ Worst frame after a jump: **all 100: p50 17.8, p95 23.1, p99 37.2, max 37.2 ms, 
 session started a video encode near the end of the run; the warm round, run during it, stayed at 18 ms. With 100
 samples p99 equals the single worst jump, so "p99 < 50 ms" holds for this sample on this machine, not as a
 guarantee. No optimisation was started. The uncapped `benchmark.spec.ts` stays the render-cost comparison only.
+
+### 3.3 follow-up (2026-11-14): one real outline without a survey? — no, direction stopped
+
+Re-checked only what could have changed since the 3.1–3.3 research: live OSM (Overpass, base 2026-11-14T21:11Z)
+around the zemstvo building, the Rylskyi crossing and the kostel — the same 15 ways as the 2026-11-12 snapshot,
+none contains a landmark point, the kostel has no OSM building or place_of_worship; Microsoft footprints — the same
+release (dataset-links 2026-02-25, quadkey 120303230 from 2026-02-23). Every other source was already ruled out
+(Overture = the same outlines; GlobalBuildingAtlas not downloaded by decision; no general plan, no open municipal
+data, cadastre = parcels only; 1815/1826 plans predate the buildings). Without one of: a local OSM mapper, an
+on-site GNSS walk-around, or an official plan with a licence, no outline can pass the `approval.basis` rule, so
+none was drawn. Already-located objects with photos (lyceum, synagogue, 1 Kyivska St, the museum at 35
+Bohachevskoho St, the central memorials) are the better target for visible improvement.
+
+# Skvyra Historic Centre — Visual Authenticity 3.4 (2026-11-15)
+
+Goal: a more recognisable historic centre from existing capabilities (landmark catalogue, composite landmarks,
+facade shader), every new detail traced to a licensed photo, nothing invented as confirmed. Photos are referenced
+(Wikimedia Commons, CC BY-SA), never copied into the model or the repository; screenshots in `docs/img/a34/` are
+renders of the model only.
+
+## What was done per object
+
+| Object | Evidence | Result | Confidence / what stays approximate |
+|---|---|---|---|
+| Lyceum (boys' gymnasium), OSM way 952914329 | 27 Commons files (Xsandriel 2025 ×17, Kiyanka 2015/2025 ×6, WestBam 2019 ×2, Inishche 2010, Олекса-Київ 2014) | composite of four blocks on the unchanged OSM outline: two-storey pedimented west wing with oculus, door and blue/yellow plinth band; two-storey link; tall two-storey main block with the south risalit's pediment and the domed tower; two-storey pedimented east wing. Tile-clad facade style (pink/beige patchwork, rectangular ground-floor windows, tall upper windows with arched fanlights, mosaic panels, lighter pilasters), pink and white cornice bands, grey stone plinth. **Tower moved to the risalit's south-east corner** (3.0 had the south-west one; every south / south-west view shows the three-axis pediment face left of the tower and the six-axis face receding further left) | storeys = OSM `building:levels=2` (the upper row of arches is a fanlight of the same storey, not a third floor); eaves 12.3 / 10 / 8.8 m, pediment rises, colours: photo estimates. Not modelled: street (north) facade with a four-column portico (position along the facade not determinable), door canopies, mosaic motifs (generic speckle) |
+| Lyceum annex, OSM way 952914328 | garden view Skvyra lyceum (1); 2025 photos of the Olshevskyi bust | was a windowless white box (classified as a warehouse); now one storey, beige tile cladding, windows, low blue metal roof | west side is yellow corrugated sheet on the 2025 photos — one colour per building, the lyceum-side beige is used |
+| 1 Kyivska St (1903), Microsoft ML outline | 2 photos: Basil Tsymbaliuk 2017 (CC BY-SA 4.0), Олекса-Київ 2014 (CC BY-SA 3.0) | was a two-storey block with arched windows; now one tall storey of whitewashed brick, six windows on the 17.5 m street front (= the ML outline's south-east edge, 6 × 2.9 m bays), central ogee brick attic with an arched niche, dentil band under the eaves, low hipped slate roof, no invented street door | rear/side facades not visible (drawn with the same windows); attic size and eave from the bay scale |
+| Bust of M. M. Olshevskyi (Q122579664) | 4 photos (Kiyanka 2015/2025, Xsandriel 2025); Wikidata/WLM point | new free-standing monument: two-step black stone base, black granite block and pillar, bronze bust; front faces west (the annex is behind it on the photos) | sizes from the head scale (~0.4 m); the bust is a blocky form, no likeness |
+| Local history museum, OSM way 1573335660 | OSM (one mapper, 2026-10-29: name, вул. Богачевського 35); a tourism catalogue lists вул. К. Болсуновського 70 — the outline fronts Bolsunovskoho, so both can describe the same plot; **no photo of the building** on Commons; a 2019 panorama by WestBam shows a red two-storey pedimented building with a long one-storey brick wing in that direction | **not rebuilt** — identity plausible, appearance unconfirmed |
+| Afghan war memorial (Q122330131) | 2 photos WestBam 2019 (CC BY-SA 4.0): three granite steles, gilded trident on the central one | **not rebuilt** — the Wikidata coordinate equals the photographer's geotag; the panorama (sun direction, three surrounding buildings matched) puts the steles ~20–30 m south-west of it, too uncertain to place |
+| WWII memorial (obelisk, wall of names, cannon) | 1 photo (Олекса-Київ 2014); three unnamed OSM war_memorial nodes near the park | **not rebuilt** — which node is which element is unknown |
+| Shevchenko monument | OSM node only, no photo | marker in the search index only (unchanged) |
+
+## How (no new tools)
+
+- `config/landmarks.json`: lyceum `composite` (4 parts, `decompose` for the risalit roof, per-part wall / frieze /
+  plinth colours and bands, pediments and doors), annex and 1 Kyivska St attributes, new `monuments` list.
+- `buildings.py`: facade styles `tiled_arched` (8) and `tiled` (9); `pediment_tris` (triangle or ogee attic,
+  raking cornice, oculus) shared by composite and plain landmarks; `wall_frame` / `facade_features` (pediment, band on
+  the wall nearest to a point); `monument_mesh`; landmark `kind`, `floor_h`, `bay_m`, `street_door: false`.
+- `tiles.py`: rotunda on composite landmarks (takes the block's eave / storey height / facade), monuments in their
+  tile (hash, LOD0 bust, LOD0–1 only), monuments in the search index.
+- `materials.ts`: tile grid and patchwork, per-storey window shapes, mosaic and pilasters for style 8 only.
+
+## Visual check (photo → model)
+
+Fixed viewpoints matching the photos: `lyceum-garden` (Skvyra lyceum (1)), `lyceum-west` (Kiyanka 2025 03),
+`kyivska-1` (Tsymbaliuk 2017), `olshevskyi` (Kiyanka 2025 02), plus `lyceum-tower`, `lyceum-ensemble`,
+`historic-centre` (demo). Before/after: `docs/img/a34/*-before-after.jpg`; provenance colouring (`COLOR=geometry`
+for the compare spec): `historic-centre-provenance.jpg`, `lyceum-ensemble-provenance.jpg`. Corrections made after the
+comparison: main block colour less pink, annex beige instead of yellow on the photographed side, no street door on
+1 Kyivska St.
+
+## Performance and QA
+
+Paired A/B/A/B frame benchmark (3.3 code vs 3.4, best of two, while another session rendered in Blender): every view
+within ±0.4 ms p95/p99, lyceum view +4 k triangles (+1 %); `benchmarks/results/2026-11-15-a34-*.json`. Tiles +0.36 MB
+of 188 MB (lyceum tile LOD0 802 → 959 KB, LOD1 217 → 372 KB). `make qa`: 0 floating / buried / road overlaps / trees
+in buildings / faces down, 0 height outliers.

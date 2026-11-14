@@ -82,6 +82,15 @@ Honest list of what this reconstruction is **not**, as of 2026-11-14.
   check in `skvyra review apply`. The workbench draws in local metres on a 2D map without imagery (no legal
   high-resolution imagery is available), so it is for recording outlines obtained elsewhere, not for tracing.
 
+## Historic centre from photos (Authenticity 3.4)
+
+- Lyceum, annex, 1 Kyivska St and the Olshevskyi bust: dimensions, colours and details are photo estimates
+  (`method: photo_estimate` in `config/landmarks.json`); facades not seen on any photo repeat the visible ones.
+- The lyceum's street facade with a four-column portico is not modelled (its position along the facade is unknown).
+- Not rebuilt: local history museum (no photo of the building), Afghan war memorial (coordinate is the photographer's
+  position), WWII memorial (element positions unknown), Shevchenko monument (no photo). Kostel, zemstvo building and
+  Rylskyi house remain as in 3.3 (no confirmed outline).
+
 ## Trees (Realism & Authenticity 3.0)
 
 - Tree tops come from an **ML canopy height model** (Meta/WRI v2) of Maxar imagery from **2015-06-24** (84 % of

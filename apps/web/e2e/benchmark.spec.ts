@@ -70,6 +70,7 @@ test('benchmark: city route', async ({ page }) => {
     await fly(150, 120, 350); await still(`centre 350 m (${q})`)
     await fly(-700, -500, 90); await still(`south-west houses 90 m (${q})`)
     await fly(150, 120, 300, 10); await still(`centre low angle 10° (${q})`)
+    await fly(-815, 705, 120, 25); await still(`lyceum 120 m (${q})`) // photo-rebuilt landmark (3.4)
   }
   // continuous flight: 18 s straight across town at 120 m altitude (~2.8 km), streaming while moving
   await set({ quality: 'medium' })

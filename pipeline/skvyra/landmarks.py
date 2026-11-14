@@ -80,3 +80,10 @@ def match(buildings, frame, max_dist: float = 30.0, streets=None) -> dict:
         log.warning("%d landmark(s) without a footprint within %.0f m: %s", len(unmatched), max_dist, [r["name"] for r in unmatched])
     (C.PROCESSED / "landmarks_report.json").write_text(json.dumps(report, ensure_ascii=False, indent=1))
     return out
+
+
+def monuments(frame) -> list:
+    """Free-standing monuments rebuilt from photos (config/landmarks.json "monuments"). -> [(x, y, spec)] local."""
+    if not CATALOGUE.exists():
+        return []
+    return [(*map(float, frame.to_local(*m["lonlat"])), m) for m in json.loads(CATALOGUE.read_text()).get("monuments", [])]
