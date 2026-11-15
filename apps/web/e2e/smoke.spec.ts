@@ -107,6 +107,10 @@ test('access and HTTP delivery', async ({ browser, playwright }) => {
     const r = await get(js)
     check(r.ok() && /immutable/.test(r.headers()['cache-control'] ?? ''), `${js}: immutable`)
   }
+  for (const [path, must] of [['LICENSES/NOTICE.txt', 'NOT relicensed under the ODbL'], ['LICENSES/NOTICE.txt', 'do not incur any liability'], ['LICENSES/CDLA-Permissive-2.0.txt', 'Community Data License Agreement']]) {
+    const r = await get(path)
+    check(r.ok() && (await r.text()).includes(must), `${path}: served with the required notice (${r.status()})`)
+  }
   for (const path of ['tiles/missing.lod2.glb', 'review.html', 'review', 'review.json', 'blender/', '_headers', 'scripts/pack_demo.py', '.git/config', 'data/overrides/footprints.geojson']) {
     const r = await get(path)
     const t = r.status() === 200 ? await r.text() : ''

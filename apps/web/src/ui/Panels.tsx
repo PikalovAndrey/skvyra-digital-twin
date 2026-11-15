@@ -495,6 +495,7 @@ export function Attribution({ index }: { index: TileIndex }) {
               <div className="text-slate-500">{v.source_timestamp ? `data: ${v.source_timestamp}` : ''} {v.retrieved_at ? `· retrieved ${v.retrieved_at.slice(0, 10)}` : ''}</div>
             </div>
           ))}
+          <a href="LICENSES/NOTICE.txt" target="_blank" rel="noopener" className="mb-1 block text-sky-300 underline" data-testid="licences-link">{t('licencesLink')}</a>
           <div className="text-slate-500">index {index.generated_at.slice(0, 16)} · code {index.code_version}</div>
         </div>
       )}

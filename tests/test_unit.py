@@ -825,7 +825,16 @@ def test_pack_demo_removes_internal_files_gzips_tiles_and_flags_leaks(tmp_path, 
     (out / "tiles" / "t+0+0.lod0.glb").write_bytes(glb)
     monkeypatch.setattr(pd, "OUT", out)
     monkeypatch.setattr(pd, "ROOT", tmp_path)
+    assert pd.main() == 1  # no licence notices in the repository: refuse
+    (tmp_path / "LICENSES").mkdir()
+    for n in pd.LICENCE_FILES:
+        (tmp_path / "LICENSES" / n).write_text(n)
     assert pd.main() == 0
+    assert all((out / "LICENSES" / n).exists() for n in pd.LICENCE_FILES)  # ODbL / Copernicus / CDLA notices ship
+    rules = {r["source"]: r["headers"] for r in json.loads((out / "vercel.json").read_text())["headers"]}
+    assert "immutable" in str(rules["/assets/(.*)"]) and rules["/tiles/index.json"][0]["value"] == "no-cache"
+    assert list(rules)[-1] == "/tiles/index.json"  # Vercel: the last matching rule wins over /tiles/(.*)
+    assert (out / ".vercelignore").read_text().split() == ["_headers"]
     packed = (out / "tiles" / "t+0+0.lod0.glb").read_bytes()
     assert packed[:2] == b"\x1f\x8b" and _gz.decompress(packed) == glb and len(packed) < len(glb)
     assert not (out / "review.json").exists() and not (out / "blender").exists()
@@ -915,3 +924,15 @@ def test_preview_preflight_blocks_every_unsafe_cloudflare_setup(monkeypatch):
                    {"https://skv.pages.dev/": public}, {"production": {"result": [{"environment": "production"}]}},
                    {"preview": {"result": []}}):
         assert run_after({**after, **change}), change
+
+
+def test_licence_files_scope():
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1]
+    lic = (root / "LICENSE").read_text()
+    assert lic.startswith("MIT License") and "Permission is hereby granted" in lic
+    notice = (root / "LICENSES" / "NOTICE.txt").read_text()
+    for must in ("ODbL", "do not incur any liability", "NOT relicensed under the ODbL", "Collective Database",
+                 "MIT licence", "CDLA-Permissive-2.0.txt", "changes made"):
+        assert must in notice, must
+    assert "Community Data License Agreement" in (root / "LICENSES" / "CDLA-Permissive-2.0.txt").read_text()

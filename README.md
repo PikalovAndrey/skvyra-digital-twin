@@ -5,6 +5,11 @@ interactive browser explorer (React Three Fiber) and a headless Blender pipeline
 Every building sits on its real footprint; every height, roof and colour that is *not* observed is
 labelled as inferred.
 
+**Status: Released** — public since 2026-11-15 (first release, commit `257659a`).
+Live viewer: **https://skvyra-twin.vercel.app** · Source: https://github.com/PikalovAndrey/skvyra-digital-twin ·
+Deployed version: `https://skvyra-twin.vercel.app/version.json`. The model is built automatically from open data;
+it is not a photographic copy of the town — see [docs/GEOGRAPHIC_ACCURACY.md](docs/GEOGRAPHIC_ACCURACY.md).
+
 ![Viewer overview](docs/img/viewer-1-overview.jpg)
 
 | Close-up with street readout | Building metadata with provenance | Data-quality mode |
@@ -125,12 +130,14 @@ itself comes from (`site_survey`, `licensed_imagery`, `official_document`, `open
 can only support a check), `checks` says what was compared (e.g. "L shape and 23 m front match the WestBam photos").
 Every evidence entry needs a url and a licence. The change goes through the same dry run → `--yes` (backup) → revert.
 
-## Public demo (prepared, not deployed)
+## Public demo (released 2026-11-15)
 
-`make demo` → `apps/web/dist-demo` (46 MB static folder: viewer only, gzipped tiles, cache headers, 404 page,
-`version.json`; the review workbench is not included). Cloudflare Pages preview upload (read-only preflight first, explicit confirmation, never
-production): `scripts/deploy_preview.sh`. Steps, hosting terms, network cost, licences, browser support:
-[docs/DEPLOY.md](docs/DEPLOY.md). Demo views:
+https://skvyra-twin.vercel.app — Vercel Hobby (personal, non-commercial), static files only, deployed manually with
+the Vercel CLI (no automatic deploys from GitHub). `make demo` → `apps/web/dist-demo` (46 MB static folder: viewer
+only, gzipped tiles, cache headers for Vercel and Cloudflare, 404 page, `version.json`, licence notices in
+`LICENSES/`; the review workbench is not included). Build, deploy, caching, versioning and rollback:
+[docs/DEPLOY.md](docs/DEPLOY.md). The Cloudflare Pages preview flow (`scripts/deploy_preview.sh`) is a prepared
+alternative and is not used. Demo views:
 `docs/img/a35/demo-*.jpg`, first visit `first-visit-desktop.jpg`, phone `mobile-*.jpg`.
 
 ## Status (2026-11-15, after Demo Readiness 3.5)
@@ -175,7 +182,15 @@ Historic Centre 3.4: before/after `docs/img/a34/lyceum-garden-before-after.jpg`,
 - Landmark coordinates: Wikidata (CC0). Style references: Wikimedia Commons photos (CC BY-SA, authors on the
   linked file pages) — referenced, not redistributed.
 
-Licence compatibility and what may be published: see docs/LICENSES.md. Nothing
-here uses Google, Bing, Esri or other proprietary imagery or 3D data. Sensitive features (military,
-security infrastructure) are excluded by the pipeline. The project is local-only; nothing has been
-published or deployed.
+The organisations in charge of the Copernicus programme by law or by delegation do not incur any liability for
+any use of the Copernicus WorldDEM-30. The OpenStreetMap-derived contents of the public build (tiles, search
+index) are offered under the ODbL 1.0; the other sources in the same files keep their own licences (not relicensed
+under the ODbL); all notices ship with it in `LICENSES/NOTICE.txt`. Licence compatibility and what may be
+published: see docs/LICENSES.md. Nothing here uses Google, Bing, Esri or other proprietary imagery or 3D data.
+Sensitive features (military, security infrastructure) are excluded by the pipeline.
+
+**Code licence: MIT** (`LICENSE`) — covers only this project's own source code and documentation text (pipeline,
+viewer, scripts, tests, Blender scripts, docs). It does **not** relicense anything that has its own licence: OSM-derived
+geodata stays ODbL 1.0, Microsoft footprints CDLA-Permissive-2.0, Copernicus/Sentinel/GHSL/Meta/WorldCover data keep
+their own terms and notices, Wikimedia Commons photos stay with their authors (linked only, never included). Generated
+tiles, processed data and renders contain such data and follow `LICENSES/NOTICE.txt` and docs/LICENSES.md, not MIT.

@@ -164,6 +164,7 @@ const uk = {
   about: 'Про дані',
   aboutText: 'Будівлі: OpenStreetMap + Microsoft Global ML Building Footprints (заповнення прогалин). Рельєф: Copernicus GLO-30 (30 м, модель поверхні). Висоти будівель здебільшого оцінені за типом. Дерева: позиції й висоти з моделі висоти крон Meta/WRI (знімки 2011–2015), перевірені за ESA WorldCover 2021; там, де модель ненадійна, — за правилами.',
   sourcesTitle: 'Джерела та ліцензії',
+  licencesLink: 'Повні ліцензійні повідомлення (ODbL, Copernicus, CC BY, CDLA)',
 } as const
 
 export type Key = keyof typeof uk
@@ -330,6 +331,7 @@ const en = {
   about: 'About the data',
   aboutText: 'Buildings: OpenStreetMap + Microsoft Global ML Building Footprints (gap fill). Terrain: Copernicus GLO-30 (30 m surface model). Building heights are mostly type-based estimates. Trees: positions and heights from the Meta/WRI canopy height model (imagery 2011–2015), checked against ESA WorldCover 2021; rule-based where the model is unreliable.',
   sourcesTitle: 'Sources & licences',
+  licencesLink: 'Full licence notices (ODbL, Copernicus, CC BY, CDLA)',
 } satisfies Record<Key, string>
 
 export const DICTS = { uk, en } as const

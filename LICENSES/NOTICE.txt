@@ -1,0 +1,65 @@
+Skvyra digital twin - data licences and notices
+================================================
+
+This website shows a 3D model of Skvyra (Kyiv Oblast, Ukraine) built automatically from open data.
+Source code and the full processing pipeline: https://github.com/PikalovAndrey/skvyra-digital-twin
+This is an independent hobby project. It is not endorsed by any of the data providers below, by the
+European Union, ESA or any other entity in charge of the Copernicus programme, by Microsoft, Meta or WRI.
+
+Derived geodata (tiles/*.glb, tiles/*.json, search.json, quality_gaps.json)
+--------------------------------------------------------------------------
+These files contain information from OpenStreetMap, which is made available here under the
+Open Database License (ODbL) 1.0: https://opendatacommons.org/licenses/odbl/1-0/
+(c) OpenStreetMap contributors - https://www.openstreetmap.org/copyright
+The ODbL applies to the OpenStreetMap-derived contents: the geometry, tags and names of OSM features
+(buildings, roads, bridges, railways, water, land use, fences, mapped trees, landmarks) and the building layer that
+combines OSM with the Microsoft footprints below. This derived database is offered under the ODbL 1.0.
+The method of making it (every alteration of the source data) is the public pipeline in the repository above.
+
+The other sources below are not OpenStreetMap data and are NOT relicensed under the ODbL by being placed
+in the same files (ODbL 1.0, section 4.5, Collective Database): terrain heights (Copernicus), ground
+colour (Sentinel-2), height estimates (GHSL), tree positions and heights (Meta/WRI) and the land cover
+check (WorldCover) keep their own licences and notices as listed below. Where OpenStreetMap was used to
+modify them (terrain lowered under OSM buildings, height estimates attached to OSM buildings), both the
+ODbL and the source's own conditions apply to that part.
+The project's MIT licence (LICENSE in the repository) covers only the project's own source code; it does
+not apply to any of the data on this page.
+
+Building footprints that are not in OpenStreetMap come from Microsoft Global ML Building Footprints,
+Community Data License Agreement - Permissive, Version 2.0; the agreement text is in
+LICENSES/CDLA-Permissive-2.0.txt next to this file and applies to that data when it is shared.
+
+Terrain
+-------
+produced using Copernicus WorldDEM-30 (c) DLR e.V. 2010-2014 and (c) Airbus Defence and Space GmbH 2014-2018
+provided under COPERNICUS by the European Union and ESA; all rights reserved.
+The organisations in charge of the Copernicus programme by law or by delegation do not incur any liability
+for any use of the Copernicus WorldDEM-30.
+(The surface model was modified: corrected towards a terrain model under buildings and woodland.)
+Anyone who redistributes this terrain, modified or not, must keep both sentences above
+(Licence for the use of the Copernicus WorldDEM-30, Article 6).
+
+Ground colour
+-------------
+Contains modified Copernicus Sentinel data 2026 (scene S2C_35UPR_20260718).
+
+Building heights (estimates for large buildings)
+------------------------------------------------
+GHSL GHS-BUILT-H R2023A (c) European Union 1995-2026, JRC, CC BY 4.0
+(https://creativecommons.org/licenses/by/4.0/); changes made: values sampled per building.
+
+Trees
+-----
+High Resolution Canopy Height Maps v2 (c) Meta and World Resources Institute (WRI), CC BY 4.0;
+changes made: canopy segmented into individual trees.
+Land cover check: (c) ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021)
+processed by ESA WorldCover consortium, CC BY 4.0; used only to decide where the canopy model is outdated.
+
+Other
+-----
+Landmark coordinates and names: Wikidata (CC0).
+Wikimedia Commons photos were used only as visual reference for a few landmarks; no photo is part of
+this website. Each building card links to the photo pages with author and licence.
+
+All data is provided as is, without warranty. Heights, roofs, colours and most trees are estimates;
+see the in-app notes and docs/GEOGRAPHIC_ACCURACY.md in the repository.

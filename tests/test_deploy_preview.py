@@ -97,6 +97,7 @@ def sandbox(tmp_path_factory):
     fakebin.mkdir()
     for f in ("deploy_preview.sh", "preflight_preview.py", "pack_demo.py"):
         shutil.copy(REPO / "scripts" / f, repo / "scripts" / f)
+    shutil.copytree(REPO / "LICENSES", repo / "LICENSES")
     dist = repo / "apps" / "web" / "dist-demo"
     (dist / "tiles").mkdir(parents=True)
     (dist / "index.html").write_text('<!doctype html><div id="root"></div>')
