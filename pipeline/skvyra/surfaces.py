@@ -151,22 +151,77 @@ def drape_thin(poly, terrain, bounds, offset: float, seg: float = 4.0) -> np.nda
     return tris
 
 
-def bridge_tris(poly, line, terrain, bounds, deck: float = 0.8) -> np.ndarray:
-    """A flat-ish deck interpolated between the ends of the bridge way (DEM under bridges is unreliable)."""
-    x0, y0, x1, y1 = bounds
-    poly = shapely.clip_by_rect(poly, x0, y0, x1, y1)
-    if poly.is_empty:
-        return np.zeros((0, 3, 3))
-    (ax, ay), (bx, by) = line.coords[0], line.coords[-1]
-    za, zb = terrain.z(ax, ay), terrain.z(bx, by)
-    t2 = triangulate(poly)
-    if not len(t2):
-        return np.zeros((0, 3, 3))
-    flat = t2.reshape(-1, 2)
-    proj = np.array([line.project(shapely.Point(p), normalized=True) for p in flat])
-    z = za + (zb - za) * proj + deck
-    top = np.concatenate([flat, z[:, None]], 1).reshape(-1, 3, 3)
-    return top
+def _facing(tris, d):
+    """Wind each triangle so its normal points along `d` (one direction per triangle, or one for all)."""
+    tris = np.asarray(tris, float).reshape(-1, 3, 3)
+    n = np.cross(tris[:, 1] - tris[:, 0], tris[:, 2] - tris[:, 0])
+    d = np.asarray(d, float)
+    if d.ndim == 2 and len(d) != len(n):  # one direction per quad (2 triangles each)
+        d = np.repeat(d, len(n) // len(d), 0)
+    flip = (n * np.broadcast_to(d, n.shape)).sum(1) < 0
+    tris[flip] = tris[flip][:, ::-1]
+    return tris
+
+
+def _quads(A, B, C, D):
+    """Strips of quads A[k] B[k] C[k] D[k] (arrays (n,3)) -> (2n,3,3)."""
+    return np.stack([np.stack([A, B, C], 1), np.stack([A, C, D], 1)], 1).reshape(-1, 3, 3)
+
+
+def bridge_mesh(line, p: dict, terrain, offset: float, seg: float = 4.0):
+    """Bridge on an OSM `bridge=*` way: deck (-> the road material of its category) and structure (fascia,
+    underside, parapets or railings -> "bridge" material). -> (deck (n,3,3), structure (m,3,3)).
+    Heights: the DEM under bridges does not resolve the valley, so the deck is laid on the line between the
+    road levels at both ends (exactly the draped road height there: no step at the joints), never below the
+    ground, plus a smooth sin^2 rise (0 at the ends, 0.2-0.6 m mid-span) that keeps it clear of the water
+    surface. Width = road_width (inferred unless tagged). Parapets/railings are generic, not surveyed."""
+    w, _ = road_width(p)
+    foot = p.get("highway") in FOOT
+    road_off = offset + (0.02 if road_category(p) == "paved" else 0)  # same lift as the draped road it joins
+    thick, rail_h = (0.3, 1.0) if foot else (0.6, 0.9)
+    pts = np.asarray(shapely.segmentize(line, seg).coords)[:, :2]
+    if len(pts) < 2 or line.length < 0.5:
+        return np.zeros((0, 3, 3)), np.zeros((0, 3, 3))
+    d = np.concatenate([[0], np.cumsum(np.hypot(*np.diff(pts, axis=0).T))])
+    t = d / d[-1]
+    tan = np.gradient(pts, axis=0)
+    tan /= np.linalg.norm(tan, axis=1)[:, None]
+    nrm = np.column_stack([-tan[:, 1], tan[:, 0]])  # left of the direction of travel
+    rise = np.clip(0.02 * d[-1], 0.2, 0.6) * np.sin(np.pi * t) ** 2
+
+    def edge(o):  # points offset `o` m to the left, deck top z there
+        e = pts + nrm * o
+        g = terrain.z(e[:, 0], e[:, 1]) + road_off
+        z = np.maximum(g[0] + (g[-1] - g[0]) * t, g) + rise
+        return np.column_stack([e, z])
+
+    L, R = edge(w / 2), edge(-w / 2)
+    down = np.array([0, 0, thick])
+    deck = _facing(_quads(L[:-1], R[:-1], R[1:], L[1:]), [0, 0, 1])
+    struct = [_facing(_quads(L[:-1], R[:-1], R[1:], L[1:]) - down, [0, 0, -1])]  # underside
+    up = np.array([0, 0, 0 if foot else rail_h])
+    for E, s in ((L, 1), (R, -1)):  # fascia (+ outer parapet face): from the underside to the parapet top
+        out = np.column_stack([nrm * s, np.zeros(len(E))])
+        struct.append(_facing(_quads(E[:-1] - down, E[1:] - down, E[1:] + up, E[:-1] + up), out[:-1]))
+    if foot:  # railing: posts every ~2 m and a hand rail, both sides
+        from .buildings import box_tris
+        for o in (w / 2 - 0.05, -(w / 2 - 0.05)):
+            E = edge(o)
+            for k in np.unique(np.round(np.linspace(0, len(E) - 1, max(2, int(d[-1] / 2) + 1))).astype(int)):
+                c, z0 = E[k, :2] + tan[k] * 0.05 * (int(k == 0) - int(k == len(E) - 1)), E[k, 2]  # end posts stay on the deck
+                post = np.array(box_tris(c, tan[k], nrm[k], 0.04, 0.04, z0, z0 + rail_h)[:8])  # 4 sides
+                struct.append(_facing(post, np.column_stack([post.mean(1)[:, :2] - c, np.zeros(8)])))
+            top, bot = E + [0, 0, rail_h], E + [0, 0, rail_h - 0.08]
+            for s in (1, -1):
+                struct.append(_facing(_quads(bot[:-1], bot[1:], top[1:], top[:-1]), np.column_stack([nrm[:-1] * s, np.zeros(len(E) - 1)])))
+    else:  # solid parapet 0.25 m: inner face and top; ends closed
+        for o, s in ((w / 2, 1), (-w / 2, -1)):
+            Eo, Ei = edge(o), edge(o - s * 0.25)
+            struct.append(_facing(_quads(Ei[:-1], Ei[1:], Ei[1:] + up, Ei[:-1] + up), np.column_stack([-nrm[:-1] * s, np.zeros(len(Ei) - 1)])))
+            struct.append(_facing(_quads(Eo[:-1] + up, Eo[1:] + up, Ei[1:] + up, Ei[:-1] + up), [0, 0, 1]))
+            for k, dirn in ((0, -tan[0]), (-1, tan[-1])):
+                struct.append(_facing(_quads(Eo[[k]] - down, Ei[[k]] - down, Ei[[k]] + up, Eo[[k]] + up), [*dirn, 0]))
+    return deck, np.concatenate(struct)
 
 
 # How strongly mapped land cover tints the satellite base colour (0 = keep Sentinel-2, 1 = flat class colour).

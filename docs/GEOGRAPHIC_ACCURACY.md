@@ -73,5 +73,13 @@ are documented assumptions with "low" confidence.
   the Catholic church's only footprint is a merged ML outline, so it stays generic; two listed buildings
   have no footprint at their Wikidata coordinates.
 - Roof shapes, materials, colours and window layouts are plausible for the region, not observed.
-- Bridges are flat decks between the DEM heights of their ends.
+- Bridges (every OSM `bridge=*` way, 15 in the model, 13 inside the town boundary): position, length and course are
+  OSM; the deck joins the draped road at both ends at exactly its height, never dips below the ground and rises
+  smoothly by 0.2–0.6 m mid-span to clear the water (the 30 m DEM does not resolve the stream valleys, so real deck
+  heights are unknown). Width is the inferred road width unless OSM has `width`. Fascia (0.6 m, footbridges 0.3 m),
+  plain 0.9 m parapets on vehicle bridges and post-and-rail railings (1.0 m) on footbridges are generic, not surveyed;
+  no piers. Before 2026-11-16 every deck was wound downwards and culled: bridges showed as gaps in the road.
+  Before/after: [Kyivska oblique](img/bridges/kyivska-oblique-before-after.jpg) ·
+  [Kyivska side](img/bridges/kyivska-side-before-after.jpg) · [Shevchenka oblique](img/bridges/shevchenka-oblique-before-after.jpg) ·
+  [Shevchenka side](img/bridges/shevchenka-side-before-after.jpg).
 - Water surfaces inherit DEM noise; rivers are not hydrologically flattened.

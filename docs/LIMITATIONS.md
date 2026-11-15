@@ -18,7 +18,8 @@ Honest list of what this reconstruction is **not**, as of 2026-11-14.
   DATA_SOURCE_AUDIT.md). These areas look empty in the model; they may or may not be empty in reality.
 - **Terrain is a 30 m radar surface model** with an approximate DTM correction under mapped buildings and
   woodland (morphological opening); ~2–4 m vertical error is typical, unmapped tree belts still read
-  high. Rivers are not flattened; bridges are interpolated decks.
+  high. Rivers are not flattened; bridges are generic decks between the road levels at their ends
+  (estimated rise, width, parapets; no piers).
 - **Road widths are inferred** from class (no width tags); sidewalks are not modelled (none mapped).
   Road markings are not drawn at all rather than guessed.
 - **Land use is incomplete**: unmapped areas take their colour from the Sentinel-2 scene of 18 July 2026

@@ -80,7 +80,9 @@ Per tile (`tile_size_m` = 500 m, cells aligned to the local origin, id `t<ix><iy
   footprint's representative point. Vertex attributes: `_FEATURE_ID`, `_STYLE` (facade / roof material),
   wall UVs (bays, floors), roof UVs (metres along eave / up slope).
 - Roads: buffered by width (tag > lanes × 3.25 m > class default), unioned per surface class (paved /
-  unpaved / foot) so junctions are one coherent surface; bridges become separate decks.
+  unpaved / foot) so junctions are one coherent surface; bridges become separate decks
+  (`surfaces.bridge_mesh`: deck in the road material, fascia/parapets in `bridge`; built once, in the tile holding the
+  bridge midpoint; neighbouring road caps are trimmed at the deck ends).
 - Draping: polygons are split along terrain cells and diagonals, triangulated (constrained Delaunay) and
   lifted to terrain + offset.
 - Ground textures: Sentinel-2 colour (graded, roof pixels around known footprints in-painted from nearby

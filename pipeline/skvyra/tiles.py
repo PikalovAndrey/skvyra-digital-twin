@@ -418,6 +418,9 @@ def build_tile(ix, iy, force=False) -> dict:
     roads_local = [_CTX["roads"][i] for i in ridx]
     road_polys, bridges = S.road_polygons(roads_local)
     road_polys = {k: shapely.clip_by_rect(v, *b) for k, v in road_polys.items()}
+    if bridges:  # the deck replaces the road there: trim the neighbours' round caps instead of stacking surfaces
+        deck_area = shapely.union_all([q for q, *_ in bridges])
+        road_polys = {k: v.difference(deck_area) for k, v in road_polys.items()}
     paved_areas = [shapely.clip_by_rect(_CTX["areas"][i][0], *b) for i in aidx if _CTX["areas"][i][1]["cover"] == "paved"]
     if paved_areas:
         road_polys["paved"] = shapely.union_all([road_polys.get("paved", shapely.Polygon()), *paved_areas])
@@ -439,7 +442,7 @@ def build_tile(ix, iy, force=False) -> dict:
     # gravel shoulders along paved roads (inferred, 1 m): never under buildings, water or other surfaces
     if "paved" in road_polys:
         taken = shapely.union_all(list(road_polys.values()) + ([near_fp] if near_fp is not None else []) +
-                                  ([water] if water is not None else []))
+                                  ([water] if water is not None else []) + [q for q, *_ in bridges])
         sh = shapely.clip_by_rect(road_polys["paved"].buffer(1.0, quad_segs=2).difference(taken), *b)
         if not sh.is_empty:
             road_polys["shoulder"] = sh
@@ -505,6 +508,11 @@ def build_tile(ix, iy, force=False) -> dict:
                            "z": round(float(t0z.z(pt.x, pt.y)), 2), "name": p.get("tags", {}).get("name")})
 
     bidx_set = set(bidx)
+    # ground texture: bridges painted as road over the water (LOD2 has no road meshes; nearer, the deck covers it)
+    tex_roads = dict(road_polys)
+    for poly, _, p in bridges:
+        cat = S.road_category(p)
+        tex_roads[cat] = shapely.union_all([tex_roads.get(cat, shapely.Polygon()), shapely.clip_by_rect(poly, *b)])
     files, zr, sizes = {}, None, {}
     for lod, spec in LODS.items():
         ter = _CTX["terrains"][lod]
@@ -549,11 +557,16 @@ def build_tile(ix, iy, force=False) -> dict:
                     soups["decor_fence"].add(S.fence_tris(line, ter), LIN(col))
             for r in rails:
                 soups["rail"].add(S.drape(r, ter, b, off), COLORS["rail"])
-            for poly, line, p in bridges:
-                soups["bridge"].add(S.bridge_tris(poly, line, ter, b), COLORS["bridge"])
+            for poly, line, p in bridges:  # whole bridge in the tile holding its midpoint (no seams, no duplicates)
+                mid = line.interpolate(0.5, normalized=True)
+                if b[0] <= mid.x < b[2] and b[1] <= mid.y < b[3]:
+                    deck, struct = S.bridge_mesh(line, p, ter, off)
+                    cat = S.road_category(p)
+                    soups[f"road_{cat}"].add(deck, COLORS[f"road_{cat}"])
+                    soups["bridge"].add(struct, COLORS["bridge"])
         base = S.sample_base(_CTX["s2"], b, spec["tex"], (frame.ox, frame.oy)) if _CTX["s2"] is not None else None
         near = [g for g, *_ in blds] + [_CTX["bld"][j][0] for j in _CTX["bld_tree"].query(tb.buffer(5)) if j not in bidx_set]
-        tex = S.ground_texture(b, spec["tex"], areas_local, water, road_polys, rails, spec["q"], f"{tid}{lod}", base,
+        tex = S.ground_texture(b, spec["tex"], areas_local, water, tex_roads, rails, spec["q"], f"{tid}{lod}", base,
                                footprints=near if lod < 2 else None)
         prims = [{"name": k, "soup": s, "material": {**MATERIALS[k], "color": [1, 1, 1]},
                   "uv": k in ("terrain", "walls", "roofs"), "fid": k in ("walls", "roofs", "details"),

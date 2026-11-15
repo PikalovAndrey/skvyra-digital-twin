@@ -936,3 +936,39 @@ def test_licence_files_scope():
                  "MIT licence", "CDLA-Permissive-2.0.txt", "changes made"):
         assert must in notice, must
     assert "Community Data License Agreement" in (root / "LICENSES" / "CDLA-Permissive-2.0.txt").read_text()
+
+
+@pytest.mark.parametrize("highway", ["primary", "footway"])
+def test_bridge_deck_faces_up_meets_road_and_clears_ground(highway):
+    """The deck was wound clockwise (culled = invisible: every bridge was a gap in the road, 2026-11-15)."""
+    ter = Slope()
+    line = shapely.LineString([(10, 10), (30, 12), (45, 20)])  # curved
+    p = {"highway": highway, "bridge": "yes"}
+    deck, struct = S.bridge_mesh(line, p, ter, 0.12)
+    for t in (deck, struct):
+        assert len(t) and np.isfinite(t).all()
+    n = np.cross(deck[:, 1] - deck[:, 0], deck[:, 2] - deck[:, 0])
+    assert (n[:, 2] > 0).all()  # every deck triangle faces up
+    w, _ = S.road_width(p)
+    v = deck.reshape(-1, 3)
+    lift = 0.12 + (0.02 if S.road_category(p) == "paved" else 0)
+    g = ter.z(v[:, 0], v[:, 1]) + lift
+    assert (v[:, 2] >= g - 1e-6).all()  # never below the draped road level
+    assert v[:, 2].max() - g.max() < 0.7  # no floating deck
+    for end in (line.coords[0], line.coords[-1]):  # joints: exactly the draped road height, no step
+        near = v[np.hypot(v[:, 0] - end[0], v[:, 1] - end[1]) < w / 2 + 1e-6]
+        assert len(near) >= 2
+        assert np.abs(near[:, 2] - (ter.z(near[:, 0], near[:, 1]) + lift)).max() < 0.05
+    # structure: underside faces down, something rises above the deck (parapet / railing), all inside the width
+    sn = np.cross(struct[:, 1] - struct[:, 0], struct[:, 2] - struct[:, 0])
+    assert (sn[:, 2] < -1e-9).any() and struct[..., 2].max() > v[:, 2].max() + 0.8
+    assert line.buffer(w / 2 + 0.05, cap_style="flat").buffer(1e-3).covers(shapely.MultiPoint(struct.reshape(-1, 3)[:, :2]))
+    if highway == "primary":  # outer faces (fascia + parapet) point away from the road, inner parapet faces towards it
+        side = np.abs(sn[:, 2]) < 1e-6 * np.linalg.norm(sn, axis=1)
+        c, ns = struct[side].mean(1), sn[side]
+        foot_pt = np.array([line.interpolate(line.project(shapely.Point(x, y))).coords[0] for x, y in c[:, :2]])
+        away = ((c[:, :2] - foot_pt) * ns[:, :2]).sum(1)
+        dist = np.hypot(*(c[:, :2] - foot_pt).T)
+        outer, inner = np.abs(dist - w / 2) < 0.05, np.abs(dist - (w / 2 - 0.25)) < 0.05
+        assert outer.sum() > 4 and inner.sum() > 4
+        assert (away[outer] > 0).all() and (away[inner] < 0).all()

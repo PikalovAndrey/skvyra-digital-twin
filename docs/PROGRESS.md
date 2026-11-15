@@ -141,7 +141,7 @@ exists and runs, but no dedicated test. **Partial** = works with known gaps. **B
 | Normalization: repair, quarantine, dedupe, sensitive suppression, stable ids | Verified | `test_unit.py`, `test_integration.py::test_normalization_counts_and_quarantine` |
 | Terrain (fill, despike, smooth, lattice, skirts, seamless edges) | Verified | `test_terrain_tiles_share_edge_vertices`, `test_dem_cleanup_does_not_depend_on_logging` |
 | Buildings: heights with provenance, 5 roof families, courtyards, concave, narrow | Verified | roof area = footprint area for 5 roofs × 6 shapes; outward walls; slopes (no floating) |
-| Roads: width rules, unioned surfaces, draping, bridges | Verified (bridges: implemented only) | `test_drape_*`, `test_road_union_has_no_overlaps` |
+| Roads: width rules, unioned surfaces, draping, bridges | Verified (bridges since 2026-11-16: deck faces up, joints flush, structure; `make qa` checks all 15) | `test_drape_*`, `test_road_union_has_no_overlaps`, `test_bridge_deck_*` |
 | Blender scene + rendered preview | Visually verified | `docs/img/render-street-eevee.jpg`, `render-centre-sunset-cycles.jpg` |
 
 ## Milestone C — Interactive viewer: **done**
