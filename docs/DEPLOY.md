@@ -115,13 +115,36 @@ Preflight and upload (environment: `PAGES_ACCOUNT_ID`, `PAGES_PROJECT`, `PREVIEW
 | pack check, no source maps | internal file, local path or key, host limits |
 | account | the token cannot read this account ID (its name is printed to confirm) |
 | project | missing, production branch not `production`, deployment branch is a production-like name, Git source connected, any production deployment |
-| Access | no Access application covering `preview.<subdomain>`; a policy that is not `allow`, includes anything but e-mail addresses, or an address not in `PREVIEW_EMAILS` (shown masked); one-time PIN missing → warning |
-| probes | `https://preview.<subdomain>/` without login is not redirected to Cloudflare Access; `https://<subdomain>/` serves the demo |
+| Access | no Access application covering both the branch alias `preview.<subdomain>` and unique deployment hosts `<hash>.<subdomain>`; a policy that is not `allow`, includes anything but e-mail addresses, or an address not in `PREVIEW_EMAILS` (shown masked); one-time PIN missing → warning |
 
-API errors or an unreachable API count as failures. The upload command gets the verified account ID, the pinned
+Before the first upload the preview hosts do not exist yet, so the preflight checks Access through the API only (an
+HTTP probe there would block the first deployment for ever). Right after the upload, `--after-upload` (no login):
+
+| Check | Fails when |
+|---|---|
+| deployment | no preview deployment of this commit on the branch (API) |
+| unique URL `https://<hash>.<subdomain>/` and every alias | not redirected to Cloudflare Access, or the demo page is served |
+| production | `https://<subdomain>/` serves the demo, or a production deployment exists |
+
+The new deployment is identified by its ID (IDs listed right before the upload), environment `preview`, branch and
+commit — an earlier upload of the same commit is not mistaken for it. Exit codes of `deploy_preview.sh upload`:
+0 private; 1 refused before the upload (nothing uploaded); **2 CRITICAL** — a URL is readable without login or a
+production deployment exists, reported at once without retries; 3 uploaded but not verifiable (deployment not visible
+in the API after 3 attempts 15 s apart, or API unreachable) — treat as possibly public. Nothing is deleted
+automatically; the script prints the command to take the project offline for you to decide. No token, cookie or
+Access redirect query is printed; the smoke test runs without Playwright traces (they would store the session).
+
+Tested end to end without Cloudflare (`tests/test_deploy_preview.py`: fake wrangler + fake Cloudflare API/hosts):
+preflight passes with no preview deployment yet; missing Access, alias-only Access, "everyone", unapproved address,
+bypass, production branch `preview`, Git source, existing production, unreachable API and branch `main` all block the
+upload; an upload landing in production and a public unique URL / alias / production URL give exit 2 at once; a late
+deployment is waited for; a never-visible one and an API outage after the upload give exit 3; the token and the
+Access query never appear in the output. The upload command gets the verified account ID, the pinned
 wrangler and no terminal on stdin (it cannot offer to create a project or switch account). Tested:
 `tests/test_unit.py::test_preview_preflight_blocks_every_unsafe_cloudflare_setup` (fake Cloudflare API: the good
-setup passes, each of ten unsafe variants fails).
+setup passes, each unsafe variant fails before the upload; after it a public unique URL, alias or production URL,
+a production deployment or a missing deployment fails; a not yet existing preview host does not block the first
+upload).
 
 ## Smoke test of the deployed preview (`e2e/smoke.spec.ts`, read-only)
 

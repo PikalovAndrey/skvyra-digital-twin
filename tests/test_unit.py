@@ -840,7 +840,7 @@ def test_pack_demo_removes_internal_files_gzips_tiles_and_flags_leaks(tmp_path, 
 def test_preview_preflight_blocks_every_unsafe_cloudflare_setup(monkeypatch):
     """scripts/preflight_preview.py remote checks against a fake Cloudflare API: the good setup passes; a wrong
     production branch, a production deployment, a Git source, missing Access, a non-e-mail or non-allow policy, an
-    unapproved address and a publicly readable preview host each fail."""
+    unapproved address each fail; after the upload a public deployment URL, alias or production URL fails."""
     import copy
     import importlib.util
     spec = importlib.util.spec_from_file_location("preflight_preview", C.ROOT / "scripts" / "preflight_preview.py")
@@ -884,5 +884,34 @@ def test_preview_preflight_blocks_every_unsafe_cloudflare_setup(monkeypatch):
     assert broken(lambda w: pol(w)["include"].append({"email_domain": {"domain": "example.org"}}))
     assert broken(lambda w: pol(w)["include"].append({"email": {"email": "stranger@example.com"}}))
     assert broken(lambda w: pol(w).update(decision="bypass"))
-    assert broken(lambda w: w.update(preview=(200, {}, b'<div id="root"></div>')))
-    assert broken(lambda w: w.update(production=(200, {}, b'<html><div id="root"></div>')))
+    assert broken(lambda w: w["apps"]["result"][0].update(domain="preview.skv.pages.dev"))  # alias only, not hash URLs
+    # before the first upload the preview hosts do not exist: no HTTP probe may block it
+    assert broken(lambda w: w.update(preview=(404, {}, b"no deployment"))) == []
+
+    # after the upload: the unique deployment URL and every alias must redirect to Access, production stays empty
+    head = "f" * 40
+    dep = {"id": "new-1", "url": "https://ab12cd34.skv.pages.dev", "aliases": ["https://preview.skv.pages.dev"], "environment": "preview",
+           "deployment_trigger": {"metadata": {"branch": "preview", "commit_hash": head}}}
+    access = (302, {"Location": "https://team.cloudflareaccess.com/cdn-cgi/access/login/x"}, b"")
+    after = {"project": ok["project"], "preview": {"result": [dep]}, "production": {"result": []},
+             "https://ab12cd34.skv.pages.dev/": access, "https://preview.skv.pages.dev/": access,
+             "https://skv.pages.dev/": (404, {}, b"")}
+
+    def run_after(world):
+        def http(url, token=None):
+            if url.startswith(pf.API):
+                key = "production" if "env=production" in url else "preview" if "env=preview" in url else "project"
+                return 200, {}, json.dumps(world[key]).encode()
+            return world[url]
+        monkeypatch.setattr(pf, "http", http)
+        fails = []
+        code = pf.after_upload_checks(lambda good, what: fails.append(what) if not good else None, "acc", "skv", "preview", head, set(), "token")
+        assert (code == 0) == (fails == [])
+        return fails
+
+    assert run_after(after) == []
+    public = (200, {}, b'<html><div id="root"></div>')
+    for change in ({"https://ab12cd34.skv.pages.dev/": public}, {"https://preview.skv.pages.dev/": public},
+                   {"https://skv.pages.dev/": public}, {"production": {"result": [{"environment": "production"}]}},
+                   {"preview": {"result": []}}):
+        assert run_after({**after, **change}), change

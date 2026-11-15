@@ -23,6 +23,8 @@ const expectedCommit = process.env.SMOKE_COMMIT ?? (existsSync(`${DIST}/version.
 type W = { __skvyra?: { stats(): { active: number; loading: number; queued: number; failed: number; gaps?: number; fillVisible?: boolean | null } } }
 
 test.skip(!process.env.SMOKE_URL, 'set SMOKE_URL to the deployed preview (see the header)')
+// no trace / video: they would store the Access session cookie and headers on disk
+test.use({ trace: 'off', video: 'off' })
 test.describe.configure({ mode: 'serial' })
 test.setTimeout(420_000)
 
@@ -56,7 +58,7 @@ test('access and HTTP delivery', async ({ browser, playwright }) => {
     // without credentials the preview must not be readable
     const anon = await playwright.request.newContext()
     const r = await anon.get(URL_, { maxRedirects: 0 })
-    const loc = r.headers()['location'] ?? ''
+    const loc = (r.headers()['location'] ?? '').split('?')[0] // no query: Access metadata
     check([302, 303, 401, 403].includes(r.status()) && (r.status() >= 400 || /cloudflareaccess\.com/.test(loc)), `anonymous request is stopped by Access (${r.status()} ${loc.slice(0, 60)})`)
     await anon.dispose()
     if (!token) {

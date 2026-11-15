@@ -15,10 +15,18 @@ Checks (each prints ok / FAIL; exit 1 on any FAIL):
   account the token reaches exactly this account (name shown for you to confirm)
   project exists; production branch is `production`; deployment branch is not it; no Git source (Direct Upload);
           no production deployment
-  access  an Access application covers preview.<subdomain>; every policy is `allow` and includes only e-mail rules;
-          those e-mails are a subset of PREVIEW_EMAILS; one-time PIN login is enabled (warning only)
-  probes  https://<branch>.<subdomain>/ without login → redirect to Cloudflare Access; https://<subdomain>/ does not
-          serve the demo
+  access  an Access application covers the branch alias <branch>.<subdomain> and the unique deployment hosts
+          <hash>.<subdomain>; every policy is `allow` and includes only e-mail rules; those e-mails are a subset of
+          PREVIEW_EMAILS; one-time PIN login is enabled (warning only)
+  These are API checks only: before the first upload the preview hosts do not exist yet, so no HTTP probe of them is
+  possible (it would block the first deployment for ever).
+
+`--list-preview-ids` (right before the upload) prints the IDs of the existing preview deployments.
+`--after-upload` (right after it, KNOWN_PREVIEW_IDS = that list): the new deployment is the one with an ID not seen
+before, environment preview, this branch and this commit; without login its unique URL and every alias must redirect
+to Cloudflare Access, the production URL must not serve the demo, no production deployment may exist.
+Exit 0 private, 2 CRITICAL (something public), 3 not verifiable yet (retry). Nothing is ever deleted here.
+No token, cookie or Access redirect query is printed.
 """
 import fnmatch
 import json
@@ -95,15 +103,16 @@ def remote_checks(check, account, project, branch, emails, token):
     prod = [x for x in d.get("result") or [] if x.get("environment") == "production"]
     check(s == 200 and not prod, f"no production deployment (found {len(prod)}, HTTP {s})")
 
-    host = f"{branch}.{sub}"
+    hosts_needed = [f"{branch}.{sub}", f"0123abcd.{sub}"]  # branch alias and a unique deployment host
     s, d = api(f"/accounts/{account}/access/apps", token)
     apps = d.get("result") or []
     def hosts(a):
         out = [a.get("domain") or ""] + list(a.get("self_hosted_domains") or [])
         out += [x.get("uri", "") for x in a.get("destinations") or [] if isinstance(x, dict)]
         return [h.split("/")[0] for h in out if h]
-    covering = [a for a in apps if any(fnmatch.fnmatch(host, h) for h in hosts(a))]
-    check(s == 200 and bool(covering), f"Cloudflare Access application covers {host} (HTTP {s}, {len(covering)} found)")
+    covering = [a for a in apps if any(fnmatch.fnmatch(hn, h) for hn in hosts_needed for h in hosts(a))]
+    for hn in hosts_needed:
+        check(s == 200 and any(fnmatch.fnmatch(hn, h) for a in covering for h in hosts(a)), f"Cloudflare Access application covers {hn} (HTTP {s})")
     approved = {e.strip().lower() for e in emails if e.strip()}
     for a in covering:
         pols = a.get("policies") or []
@@ -120,11 +129,53 @@ def remote_checks(check, account, project, branch, emails, token):
     if s == 200 and not any(x.get("type") == "onetimepin" for x in d.get("result") or []):
         print("warn one-time PIN login is not enabled: testers without a Cloudflare account cannot sign in")
 
-    st, hd, _ = http(f"{SCHEME}://{host}/")
-    loc = {k.lower(): v for k, v in hd.items()}.get("location", "")
-    check(st in (301, 302, 303, 307) and "cloudflareaccess.com" in loc, f"{host} without login → Cloudflare Access ({st} {loc[:50]})")
+
+def deployments(account, project, env_name, token):
+    """Deployments of one environment, or None when the API cannot be read."""
+    s, d = api(f"/accounts/{account}/pages/projects/{project}/deployments?env={env_name}", token)
+    return (d.get("result") or []) if s == 200 and d.get("success", True) else None
+
+
+def meta(x):
+    return (x.get("deployment_trigger") or {}).get("metadata") or {}
+
+
+def after_upload_checks(check, account, project, branch, commit, known_ids, token) -> int:
+    """0 = the new deployment is private; 2 = CRITICAL (a URL is readable without login, or a production deployment
+    exists); 3 = not verifiable yet (deployment not visible in the API, API unreachable) - the caller retries."""
+    s, d = api(f"/accounts/{account}/pages/projects/{project}", token)
+    sub = (d.get("result") or {}).get("subdomain", "") if s == 200 else ""
+    prod, prev = deployments(account, project, "production", token), deployments(account, project, "preview", token)
+    if not sub or prod is None or prev is None:
+        check(False, f"Cloudflare API readable (HTTP {s}) - privacy of the upload NOT verified")
+        return 3
+    critical = False
+    if prod:
+        check(False, f"CRITICAL: {len(prod)} production deployment(s): {[x.get('id') for x in prod]}")
+        critical = True
+    # the deployment this upload created: an ID that did not exist before, in the preview environment, on this
+    # branch, from this commit (an older upload of the same commit has another ID and is not mistaken for it)
+    new = [x for x in prev if x.get("id") not in known_ids]
+    mine = [x for x in new if x.get("environment") == "preview" and meta(x).get("branch") == branch and meta(x).get("commit_hash") == commit]
+    if len(mine) != 1:
+        check(False, f"exactly one new preview deployment of {commit[:7]} on {branch!r} (new: {[(x.get('id'), x.get('environment'), meta(x).get('branch')) for x in new]})")
+        return 2 if critical else 3
+    dep = mine[0]
+    check(True, f"new deployment {dep.get('id')} (environment {dep.get('environment')}, branch {branch}, commit {commit[:7]})")
+    urls = sorted({u for u in [dep.get("url", "")] + list(dep.get("aliases") or []) if u})
+    if not any(u.split("//")[-1].startswith(f"{branch}.") for u in urls):
+        check(False, f"branch alias {branch}.{sub} not yet listed ({len(urls)} URL(s))")
+        return 2 if critical else 3
+    for u in urls:  # unique deployment URL and every alias, without login
+        st, hd, body = http(u.rstrip("/") + "/")
+        loc = {k.lower(): v for k, v in hd.items()}.get("location", "").split("?")[0]  # no query: it carries Access metadata
+        private = st in (301, 302, 303, 307) and "cloudflareaccess.com" in loc and DEMO_MARK.encode() not in body
+        check(private, f"{u} without login → Cloudflare Access ({st} {loc[:60]})" + ("" if private else " - CRITICAL: PUBLIC"))
+        critical |= not private
     st, _, body = http(f"{SCHEME}://{sub}/")
-    check(not (st == 200 and DEMO_MARK.encode() in body), f"{sub} (production) does not serve the demo ({st})")
+    public = st == 200 and DEMO_MARK.encode() in body
+    check(not public, f"{sub} (production) does not serve the demo ({st})" + (" - CRITICAL: PUBLIC" if public else ""))
+    return 2 if critical or public else 0
 
 
 def main(argv=None) -> int:
@@ -138,7 +189,22 @@ def main(argv=None) -> int:
         print(("ok   " if ok else "FAIL ") + what)
         if not ok:
             fails.append(what)
-    if "--remote-only" not in (argv or sys.argv[1:]):
+    args = argv if argv is not None else sys.argv[1:]
+    if "--list-preview-ids" in args:  # recorded right before the upload, so the new deployment can be told apart
+        prev = deployments(env["PAGES_ACCOUNT_ID"], env["PAGES_PROJECT"], "preview", env["CF_PREFLIGHT_TOKEN"])
+        if prev is None:
+            print("cannot read the existing preview deployments", file=sys.stderr)
+            return 1
+        print(",".join(str(x.get("id")) for x in prev))
+        return 0
+    if "--after-upload" in args:
+        commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
+        known = {i for i in env.get("KNOWN_PREVIEW_IDS", "").split(",") if i}
+        code = after_upload_checks(check, env["PAGES_ACCOUNT_ID"], env["PAGES_PROJECT"], env.get("PAGES_BRANCH", "preview"),
+                                   commit, known, env["CF_PREFLIGHT_TOKEN"])
+        print(f"after upload: {({0: 'PRIVATE', 2: 'CRITICAL', 3: 'NOT VERIFIED'})[code]}")
+        return code
+    if "--remote-only" not in args:
         local_checks(check)
     remote_checks(check, env["PAGES_ACCOUNT_ID"], env["PAGES_PROJECT"], env.get("PAGES_BRANCH", "preview"),
                   env["PREVIEW_EMAILS"].split(","), env["CF_PREFLIGHT_TOKEN"])
