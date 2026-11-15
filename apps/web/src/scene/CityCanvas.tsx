@@ -73,7 +73,6 @@ function SceneContent({ index, baseUrl, streets, onManager }: Props) {
   const cameraMode = useStore((s) => s.cameraMode)
   const manager = useMemo(() => new TileManager(index, baseUrl), [index, baseUrl])
   const controls = useRef<MapControlsImpl>(null)
-  const loadingFill = useRef<THREE.Object3D | null>(null) // coarse ground under the tiles, shown until they load
   const sun = useRef<THREE.DirectionalLight>(null)
   const pose = useMemo(() => overviewPose(index), [index])
   const zmin = Math.min(...index.tiles.map((t) => t.z[0]))
@@ -98,12 +97,13 @@ function SceneContent({ index, baseUrl, streets, onManager }: Props) {
         })
         root = g.scene
         root.name = 'context (Sentinel-2, not reconstructed)'
-        loadingFill.current = root.getObjectByName('context_under') ?? null
+        manager.loadingFill = root.getObjectByName('context_under') ?? null // shown/hidden by the tile manager
         scene.add(root)
       })
       .catch((e) => (e as Error).name !== 'AbortError' && console.warn('context ground unavailable:', e))
     return () => {
       ctrl.abort()
+      manager.loadingFill = null
       if (root) {
         scene.remove(root)
         root.traverse((o) => {
@@ -116,7 +116,7 @@ function SceneContent({ index, baseUrl, streets, onManager }: Props) {
         })
       }
     }
-  }, [index, baseUrl, scene])
+  }, [index, baseUrl, scene, manager])
 
   // shader warm-up: compile every shared material once at start-up, so the first close-up does not stall
   useEffect(() => {
@@ -211,10 +211,6 @@ function SceneContent({ index, baseUrl, streets, onManager }: Props) {
     const now = performance.now()
     if (now - a.t > 500) {
       const s = manager.stats()
-      if (loadingFill.current && s.active > 0 && !s.loading && !s.queued) {
-        loadingFill.current.visible = false // first tiles are in: the coarse fill would only poke through them
-        loadingFill.current = null
-      }
       const mem = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory
       useStore.getState().set({
         stats: {

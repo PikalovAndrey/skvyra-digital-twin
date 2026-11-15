@@ -715,6 +715,15 @@ def build_context(cfg, frame, cells=()) -> dict | None:
     # loaded (instead of the flat horizon plane showing through the gaps on a slow network), then hides it
     below = tris[under].copy()
     below[..., 2] -= 6.0
+    # and never above the terrain of any LOD: each vertex at most the lowest DEM within one grid step around it (the
+    # area of all its triangles) minus a margin - in narrow valleys the 120 m interpolation was up to 9 m too high
+    fine = Terrain(dem_path(), frame, step=10.0, verbose=False)
+    off = np.arange(-step, step + 1e-6, 15.0)
+    ox, oy = (a.ravel() for a in np.meshgrid(off, off))
+    v = below.reshape(-1, 3)
+    for i in range(0, len(v), 2000):
+        c = v[i:i + 2000]
+        c[:, 2] = np.minimum(c[:, 2], fine.z(c[:, :1] + ox, c[:, 1:2] + oy).min(axis=1) - 1.5)
     tris = tris[~under].copy()
     tris[..., 2] -= 2.5
 

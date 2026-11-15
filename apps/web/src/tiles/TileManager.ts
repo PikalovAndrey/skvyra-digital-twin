@@ -49,6 +49,8 @@ export interface StreamStats {
   transferredMB: number
   lodCounts: [number, number, number]
   missing: string[]
+  gaps: number // tiles in view with no LOD loaded at all (the ground below shows through)
+  fillVisible: boolean | null // coarse loading fill under the tiles (null: context not loaded)
 }
 
 export class TileManager {
@@ -65,6 +67,8 @@ export class TileManager {
   private box = new THREE.Box3()
   private transferred = 0
   private queued = 0 // wanted tiles whose desired LOD is neither loaded nor in flight
+  private gaps = 0
+  loadingFill: THREE.Object3D | null = null // set by the scene once the context mesh is in
   readonly loadMs: number[] = [] // fetch + parse + prepare per tile (benchmarks)
   readonly parseMs: number[] = [] // main-thread part: glTF parse + material setup
   readonly treeMs: number[] = [] // main-thread tree instancing per tile (benchmarks)
@@ -125,6 +129,7 @@ export class TileManager {
     // 2. display: wanted LOD if loaded, else the closest loaded LOD as a placeholder
     const now = performance.now()
     let queued = 0
+    let gaps = 0
     let upgrades = 0
     for (const w of wants) {
       const id = w.tile.id
@@ -135,6 +140,7 @@ export class TileManager {
           if (show) break
         }
       }
+      if (!show) gaps++
       if (show) {
         show.lastUsed = this.clock
         const cur = this.shown.get(id)
@@ -155,6 +161,10 @@ export class TileManager {
       }
     }
     this.queued = queued
+    this.gaps = gaps
+    // the coarse fill under the tiles is shown exactly while some wanted tile has nothing loaded (otherwise it would
+    // only poke through loaded terrain in valleys) - also later, e.g. at the far edge of town on low quality
+    if (this.loadingFill) this.loadingFill.visible = gaps > 0
     // tree detail by distance (hysteresis so a tile on the boundary does not flip every frame)
     for (const [id, lod] of this.shown) {
       if (lod !== 0) continue
@@ -498,6 +508,8 @@ export class TileManager {
       transferredMB: this.transferred / 1e6,
       lodCounts,
       missing: this.index.failed.map((f) => f.id),
+      gaps: this.gaps,
+      fillVisible: this.loadingFill ? this.loadingFill.visible : null,
     }
   }
 

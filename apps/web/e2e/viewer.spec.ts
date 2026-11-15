@@ -262,3 +262,58 @@ test('overview loads tile metadata lazily, a far building still opens its card',
   })
   expect(b?.id).toBeTruthy()
 })
+
+// Loading fill (coarse satellite ground under the tiles): whenever a tile in view has nothing loaded yet, the fill must
+// be visible, so the flat horizon plane never shows through, and hidden when nothing is missing. Scenario on a slow
+// network: start at one edge before the overview is in, move to the far edge (tiles never loaded), overview, centre
+// (LOD changes: the coarser LOD stays as placeholder, no gap).
+test('loading fill covers every gap: early jump, return to overview, LOD change', async ({ page, context }) => {
+  test.setTimeout(240_000)
+  const cdp = await context.newCDPSession(page)
+  await cdp.send('Network.enable')
+  await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 40, downloadThroughput: 20e6 / 8, uploadThroughput: 2.5e6 / 8 })
+  const samples: { t: string; gaps: number; fill: boolean | null; loading: number }[] = []
+  const sample = async (t: string, ms: number) => {
+    const end = Date.now() + ms
+    while (Date.now() < end) {
+      const s = await page.evaluate(() => (window as unknown as { __skvyra?: { stats(): { gaps: number; fillVisible: boolean | null; loading: number } } }).__skvyra?.stats())
+      if (s) samples.push({ t, gaps: s.gaps, fill: s.fillVisible, loading: s.loading })
+      await page.waitForTimeout(100)
+    }
+  }
+  await page.goto('/')
+  await page.waitForFunction(() => typeof (window as unknown as { __skvyra?: { stats(): { fillVisible: boolean | null } } }).__skvyra?.stats().fillVisible === 'boolean', null, { timeout: 60_000 })
+  // low quality (tiles are wanted within 7 km only), instant jump to the south-west edge before the overview is in, wait
+  // there (first "everything loaded" moment with only part of the town loaded), then fly to the north-east edge
+  const view = (camera: number[], target: number[], fly: boolean) => page.evaluate((v) => (window as unknown as { __skvyraStore: { getState(): { set(p: object): void } } })
+    .__skvyraStore.getState().set({ view: { ...v, t: Date.now() } }), { camera, target, fly })
+  await page.evaluate(() => (window as unknown as { __skvyraStore: { getState(): { set(p: object): void } } }).__skvyraStore.getState().set({ quality: 'low' }))
+  await view([-3300, -3300, 600], [-3000, -3000, 200], false)
+  await sample('south-west', 1500)
+  await streamingIdle(page)
+  await sample('south-west idle', 600)
+  await view([3300, 2800, 600], [3000, 2500, 200], true)
+  await sample('north-east', 4000)
+  await streamingIdle(page)
+  await sample('north-east idle', 600)
+  await page.getByTestId('tb-places').click()
+  await page.getByTestId('places').getByRole('button').last().click() // "whole town from above"
+  await sample('overview', 2500)
+  await page.screenshot({ path: `${SHOTS}/loading-fill-overview-return.png` })
+  await streamingIdle(page, 50)
+  await sample('overview idle', 600)
+  await page.getByTestId('tb-places').click()
+  await page.getByTestId('place-centre').click()
+  await sample('centre', 3000)
+  await streamingIdle(page)
+  await sample('centre idle', 600)
+  const uncovered = samples.filter((s) => s.gaps > 0 && s.fill === false)
+  const summary = Object.fromEntries([...new Set(samples.map((s) => s.t))].map((t) => {
+    const ss = samples.filter((s) => s.t === t)
+    return [t, { n: ss.length, maxGaps: Math.max(...ss.map((s) => s.gaps)), uncovered: ss.filter((s) => s.gaps > 0 && s.fill === false).length, fillShownWithoutGaps: ss.filter((s) => s.gaps === 0 && s.fill).length }]
+  }))
+  console.log(JSON.stringify(summary))
+  expect(samples.some((s) => s.t === 'north-east' && s.gaps > 0)).toBe(true) // gaps after the first idle moment
+  expect(uncovered).toEqual([])
+  expect(samples.filter((s) => s.t.endsWith('idle')).every((s) => s.gaps === 0 && s.fill === false)).toBe(true) // hidden once all is in
+})

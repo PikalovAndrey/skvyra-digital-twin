@@ -1,5 +1,13 @@
 # Progress — 2026-11-15
 
+## 3.5.1 — pre-deploy (2026-11-15)
+
+Loading fill shown exactly while a tile in view has nothing loaded (the one-shot hide left a gap at the far edge of
+town on low quality — reproduced by a new e2e test, then fixed) and kept below the terrain of every LOD (was up to 9 m
+above it in valleys). Smoke test for the deployed preview (`e2e/smoke.spec.ts`), read-only preflight
+(`scripts/preflight_preview.py`: account, project, production branch, no production deployment, Access with approved
+e-mails only, clean package from HEAD) run before any upload by `scripts/deploy_preview.sh`. Not deployed.
+
 ## Iteration 10 — Demo Readiness 3.5 (2026-11-15)
 
 First-visit card and Places menu (centre, lyceum, synagogue, 1 Kyivska St, residential, whole town), facade

@@ -835,3 +835,54 @@ def test_pack_demo_removes_internal_files_gzips_tiles_and_flags_leaks(tmp_path, 
     assert pd.main() == 0 and (out / "tiles" / "t+0+0.lod0.glb").read_bytes() == packed  # idempotent
     (out / "search.json").write_text('{"path": "/Users/someone/x"}')
     assert pd.main() == 1  # a local path leaks into the public build
+
+
+def test_preview_preflight_blocks_every_unsafe_cloudflare_setup(monkeypatch):
+    """scripts/preflight_preview.py remote checks against a fake Cloudflare API: the good setup passes; a wrong
+    production branch, a production deployment, a Git source, missing Access, a non-e-mail or non-allow policy, an
+    unapproved address and a publicly readable preview host each fail."""
+    import copy
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("preflight_preview", C.ROOT / "scripts" / "preflight_preview.py")
+    pf = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(pf)
+    ok = {
+        "account": {"success": True, "result": {"name": "Demo account"}},
+        "project": {"result": {"name": "skv", "subdomain": "skv.pages.dev", "production_branch": "production", "source": None}},
+        "deployments": {"result": []},
+        "apps": {"result": [{"name": "skv previews", "domain": "*.skv.pages.dev", "policies": [
+            {"name": "testers", "decision": "allow", "include": [{"email": {"email": "a@example.org"}}, {"email": {"email": "b@example.org"}}]}]}]},
+        "idps": {"result": [{"type": "onetimepin"}]},
+        "preview": (302, {"Location": "https://team.cloudflareaccess.com/cdn-cgi/access/login/preview.skv.pages.dev"}, b""),
+        "production": (404, {}, b"not found"),
+    }
+
+    def run(world):
+        def http(url, token=None):
+            if url.startswith(pf.API):
+                key = ("deployments" if "/deployments" in url else "project" if "/pages/projects/" in url else
+                       "apps" if url.endswith("/access/apps") else "idps" if "identity_providers" in url else "account")
+                return 200, {}, json.dumps(world[key]).encode()
+            return world["preview"] if url.startswith("https://preview.") else world["production"]
+        monkeypatch.setattr(pf, "http", http)
+        fails = []
+        pf.remote_checks(lambda good, what: fails.append(what) if not good else None, "acc", "skv", "preview",
+                         ["a@example.org", "b@example.org", "c@example.org"], "token")
+        return fails
+
+    assert run(ok) == []
+    def broken(change):
+        w = copy.deepcopy(ok)
+        change(w)
+        return run(w)
+    pol = lambda w: w["apps"]["result"][0]["policies"][0]
+    assert broken(lambda w: w["project"]["result"].update(production_branch="preview"))
+    assert broken(lambda w: w["project"]["result"].update(source={"type": "github"}))
+    assert broken(lambda w: w.update(deployments={"result": [{"environment": "production"}]}))
+    assert broken(lambda w: w.update(apps={"result": []}))
+    assert broken(lambda w: pol(w)["include"].append({"everyone": {}}))
+    assert broken(lambda w: pol(w)["include"].append({"email_domain": {"domain": "example.org"}}))
+    assert broken(lambda w: pol(w)["include"].append({"email": {"email": "stranger@example.com"}}))
+    assert broken(lambda w: pol(w).update(decision="bypass"))
+    assert broken(lambda w: w.update(preview=(200, {}, b'<div id="root"></div>')))
+    assert broken(lambda w: w.update(production=(200, {}, b'<html><div id="root"></div>')))

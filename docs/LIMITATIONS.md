@@ -88,9 +88,17 @@ Honest list of what this reconstruction is **not**, as of 2026-11-14.
   emulated viewport on a desktop GPU; real phone GPUs, memory limits and thermal throttling are untested. Low quality
   is the setting to try first on a phone.
 - First seconds: until the context ground (0.42 MB, Sentinel-2 colour) arrives, the flat horizon plane is all there
-  is (≈1 s fast, ≈2–3 s at 5 Mbit/s); after that a coarse satellite-coloured sheet fills the town area until the
-  tiles are in (it is hidden once they are, as it would poke through them in valleys). The sheet is 6 m lower and
-  120 m coarse: a tile next to a missing one shows a small step at its edge while loading.
+  is (≈1 s fast, ≈2–3 s at 5 Mbit/s); after that a coarse satellite-coloured sheet fills the town area. It is shown
+  exactly while some tile in view has nothing loaded (also later, e.g. reaching the far edge of town on low quality)
+  and hidden otherwise, as it would poke through loaded terrain in valleys. The sheet is 6 m lower and 120 m coarse:
+  a tile next to a missing one shows a small step at its edge while loading. Since 3.5.1 every fill vertex is at
+  least 1.5 m below the lowest DEM within 120 m, so the fill never rises above the terrain of any LOD (measured: 0 of
+  335 k terrain vertices; before, up to 9 m in narrow valleys).
+- Older, separate: the outer satellite sheet (`context_ground`, 2.5 m below) continues under the edge of the outer
+  tiles and rises above their terrain in a few valley spots (≤ 9.4 m; 2 187 of 276 k LOD0 vertices, e.g. tiles t-4-4,
+  t+4+2). Visible only close up at the town's outer edge; not changed in 3.5.1.
+- Places on a phone: the framings were chosen on a landscape screen; in a narrow portrait view the synagogue sits at
+  the left edge of the picture.
 - Needs WebGL 2 and `DecompressionStream`: Safari / any iOS browser 16.4+, Chrome Android 80+, Firefox Android
   113+ (MDN compat data; table in `docs/DEPLOY.md`). Checked from compatibility data and a desktop emulation only.
 - Memory on phones is not measured on a device. In the emulated tour the tile cache holds ~60–73 MB of decoded tile

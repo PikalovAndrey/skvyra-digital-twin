@@ -1,7 +1,7 @@
 # Publishing the demo (static hosting) — prepared, not deployed
 
 Nothing in this repository deploys anything on its own. `make demo` builds a self-contained static folder;
-`scripts/deploy_preview.sh` uploads it only after an explicit typed confirmation, and only as a **preview**.
+`scripts/deploy_preview.sh` uploads it only after a read-only preflight passed and an explicit typed confirmation, and only as a **preview**.
 
 ## Build
 
@@ -78,21 +78,74 @@ Checked against the Cloudflare docs on 2026-11-15:
 
 ### First test deployment — steps
 
-1. (account owner) Create / sign in to a Cloudflare account. Pick a project name (becomes `<name>.pages.dev`).
-2. `npx wrangler@4.156.0 login` (opens the browser; the token stays on this machine).
-3. `npx wrangler@4.156.0 pages project create <name> --production-branch production` — creates an empty project;
-   the production branch gets a name the script never uses.
-4. Dashboard → Workers & Pages → `<name>` → Settings → General → **Enable access policy**; add the e-mails of the
-   people who may look (Access → Applications → the project's policy).
-5. `git status` clean (commit first), then `make build && make demo`.
-6. `PAGES_PROJECT=<name> DRY_RUN=1 sh scripts/deploy_preview.sh` — checks only, prints the exact command.
-7. `PAGES_PROJECT=<name> sh scripts/deploy_preview.sh` — type the project name to confirm; uploads to branch
-   `preview` and prints `https://<hash>.<name>.pages.dev` and `https://preview.<name>.pages.dev`.
-8. Check: `curl -I https://preview.<name>.pages.dev/` from a browser session that is not signed in → redirect to
-   Cloudflare Access (not the page); `curl https://<name>.pages.dev/` → no demo (nothing deployed to production);
-   after signing in: `/version.json` shows the commit, the first visit loads, tiles have no errors.
+In the Cloudflare dashboard (account owner):
 
-The script refuses `main`/`master`/`production`/`prod` as branch, a dirty git tree, and a build whose pack check fails.
+1. Zero Trust → onboarding: team name, plan **Zero Trust Free** (payment details are required even for the free plan;
+   nothing is charged). Every person who signs in to Access takes a seat.
+2. Zero Trust → Integrations → Identity providers → Add new → **One-time PIN** (testers without a Cloudflare account
+   get an e-mail code).
+3. My Profile → API Tokens → Create Token → Custom token, **Account** permissions, all *Read*: Account Settings,
+   Cloudflare Pages, Access: Apps and Policies, Access: Organizations, Identity Providers, and Groups; Account
+   Resources: only this account. This is `CF_PREFLIGHT_TOKEN` (read-only; it cannot upload or change anything).
+
+On this machine:
+
+4. `npx wrangler@4.156.0 login`
+5. `CLOUDFLARE_ACCOUNT_ID=<id> npx wrangler@4.156.0 pages project create <name> --production-branch production`
+
+In the dashboard again:
+
+6. Workers & Pages → `<name>` → Settings → General → **Enable access policy**; then Zero Trust → Access → Applications
+   → the application for `*.<name>.pages.dev` → policy → Include → **Emails** = the approved addresses, nothing else
+   (no "Everyone", no domains). Save.
+
+Preflight and upload (environment: `PAGES_ACCOUNT_ID`, `PAGES_PROJECT`, `PREVIEW_EMAILS=a@x,b@y`,
+`CF_PREFLIGHT_TOKEN`; the addresses and the token stay out of the repository):
+
+7. `sh scripts/deploy_preview.sh preflight` — rebuilds the package from HEAD, runs every check, uploads nothing.
+8. `sh scripts/deploy_preview.sh upload` — the same preflight again, then the typed confirmation, then the upload to
+   branch `preview`, then a check that there is still no production deployment.
+9. Smoke test (below).
+
+### Preflight (`scripts/preflight_preview.py`, read-only) — prevents, not only detects
+
+| Check | Fails when |
+|---|---|
+| git tree clean, `dist-demo/version.json` = HEAD, `dirty: false` (package rebuilt from HEAD just before) | uncommitted changes, stale package |
+| pack check, no source maps | internal file, local path or key, host limits |
+| account | the token cannot read this account ID (its name is printed to confirm) |
+| project | missing, production branch not `production`, deployment branch is a production-like name, Git source connected, any production deployment |
+| Access | no Access application covering `preview.<subdomain>`; a policy that is not `allow`, includes anything but e-mail addresses, or an address not in `PREVIEW_EMAILS` (shown masked); one-time PIN missing → warning |
+| probes | `https://preview.<subdomain>/` without login is not redirected to Cloudflare Access; `https://<subdomain>/` serves the demo |
+
+API errors or an unreachable API count as failures. The upload command gets the verified account ID, the pinned
+wrangler and no terminal on stdin (it cannot offer to create a project or switch account). Tested:
+`tests/test_unit.py::test_preview_preflight_blocks_every_unsafe_cloudflare_setup` (fake Cloudflare API: the good
+setup passes, each of ten unsafe variants fails).
+
+## Smoke test of the deployed preview (`e2e/smoke.spec.ts`, read-only)
+
+```
+cd apps/web
+SMOKE_URL=https://preview.<name>.pages.dev/ SMOKE_PROD_URL=https://<name>.pages.dev/ npx playwright test smoke --headed
+```
+
+A Chrome window opens on the Access login; sign in there (e-mail code) — the test continues by itself and reuses that
+session for the HTTP checks (or set `CF_ACCESS_CLIENT_ID` / `CF_ACCESS_CLIENT_SECRET` of an Access service token).
+It checks:
+
+- without login the preview is stopped by Access; the production URL does not serve the demo;
+- `version.json` = the commit of the local `dist-demo` (or `SMOKE_COMMIT`), `dirty: false`;
+- index page, `X-Robots-Tag: noindex`; `tiles/index.json` `no-cache`;
+- a tile and the context mesh: gzip file inside, `glTF` after exactly one inflate, bytes identical to the local
+  package, `max-age=86400`, revalidation `304`; hashed JS `immutable`;
+- not served: missing tile, `review.html`, `review`, `review.json`, `blender/`, `_headers`, scripts, `.git`, overrides;
+- desktop: welcome card, overview (119 tiles, 0 failed), lyceum and synagogue via Places (waits until the camera has
+  arrived), no page errors; phone viewport 390 px: welcome, synagogue, no horizontal scroll. Screenshots in
+  `renders/smoke/`. The phone part is Chrome on the Mac, not a phone.
+
+Verified locally against Cloudflare's own asset server (`wrangler pages dev`, no Access → `SMOKE_ACCESS=0
+SMOKE_PREVIEW=0`): all checks pass.
 
 ## Other hosts
 

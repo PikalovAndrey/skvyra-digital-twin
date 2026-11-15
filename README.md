@@ -128,7 +128,7 @@ Every evidence entry needs a url and a licence. The change goes through the same
 ## Public demo (prepared, not deployed)
 
 `make demo` → `apps/web/dist-demo` (46 MB static folder: viewer only, gzipped tiles, cache headers, 404 page,
-`version.json`; the review workbench is not included). Cloudflare Pages preview upload (explicit confirmation, never
+`version.json`; the review workbench is not included). Cloudflare Pages preview upload (read-only preflight first, explicit confirmation, never
 production): `scripts/deploy_preview.sh`. Steps, hosting terms, network cost, licences, browser support:
 [docs/DEPLOY.md](docs/DEPLOY.md). Demo views:
 `docs/img/a35/demo-*.jpg`, first visit `first-visit-desktop.jpg`, phone `mobile-*.jpg`.
