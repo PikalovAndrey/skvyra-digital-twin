@@ -82,6 +82,22 @@ Honest list of what this reconstruction is **not**, as of 2026-11-14.
   check in `skvyra review apply`. The workbench draws in local metres on a 2D map without imagery (no legal
   high-resolution imagery is available), so it is for recording outlines obtained elsewhere, not for tracing.
 
+## Demo / devices (3.5)
+
+- Phones: the UI works on a 390 px touch viewport (places, search, building card, quality), measured only as an
+  emulated viewport on a desktop GPU; real phone GPUs, memory limits and thermal throttling are untested. Low quality
+  is the setting to try first on a phone.
+- First seconds: until the context ground (0.42 MB, Sentinel-2 colour) arrives, the flat horizon plane is all there
+  is (≈1 s fast, ≈2–3 s at 5 Mbit/s); after that a coarse satellite-coloured sheet fills the town area until the
+  tiles are in (it is hidden once they are, as it would poke through them in valleys). The sheet is 6 m lower and
+  120 m coarse: a tile next to a missing one shows a small step at its edge while loading.
+- Needs WebGL 2 and `DecompressionStream`: Safari / any iOS browser 16.4+, Chrome Android 80+, Firefox Android
+  113+ (MDN compat data; table in `docs/DEPLOY.md`). Checked from compatibility data and a desktop emulation only.
+- Memory on phones is not measured on a device. In the emulated tour the tile cache holds ~60–73 MB of decoded tile
+  data (budget: 220 / 480 / 900 MB for low / medium / high quality, evicting least-recently-used tiles beyond it). iOS
+  Safari can drop the WebGL context or reload the tab under memory pressure (its limits are not documented); a lost
+  context shows a message with a reload button, a tab reload cannot be intercepted.
+
 ## Historic centre from photos (Authenticity 3.4)
 
 - Lyceum, annex, 1 Kyivska St and the Olshevskyi bust: dimensions, colours and details are photo estimates

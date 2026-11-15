@@ -125,16 +125,24 @@ itself comes from (`site_survey`, `licensed_imagery`, `official_document`, `open
 can only support a check), `checks` says what was compared (e.g. "L shape and 23 m front match the WestBam photos").
 Every evidence entry needs a url and a licence. The change goes through the same dry run → `--yes` (backup) → revert.
 
-## Status (2026-11-15, after Historic Centre 3.4)
+## Public demo (prepared, not deployed)
+
+`make demo` → `apps/web/dist-demo` (46 MB static folder: viewer only, gzipped tiles, cache headers, 404 page,
+`version.json`; the review workbench is not included). Cloudflare Pages preview upload (explicit confirmation, never
+production): `scripts/deploy_preview.sh`. Steps, hosting terms, network cost, licences, browser support:
+[docs/DEPLOY.md](docs/DEPLOY.md). Demo views:
+`docs/img/a35/demo-*.jpg`, first visit `first-visit-desktop.jpg`, phone `mobile-*.jpg`.
+
+## Status (2026-11-15, after Demo Readiness 3.5)
 
 | Check | Result |
 |---|---|
 | Tile build (`build --force`) | 119 / 119 tiles, 0 failed, 19 s |
 | Geometry QA (`make qa`) | 0 floating, 0 buried, 0 road/building overlaps, 0 trees in buildings, 0 surfaces facing down; 13 low uphill walls (real slopes), 0 height outliers |
-| Python tests | 132 passed (incl. frieze + door at LOD1, pediment / monument geometry, landmark photo overrides, canopy segmentation, trust masks, tower geometry, composite landmark, quality layer, local outlines + review apply/revert, synthetic CHM end-to-end) |
-| TypeScript unit tests (vitest) | 36 passed |
+| Python tests | 133 passed, stable with and without pytest arguments; failures journalled to `tests/.failures.log` (incl. demo packing, frieze + door at LOD1, pediment / monument geometry, landmark photo overrides, canopy segmentation, trust masks, tower geometry, composite landmark, quality layer, local outlines + review apply/revert, synthetic CHM end-to-end) |
+| TypeScript unit tests (vitest) | 43 passed (incl. tile delivery variants over HTTP) |
 | Typecheck (`tsc --noEmit`) | 0 errors |
-| Browser e2e (Playwright) | 8 passed (incl. review workbench), 3 on-demand skipped (benchmark, teleport, compare) |
+| Browser e2e (Playwright) | 10 passed (incl. first-visit card and places, lazy tile metadata, review workbench), 4 on-demand skipped (benchmark, teleport, compare, firstvisit) |
 | Production build (`vite build`) | OK — JS 1.37 MB (388 KB gzip); `dist/` 229 MB incl. tiles |
 | Performance | see docs/PERFORMANCE.md — M4 Pro only; 3.0 adds ~0–5 ms p99 in tree-heavy views (paired runs under external load), CPU-throttled profile without regression in static views; weak GPUs not measured |
 

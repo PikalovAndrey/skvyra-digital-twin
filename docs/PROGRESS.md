@@ -1,5 +1,19 @@
 # Progress — 2026-11-15
 
+## Iteration 10 — Demo Readiness 3.5 (2026-11-15)
+
+First-visit card and Places menu (centre, lyceum, synagogue, 1 Kyivska St, residential, whole town), facade
+provenance in the building card, honest accuracy note, phone fixes (short attribution, toolbar, loading badge,
+scrollable card, collapsible evidence); `make demo` packs a public build without the review workbench (gzipped
+tiles, cache headers, leak checks: 229 MB → 46 MB); lazy tile metadata at overview; first-visit network
+measurements; deployment notes (docs/DEPLOY.md). Pre-commit checks: tile delivery variants tested (plain, gzip, CDN
+re-compression, host-decoded, corrupt, truncated, 404) and checked on Cloudflare's local Pages server; `404.html`
+added (Pages would answer a missing tile with the index page and 200); `version.json`; `/tiles/index.json` no-cache;
+satellite-coloured loading fill under the tiles instead of the olive plane; pytest failures are journalled
+(`tests/.failures.log`) and the one "unreproducible" failure was found: the fixture read `sys.argv` at import, so a
+bare `pytest` failed and any argument passed — fixed. `scripts/deploy_preview.sh` (Cloudflare Pages preview,
+confirmation required). Not deployed.
+
 ## Iteration 9 — Historic Centre Visual Authenticity 3.4 (2026-11-15)
 
 Lyceum rebuilt from 27 photos on the unchanged OSM outline (four blocks, pediments, tile-clad facade, tower moved

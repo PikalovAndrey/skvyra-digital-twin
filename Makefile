@@ -7,7 +7,7 @@ WEB     := cd apps/web &&
 TILES   ?= t-1-1 t+0-1 t+1-1 t-1+0 t+0+0 t+1+0 t-1+1 t+0+1 t+1+1
 
 .PHONY: qa setup env acquire acquire-offline normalize audit validate preview build all render flyover \
-        export web-dev web-build test test-unit test-integration test-web e2e bench clean-generated
+        export web-dev web-build demo test test-unit test-integration test-web e2e bench clean-generated
 
 setup:            ## create the Python venv and install web dependencies
 	python3 -m venv .venv && $(PY) -m pip install -r requirements.txt
@@ -54,6 +54,10 @@ web-dev:          ## interactive viewer on http://127.0.0.1:5199
 	$(WEB) npx vite --host 127.0.0.1
 web-build:        ## production build (heavy: run one at a time, see CLAUDE.md rules)
 	$(WEB) npx vite build
+
+demo:             ## public demo package -> apps/web/dist-demo (viewer only, gzipped tiles, _headers); no deploy
+	$(WEB) npx vite build --mode demo
+	$(PY) scripts/pack_demo.py
 
 test: test-unit test-integration test-web
 test-unit:

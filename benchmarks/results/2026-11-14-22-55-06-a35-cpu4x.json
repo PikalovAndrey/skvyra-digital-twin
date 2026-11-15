@@ -1,0 +1,284 @@
+{
+  "date": "2026-11-14T22:55:06.838Z",
+  "machine": "Apple M4 Pro, 14 cores, 24 GB",
+  "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Pro, Unspecified Version)",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "browser": "Chrome (Playwright, channel chrome, ANGLE Metal, vsync off)",
+  "cpuThrottle": 4,
+  "firstIdleMs": 3760,
+  "samples": [
+    {
+      "label": "overview (medium)",
+      "frameMs": {
+        "n": 592,
+        "mean": 5.08,
+        "p50": 5.1,
+        "p95": 7.1,
+        "p99": 9.3,
+        "max": 19.6
+      },
+      "calls": 380,
+      "triangles": 229983,
+      "lodCounts": [
+        0,
+        0,
+        119
+      ],
+      "heapMB": 89.6,
+      "transferredMB": 13.452728
+    },
+    {
+      "label": "centre 350 m (medium)",
+      "frameMs": {
+        "n": 725,
+        "mean": 4.15,
+        "p50": 3.8,
+        "p95": 8.4,
+        "p99": 11.8,
+        "max": 15
+      },
+      "calls": 131,
+      "triangles": 1588171,
+      "lodCounts": [
+        6,
+        0,
+        113
+      ],
+      "heapMB": 143.7,
+      "transferredMB": 42.032748
+    },
+    {
+      "label": "south-west houses 90 m (medium)",
+      "frameMs": {
+        "n": 932,
+        "mean": 3.22,
+        "p50": 2.8,
+        "p95": 7.3,
+        "p99": 11.7,
+        "max": 17.1
+      },
+      "calls": 68,
+      "triangles": 1503083,
+      "lodCounts": [
+        3,
+        0,
+        116
+      ],
+      "heapMB": 153.8,
+      "transferredMB": 48.576592
+    },
+    {
+      "label": "centre low angle 10° (medium)",
+      "frameMs": {
+        "n": 715,
+        "mean": 4.2,
+        "p50": 3.9,
+        "p95": 8,
+        "p99": 11.4,
+        "max": 17.7
+      },
+      "calls": 183,
+      "triangles": 1960218,
+      "lodCounts": [
+        4,
+        13,
+        102
+      ],
+      "heapMB": 144.2,
+      "transferredMB": 59.97306
+    },
+    {
+      "label": "lyceum 120 m (medium)",
+      "frameMs": {
+        "n": 919,
+        "mean": 3.27,
+        "p50": 2.9,
+        "p95": 6.9,
+        "p99": 10.6,
+        "max": 14.4
+      },
+      "calls": 102,
+      "triangles": 210754,
+      "lodCounts": [
+        6,
+        6,
+        107
+      ],
+      "heapMB": 148.5,
+      "transferredMB": 65.647596
+    },
+    {
+      "label": "overview (high)",
+      "frameMs": {
+        "n": 529,
+        "mean": 5.68,
+        "p50": 5.5,
+        "p95": 9.1,
+        "p99": 13,
+        "max": 18
+      },
+      "calls": 380,
+      "triangles": 229983,
+      "lodCounts": [
+        0,
+        0,
+        119
+      ],
+      "heapMB": 165.2,
+      "transferredMB": 76.29964
+    },
+    {
+      "label": "centre 350 m (high)",
+      "frameMs": {
+        "n": 614,
+        "mean": 4.89,
+        "p50": 4.3,
+        "p95": 10.1,
+        "p99": 14.5,
+        "max": 17
+      },
+      "calls": 131,
+      "triangles": 823971,
+      "lodCounts": [
+        6,
+        0,
+        113
+      ],
+      "heapMB": 174.5,
+      "transferredMB": 86.832464
+    },
+    {
+      "label": "south-west houses 90 m (high)",
+      "frameMs": {
+        "n": 676,
+        "mean": 4.44,
+        "p50": 3.5,
+        "p95": 11.3,
+        "p99": 14.3,
+        "max": 15.5
+      },
+      "calls": 68,
+      "triangles": 1503083,
+      "lodCounts": [
+        3,
+        0,
+        116
+      ],
+      "heapMB": 154.7,
+      "transferredMB": 86.832464
+    },
+    {
+      "label": "centre low angle 10° (high)",
+      "frameMs": {
+        "n": 522,
+        "mean": 5.76,
+        "p50": 5.7,
+        "p95": 8.9,
+        "p99": 12.2,
+        "max": 16.5
+      },
+      "calls": 301,
+      "triangles": 3617840,
+      "lodCounts": [
+        8,
+        21,
+        90
+      ],
+      "heapMB": 178.6,
+      "transferredMB": 93.972632
+    },
+    {
+      "label": "lyceum 120 m (high)",
+      "frameMs": {
+        "n": 740,
+        "mean": 4.06,
+        "p50": 3.9,
+        "p95": 7.3,
+        "p99": 10.2,
+        "max": 14.1
+      },
+      "calls": 142,
+      "triangles": 415467,
+      "lodCounts": [
+        10,
+        3,
+        106
+      ],
+      "heapMB": 185,
+      "transferredMB": 95.877884
+    }
+  ],
+  "flight": {
+    "frameMs": {
+      "n": 2560,
+      "mean": 7.07,
+      "p50": 7,
+      "p95": 10,
+      "p99": 12.9,
+      "max": 318.6
+    },
+    "hitchesOver50ms": [
+      [
+        13,
+        318.6
+      ]
+    ],
+    "tileLoadsDuringFlight": 17,
+    "loadMs": {
+      "n": 17,
+      "mean": 161.28,
+      "p50": 109.2,
+      "p95": 467.3,
+      "p99": 467.3,
+      "max": 467.3
+    },
+    "parseMs": {
+      "n": 17,
+      "mean": 122.58,
+      "p50": 65,
+      "p95": 404.8,
+      "p99": 404.8,
+      "max": 404.8
+    },
+    "heapMBTrace": [
+      209.9,
+      203.7,
+      203.9,
+      207.9,
+      201.9,
+      177.4,
+      193.6,
+      214.6,
+      235.7
+    ]
+  },
+  "allTileLoads": {
+    "loadMs": {
+      "n": 203,
+      "mean": 88.4,
+      "p50": 69.2,
+      "p95": 146.5,
+      "p99": 446.1,
+      "max": 467.3
+    },
+    "parseMs": {
+      "n": 203,
+      "mean": 54.68,
+      "p50": 42.6,
+      "p95": 86.6,
+      "p99": 391.2,
+      "max": 426
+    }
+  },
+  "treeBuildMs": {
+    "n": 129,
+    "mean": 1.23,
+    "p50": 0.9,
+    "p95": 2.5,
+    "p99": 6,
+    "max": 33.2
+  }
+}

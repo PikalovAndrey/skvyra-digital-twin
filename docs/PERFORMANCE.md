@@ -80,6 +80,35 @@ timings are exposed as `__skvyra.stageMs` / `updateMs` for future profiling.
 **100-jump run (Authenticity 3.3)**: 50 cold + 50 warm jumps, normal pacing: p50 17.8, p95 23.1, p99 = max
 37.2 ms, none above 50 ms (cold p95 30.3 / p99 37.2 ms; warm p99 18.4 ms). One machine, one run.
 
+## Demo readiness 3.5 (2026-11-15): first visit and network
+
+`FIRSTVISIT=1 NET=none|20mbit|5mbit VIEW=desktop|mobile npx playwright test firstvisit` against a served build
+(results `benchmarks/results/*firstvisit*.json`). Bandwidth is throttled in Chrome (CDP); VIEW=mobile is a 390 × 844
+touch viewport on this Mac's GPU — **not** a phone GPU test. Places: fly to the centre (350 m), lyceum (250 m),
+private sector (150 m) and wait until streaming is idle.
+
+| Build / network | first tile | first useful frame | MB in 10 / 60 s | centre | lyceum | private sector | tour total |
+|---|---|---|---|---|---|---|---|
+| unpacked (`vite preview`), none | 0.6 s | 2.6 s | 15.7 / 15.7 | 1.6 s, 31.7 MB | 0.4 s, 5.1 MB | 1.0 s, 3.7 MB | 56.3 MB |
+| packed (gzip tiles), none | 0.6 s | 2.6 s | 4.35 / 4.35 | 1.6 s, 5.9 MB | 0.4 s, 1.2 MB | 1.2 s, 0.7 MB | 12.2 MB |
+| packed + lazy tile metadata, none | 0.6 s | 2.6 s | 3.39 / 3.39 | 1.4 s, 5.2 MB | 1.0 s, 1.2 MB | 0.4 s, 0.8 MB | 10.6 MB |
+| same, 20 Mbit/s | 0.9 s | 3.3 s | 3.39 / 3.39 | 2.4 s | 1.6 s | 1.4 s | 8.8 MB |
+| same, 5 Mbit/s | 1.4 s | 6.5 s | 3.39 / 3.39 | 5.7 s | 2.8 s | 3.2 s | 8.8 MB |
+| same, mobile viewport, 5 Mbit/s | 1.4 s | 6.6 s | 3.39 / 3.39 | 4.0 s | 2.6 s | 2.8 s | 7.3 MB |
+
+Nothing more is transferred while the camera stands still (10 s = 60 s). No URL is requested twice without
+throttling; under throttling 3–5 of ~300 tile URLs are requested twice (a tile whose LOD changes mid-flight is
+cancelled and requested again later), no loops. Second visit: ~0.04 MB (revalidation). Overview loads LOD2 only
+(119 tiles); LOD0/1 only around the camera.
+
+Through Cloudflare's local Pages server (`wrangler pages dev`, real `_headers`, transport compression of text; final
+3.5 build with the loading fill): 5 Mbit/s first tile 1.4 s, first useful frame 6.6 s, 3.45 MB, centre 5.5 s,
+lyceum 2.8 s, private sector 3.3 s, 0 failed tiles; mobile viewport, unthrottled: 2.75 s, tile cache after the tour
+60 MB. The loading fill costs +0.05 MB (context 0.38 → 0.42 MB gzip).
+
+4× CPU throttling (CDP; GPU not throttled — not a weak-device test): static views p99 ≤ 14.5 ms, flight p99 12.9 ms
+with one 319 ms hitch (`*-a35-cpu4x.json`).
+
 ## Historic Centre 3.4 (2026-11-15): paired A/B/A/B
 
 3.3 code (3c353f7) vs 3.4 working tree, interleaved twice, best of two per view (another Claude session was rendering

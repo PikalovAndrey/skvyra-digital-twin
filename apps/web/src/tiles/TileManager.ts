@@ -5,6 +5,7 @@
 //  * LRU eviction under a byte budget with full GPU resource disposal
 //  * retry failed tiles with exponential backoff; report failures instead of hiding them
 //  * per-tile tree instancing, issue markers, data-quality recolouring and selection highlight
+import { maybeGunzip } from './gz'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js'
@@ -207,8 +208,9 @@ export class TileManager {
       const file = tile.files[String(lod)]
       const res = await fetch(`${this.baseUrl}tiles/${file.u}?v=${tile.hash}`, { signal: ctrl.signal })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const buf = await res.arrayBuffer()
-      this.transferred += buf.byteLength
+      const raw = await res.arrayBuffer()
+      this.transferred += raw.byteLength
+      const buf = await maybeGunzip(raw)
       const tp = performance.now()
       const gltf = await this.loader.parseAsync(buf, '')
       if (ctrl.signal.aborted || this.disposed) {
@@ -227,7 +229,9 @@ export class TileManager {
       this.loadMs.push(performance.now() - t0)
       this.loaded.set(key, entry)
       this.failures.delete(key)
-      void this.ensureMeta(tile)
+      // building attributes / trees / issue markers: needed close up, for data colouring and for the few tiles with
+      // issue markers; the overview (LOD2, realistic colours) renders without them (saves ~1 MB and 100+ requests)
+      if (lod < 2 || this.colorMode !== 'realistic' || tile.n.issues > 0) void this.ensureMeta(tile)
     } catch (e) {
       if ((e as Error).name === 'AbortError') return
       const f = this.failures.get(key) ?? { count: 0, retryAt: 0, error: '' }
@@ -384,6 +388,7 @@ export class TileManager {
 
   setColorMode(mode: ColorMode) {
     this.colorMode = mode
+    if (mode !== 'realistic') for (const id of this.shown.keys()) { const t = this.index.tiles.find((x) => x.id === id); if (t) void this.ensureMeta(t) }
     for (const l of this.loaded.values()) this.recolorEntry(l)
     for (const ex of this.extras.values()) if (ex.trees) recolorTrees(ex.trees, mode)
   }
@@ -429,7 +434,15 @@ export class TileManager {
   }
 
   /** Building / issue under a ray, if any. */
-  pick(raycaster: THREE.Raycaster): { type: 'building'; meta: BuildingMeta; tile: string; fid: number } | { type: 'issue'; tile: string; index: number } | null {
+  /** Attributes of one building, loading its tile's metadata if it is not there yet (far tiles load it lazily). */
+  async buildingMeta(tileId: string, fid: number): Promise<BuildingMeta | null> {
+    const t = this.index.tiles.find((x) => x.id === tileId)
+    const meta = t ? await this.ensureMeta(t) : null
+    return meta?.buildings[fid] ?? null
+  }
+
+  /** Building / issue under a ray, if any (meta is null while the tile's metadata is still loading). */
+  pick(raycaster: THREE.Raycaster): { type: 'building'; meta: BuildingMeta | null; tile: string; fid: number } | { type: 'issue'; tile: string; index: number } | null {
     const targets: THREE.Object3D[] = []
     for (const [id, lod] of this.shown) {
       const l = this.loaded.get(`${id}:${lod}`)
@@ -444,8 +457,8 @@ export class TileManager {
     const fidAttr = (hit.object as THREE.Mesh).geometry.getAttribute('_feature_id')
     if (!fidAttr || hit.face == null) return null
     const fid = fidAttr.getX(hit.face.a)
-    const meta = this.extras.get(tile)?.meta.buildings[fid]
-    return meta ? { type: 'building', meta, tile, fid } : null
+    const ex = this.extras.get(tile)
+    return ex ? (ex.meta.buildings[fid] ? { type: 'building', meta: ex.meta.buildings[fid], tile, fid } : null) : { type: 'building', meta: null, tile, fid }
   }
 
   /** Ground point under a ray (terrain only). */

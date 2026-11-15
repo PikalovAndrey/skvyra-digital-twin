@@ -6,7 +6,7 @@ import { CityCanvas } from './scene/CityCanvas'
 import { useStore } from './store'
 import type { TileManager } from './tiles/TileManager'
 import type { TileIndex } from './types'
-import { Attribution, Banner, ControlPanel, InfoPanel, Legend, LoadingBar, Minimap, PointerReadout, SearchBox, StatsOverlay } from './ui/Panels'
+import { Attribution, Banner, ControlPanel, InfoPanel, Legend, LoadingBar, Minimap, PointerReadout, SearchBox, StatsOverlay, WelcomeCard } from './ui/Panels'
 
 const BASE = import.meta.env.BASE_URL
 const CLEAN = new URLSearchParams(location.search).has('clean') // canvas only, for comparison screenshots
@@ -38,11 +38,12 @@ export default function App() {
     if (!webglAvailable()) return set({ fatal: 'webglError' })
     const ctrl = new AbortController()
     Promise.all([
-      fetch(`${BASE}tiles/index.json`, { signal: ctrl.signal }).then((r) => {
+      // index and search are always revalidated (cache: no-cache): the index names the current tile versions
+      fetch(`${BASE}tiles/index.json`, { signal: ctrl.signal, cache: 'no-cache' }).then((r) => {
         if (!r.ok) throw new Error(`index ${r.status}`)
         return r.json() as Promise<TileIndex>
       }),
-      fetch(`${BASE}search.json`, { signal: ctrl.signal }).then((r) => (r.ok ? (r.json() as Promise<SearchItem[]>) : [])),
+      fetch(`${BASE}search.json`, { signal: ctrl.signal, cache: 'no-cache' }).then((r) => (r.ok ? (r.json() as Promise<SearchItem[]>) : [])),
     ])
       .then(([idx, s]) => {
         setIndex(idx)
@@ -119,6 +120,7 @@ export default function App() {
           </div>
         </div>
       </div>
+      {CLEAN ? null : <WelcomeCard />}
     </div>
   )
 }

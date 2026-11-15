@@ -1,3 +1,4 @@
+import { maybeGunzip } from '../tiles/gz'
 import { Environment, Line, MapControls, Sky } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -72,6 +73,7 @@ function SceneContent({ index, baseUrl, streets, onManager }: Props) {
   const cameraMode = useStore((s) => s.cameraMode)
   const manager = useMemo(() => new TileManager(index, baseUrl), [index, baseUrl])
   const controls = useRef<MapControlsImpl>(null)
+  const loadingFill = useRef<THREE.Object3D | null>(null) // coarse ground under the tiles, shown until they load
   const sun = useRef<THREE.DirectionalLight>(null)
   const pose = useMemo(() => overviewPose(index), [index])
   const zmin = Math.min(...index.tiles.map((t) => t.z[0]))
@@ -81,8 +83,9 @@ function SceneContent({ index, baseUrl, streets, onManager }: Props) {
     if (!index.context) return
     const ctrl = new AbortController()
     let root: THREE.Object3D | null = null
-    fetch(`${baseUrl}tiles/${index.context.u}`, { signal: ctrl.signal })
+    fetch(`${baseUrl}tiles/${index.context.u}?v=${encodeURIComponent(index.generated_at)}`, { signal: ctrl.signal })
       .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`context ${r.status}`))))
+      .then(maybeGunzip)
       .then((buf) => new GLTFLoader().parseAsync(buf, ''))
       .then((g) => {
         if (ctrl.signal.aborted) return
@@ -95,6 +98,7 @@ function SceneContent({ index, baseUrl, streets, onManager }: Props) {
         })
         root = g.scene
         root.name = 'context (Sentinel-2, not reconstructed)'
+        loadingFill.current = root.getObjectByName('context_under') ?? null
         scene.add(root)
       })
       .catch((e) => (e as Error).name !== 'AbortError' && console.warn('context ground unavailable:', e))
@@ -207,6 +211,10 @@ function SceneContent({ index, baseUrl, streets, onManager }: Props) {
     const now = performance.now()
     if (now - a.t > 500) {
       const s = manager.stats()
+      if (loadingFill.current && s.active > 0 && !s.loading && !s.queued) {
+        loadingFill.current.visible = false // first tiles are in: the coarse fill would only poke through them
+        loadingFill.current = null
+      }
       const mem = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory
       useStore.getState().set({
         stats: {
@@ -240,7 +248,8 @@ function SceneContent({ index, baseUrl, streets, onManager }: Props) {
       const hit = manager.pick(ray)
       const set = useStore.getState().set
       if (!hit) set({ selection: null })
-      else if (hit.type === 'building') set({ selection: { type: 'building', meta: hit.meta, tile: hit.tile } })
+      else if (hit.type === 'building' && hit.meta) set({ selection: { type: 'building', meta: hit.meta, tile: hit.tile } })
+      else if (hit.type === 'building') void manager.buildingMeta(hit.tile, hit.fid).then((m) => m && set({ selection: { type: 'building', meta: m, tile: hit.tile } }))
       else {
         const issue = manager.issue(hit.tile, hit.index)
         if (issue) set({ selection: { type: 'issue', issue, tile: hit.tile } })
@@ -350,8 +359,9 @@ function CameraDirector({ manager, controls, index }: { manager: TileManager; co
     anim.current = null
     const [cx, cy, cz] = view.camera
     const [tx, ty, tz] = view.target
-    camera.position.set(cx, cz, -cy)
     const tgt = new THREE.Vector3(tx, tz, -ty)
+    if (view.fly) return start(tgt, new THREE.Vector3(cx, cz, -cy))
+    camera.position.set(cx, cz, -cy)
     if (controls.current) {
       controls.current.target.copy(tgt)
       controls.current.update()
@@ -457,7 +467,7 @@ function QualityGaps({ baseUrl }: { baseUrl: string }) {
   const [runs, setRuns] = useState<GapRun[] | null>(null)
   useEffect(() => {
     const ctrl = new AbortController()
-    fetch(`${baseUrl}quality_gaps.json`, { signal: ctrl.signal })
+    fetch(`${baseUrl}quality_gaps.json`, { signal: ctrl.signal, cache: 'no-cache' })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((d: { stats: GapStats; runs: GapRun[] }) => {
         setRuns(d.runs)

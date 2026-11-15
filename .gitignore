@@ -13,8 +13,11 @@ __pycache__/
 .pytest_cache/
 # web build / test output
 apps/web/dist/
+apps/web/dist-demo/
 apps/web/test-results/
 apps/web/e2e-results/
 apps/web/playwright-report/
 *.blend1
 .DS_Store
+tests/.failures.log
+.wrangler/

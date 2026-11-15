@@ -11,6 +11,9 @@ export default defineConfig({
     channel: 'chrome',
     viewport: { width: 1440, height: 900 },
     launchOptions: { args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'] },
+    // the first-visit card is tested on its own (e2e/viewer.spec.ts "first visit card"); elsewhere it is already seen
+    trace: 'retain-on-failure', // failures keep a trace + error context in test-results/ (no retries: a flaky test fails)
+    storageState: { cookies: [], origins: [{ origin: 'http://127.0.0.1:5199', localStorage: [{ name: 'skvyra.welcomeSeen', value: '1' }] }] },
   },
   webServer: { command: 'npx vite --host 127.0.0.1', url: 'http://127.0.0.1:5199/', reuseExistingServer: true, timeout: 60_000 },
 })

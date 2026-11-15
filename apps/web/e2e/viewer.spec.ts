@@ -209,3 +209,56 @@ test('data-quality layer: probable missing outlines, off by default, with statis
   await expect(panel).toContainText('%')
   expect(errors).toEqual([])
 })
+
+test.describe('first visit card', () => {
+  test.use({ storageState: { cookies: [], origins: [] } }) // a new visitor: empty localStorage
+
+  test('explains the model, offers places, remembers it was seen, reopens with ?', async ({ page }) => {
+    const errors: string[] = []
+    page.on('pageerror', (e) => errors.push(String(e)))
+    await page.goto('/')
+    const card = page.getByTestId('welcome')
+    await expect(card).toBeVisible()
+    await expect(card).toContainText('Сквира')
+    await expect(card).toContainText('не фотографічна копія')
+    const cam = () => page.evaluate(() => (window as unknown as { __skvyraCamera: { x: number; y: number } }).__skvyraCamera)
+    await page.getByTestId('welcome-lyceum').click()
+    await expect(card).toBeHidden()
+    await page.waitForTimeout(1800) // fly animation 1.4 s
+    const c = await cam()
+    expect(Math.hypot(c.x - -760, c.y - 600)).toBeLessThan(30) // at the lyceum camera
+    // places menu: synagogue
+    await page.getByTestId('tb-places').click()
+    await page.getByTestId('place-synagogue').click()
+    await page.waitForTimeout(1800)
+    const s = await cam()
+    expect(Math.hypot(s.x - 412.9, s.y - 110.3)).toBeLessThan(30)
+    // seen once: not shown again after a reload, "?" reopens it
+    await page.reload()
+    await page.waitForTimeout(1500)
+    await expect(page.getByTestId('welcome')).toBeHidden()
+    await page.getByTestId('help').click()
+    await expect(page.getByTestId('welcome')).toBeVisible()
+    await page.getByTestId('welcome-go').click()
+    await expect(page.getByTestId('welcome')).toBeHidden()
+    expect(errors).toEqual([])
+  })
+})
+
+test('overview loads tile metadata lazily, a far building still opens its card', async ({ page }) => {
+  const metaReqs: string[] = []
+  page.on('request', (r) => /\/tiles\/t[^/]*\.json/.test(r.url()) && metaReqs.push(r.url()))
+  await page.goto('/')
+  await streamingIdle(page, 50)
+  const s = await stats(page)
+  const withIssues = await page.evaluate(() => (window as unknown as { __skvyraStore: { getState(): { index: { tiles: { n: { issues: number } }[] } } } })
+    .__skvyraStore.getState().index.tiles.filter((t) => t.n.issues > 0).length)
+  expect(s.lodCounts[2]).toBeGreaterThan(50)
+  expect(metaReqs.length).toBeLessThanOrEqual(withIssues + s.lodCounts[0] + s.lodCounts[1]) // not one per tile
+  const b = await page.evaluate(async () => {
+    const w = window as unknown as { __skvyra: { buildingMeta(t: string, f: number): Promise<{ id: string } | null> }; __skvyraStore: { getState(): { index: { tiles: { id: string; n: { buildings: number } }[] } } } }
+    const t = w.__skvyraStore.getState().index.tiles.find((x) => x.n.buildings > 10)!
+    return w.__skvyra.buildingMeta(t.id, 0)
+  })
+  expect(b?.id).toBeTruthy()
+})

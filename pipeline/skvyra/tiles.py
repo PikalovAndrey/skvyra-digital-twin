@@ -711,17 +711,27 @@ def build_context(cfg, frame, cells=()) -> dict | None:
     # drop the sheet under the built tiles (it would only poke through); keep a margin at the outer edge
     built = shapely.union_all([box(ix * size, iy * size, (ix + 1) * size, (iy + 1) * size) for ix, iy in cells]).buffer(-inset)
     under = shapely.contains_xy(built, c[:, 0], c[:, 1]) if not built.is_empty else np.zeros(len(tris), bool)
+    # the part under the tiles is a separate mesh, lower still: the viewer shows it only until the first tiles have
+    # loaded (instead of the flat horizon plane showing through the gaps on a slow network), then hides it
+    below = tris[under].copy()
+    below[..., 2] -= 6.0
     tris = tris[~under].copy()
     tris[..., 2] -= 2.5
-    uv = np.stack([(tris[..., 0] + frame.ox - b.left) / (b.right - b.left), (b.top - (tris[..., 1] + frame.oy)) / (b.top - b.bottom)], -1)
-    soup = Soup()
-    soup.add(tris, COLORS["terrain"], uv)
+
+    def soup_of(t):
+        uv = np.stack([(t[..., 0] + frame.ox - b.left) / (b.right - b.left), (b.top - (t[..., 1] + frame.oy)) / (b.top - b.bottom)], -1)
+        s = Soup()
+        s.add(t, COLORS["terrain"], uv)
+        return s
     img = Image.fromarray(rgb)
     img = img.resize((min(2048, img.width * 2), min(2048, img.height * 2)), Image.BICUBIC)
     buf = io.BytesIO()
     img.save(buf, "JPEG", quality=80, optimize=True)
-    size = write_glb(OUT / "context.glb", [{"name": "context_ground", "soup": soup,
-                                              "material": {**MATERIALS["terrain"], "color": [1, 1, 1]}, "uv": True}],
+    mat = {**MATERIALS["terrain"], "color": [1, 1, 1]}
+    prims = [{"name": "context_ground", "soup": soup_of(tris), "material": mat, "uv": True}]
+    if len(below):
+        prims.append({"name": "context_under", "soup": soup_of(below), "material": mat, "uv": True})
+    size = write_glb(OUT / "context.glb", prims,
                      images={"ground": buf.getvalue()}, extras={"note": "context only (Sentinel-2 colour on DTM), not reconstructed"})
     return {"u": "context.glb", "s": size, "b": [x0, y0, x1, y1]}
 

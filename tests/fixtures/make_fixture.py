@@ -16,7 +16,9 @@ from pathlib import Path
 
 import numpy as np
 
-ROOT = Path(sys.argv[1])
+# read in main(): the test suite imports ll/rect from this module, and sys.argv then holds pytest's own arguments
+# (a bare `pytest` run has none, which made one integration test fail only when pytest was called without arguments)
+ROOT = Path()
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "pipeline"))
 from pyproj import Transformer  # noqa: E402
 
@@ -44,6 +46,8 @@ def way(i, pts, tags, closed=True):
 
 
 def main():
+    global ROOT
+    ROOT = Path(sys.argv[1])
     raw = ROOT / "data" / "raw"
     raw.mkdir(parents=True, exist_ok=True)
     (ROOT / "config").mkdir(exist_ok=True)

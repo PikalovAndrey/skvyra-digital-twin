@@ -58,7 +58,8 @@ interface State {
   minimap: boolean
   flyTo: { x: number; y: number; dist?: number; pitch?: number; t: number } | null // pitch: degrees below horizon
   resetView: number
-  view: { camera: [number, number, number]; target: [number, number, number]; t: number } | null // exact local-frame camera (comparison renders)
+  view: { camera: [number, number, number]; target: [number, number, number]; t: number; fly?: boolean } | null // exact local-frame camera (comparison renders; fly = animate there)
+  welcome: boolean // first-visit card
   set: (p: Partial<State>) => void
   toggleLayer: (k: keyof State['layers']) => void
 }
@@ -81,6 +82,7 @@ export const useStore = create<State>((set) => ({
   flyTo: null,
   resetView: 0,
   view: null,
+  welcome: false,
   set: (p) => set(p),
   toggleLayer: (k) => set((s) => ({ layers: { ...s.layers, [k]: !s.layers[k] } })),
 }))

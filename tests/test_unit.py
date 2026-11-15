@@ -807,3 +807,31 @@ def test_composite_frieze_and_door_render_together_at_lod1():
         side = (n[:, :2] * out2).sum(axis=1) > 0
         assert (side | (n[:, 2] > 1e-9)).all()                    # outward walls of the band, cornice tops face up
         assert fr[..., 2].min() == pytest.approx(4.5 - 0.55) and fr[..., 2].max() == pytest.approx(4.5 - 0.1)
+
+
+def test_pack_demo_removes_internal_files_gzips_tiles_and_flags_leaks(tmp_path, monkeypatch):
+    import gzip as _gz
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("pack_demo", C.ROOT / "scripts" / "pack_demo.py")
+    pd = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(pd)
+    out = tmp_path / "dist-demo"
+    (out / "tiles").mkdir(parents=True)
+    (out / "blender").mkdir()
+    (out / "index.html").write_text("<html></html>")
+    (out / "review.json").write_text("{}")
+    (out / "blender" / "centre.blend").write_bytes(b"x")
+    glb = b"glTF" + bytes(4000)
+    (out / "tiles" / "t+0+0.lod0.glb").write_bytes(glb)
+    monkeypatch.setattr(pd, "OUT", out)
+    monkeypatch.setattr(pd, "ROOT", tmp_path)
+    assert pd.main() == 0
+    packed = (out / "tiles" / "t+0+0.lod0.glb").read_bytes()
+    assert packed[:2] == b"\x1f\x8b" and _gz.decompress(packed) == glb and len(packed) < len(glb)
+    assert not (out / "review.json").exists() and not (out / "blender").exists()
+    assert "immutable" in (out / "_headers").read_text()
+    assert "404" in (out / "404.html").read_text()  # a missing file is a real 404, not the index page (Pages SPA mode)
+    assert set(json.loads((out / "version.json").read_text())) == {"commit", "dirty", "tiles_generated_at"}
+    assert pd.main() == 0 and (out / "tiles" / "t+0+0.lod0.glb").read_bytes() == packed  # idempotent
+    (out / "search.json").write_text('{"path": "/Users/someone/x"}')
+    assert pd.main() == 1  # a local path leaks into the public build

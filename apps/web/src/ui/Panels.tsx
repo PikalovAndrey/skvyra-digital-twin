@@ -6,6 +6,7 @@ import { useStore } from '../store'
 import { GAP_COLORS, QUALITY_COLORS } from '../scene/materials'
 import type { TileManager } from '../tiles/TileManager'
 import type { ColorMode, Quality, TileIndex } from '../types'
+import { PLACES } from '../places'
 
 const panel = 'pointer-events-auto rounded-xl border border-white/10 bg-slate-900/80 text-slate-100 shadow-xl backdrop-blur-md'
 
@@ -44,7 +45,7 @@ export function SearchBox({ index }: { index: Indexed[] }) {
         className="w-full rounded-lg border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 placeholder-slate-400 outline-none focus:border-sky-400"
       />
       {open && q.trim() && (
-        <ul className="absolute z-20 mt-1 max-h-80 w-full overflow-auto rounded-lg border border-white/10 bg-slate-900/95 py-1 text-sm shadow-2xl" role="listbox">
+        <ul className="absolute z-40 mt-1 max-h-80 w-full overflow-auto rounded-lg border border-white/10 bg-slate-900 py-1 text-sm shadow-2xl" role="listbox">
           {results.length === 0 && <li className="px-3 py-2 text-slate-400">{t('noResults')}</li>}
           {results.map((r, i) => (
             <li key={`${r.name}-${r.x}-${r.y}`} role="option" aria-selected={i === active}>
@@ -93,7 +94,7 @@ function Seg<T extends string>({ value, options, onChange, label, testid, vertic
   )
 }
 
-type Pop = 'layers' | 'view' | 'settings' | null
+type Pop = 'places' | 'layers' | 'view' | 'settings' | null
 
 /** Compact toolbar: every control lives in a small popover, all closed by default. */
 export function ControlPanel() {
@@ -114,7 +115,8 @@ export function ControlPanel() {
   )
   return (
     <div className="pointer-events-auto relative">
-      <div className="flex gap-1 rounded-xl bg-slate-900/60 p-1 shadow-lg backdrop-blur-md">
+      <div className="flex w-fit gap-1 rounded-xl bg-slate-900/60 p-1 shadow-lg backdrop-blur-md">
+        {btn('places', '📍', t('places'))}
         {btn('layers', '▤', t('layers'))}
         {btn('view', '◐', t('colorMode'))}
         {btn('settings', '⚙', t('quality'))}
@@ -126,9 +128,31 @@ export function ControlPanel() {
         >
           ⌂<span className="ml-1 hidden sm:inline">{t('overview')}</span>
         </button>
+        <button
+          data-testid="help"
+          title={t('help')}
+          aria-label={t('help')}
+          className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900/80 text-xs text-slate-200 hover:bg-slate-800"
+          onClick={() => s.set({ welcome: true })}
+        >
+          ?
+        </button>
       </div>
       {pop && (
         <div className={`${panel} absolute left-0 top-11 z-20 w-72 max-w-[calc(100vw-32px)] space-y-3 p-3 text-sm`}>
+          {pop === 'places' && (
+            <div className="grid grid-cols-1 gap-1" data-testid="places">
+              {PLACES.map((pl) => (
+                <button key={pl.id} data-testid={`place-${pl.id}`} className="rounded-lg bg-slate-800 px-2 py-1.5 text-left text-xs hover:bg-slate-700"
+                  onClick={() => { s.set({ view: { camera: pl.camera, target: pl.target, t: Date.now(), fly: true }, selection: null }); setPop(null) }}>
+                  {t(pl.label)}
+                </button>
+              ))}
+              <button className="rounded-lg bg-slate-800 px-2 py-1.5 text-left text-xs hover:bg-slate-700" onClick={() => { s.set({ resetView: Date.now(), selection: null }); setPop(null) }}>
+                {t('place.top')}
+              </button>
+            </div>
+          )}
           {pop === 'layers' && (
             <div className="grid grid-cols-1 gap-1" data-testid="layers">
               {(Object.keys(s.layers) as (keyof typeof s.layers)[]).map((k) => (
@@ -258,7 +282,8 @@ export function InfoPanel({ index }: { index: TileIndex }) {
       ['f.ghsl', b.ghsl?.anbh != null ? <>{b.ghsl.anbh.toFixed(1)} {t('m')} <Hint>{t('ghslNote')}{b.ghsl.share != null ? ` · ${Math.round(b.ghsl.share * 100)}%` : ''}</Hint></> : null],
       ['f.levels', b.lv != null ? <>{b.lv} <Hint>{b.hM === 'source_levels' || b.hM === 'override' ? t('observed') : t('inferred')}</Hint></> : null],
       ['f.roof', <>{t(`roof.${b.roof}` as Key)}{b.parts ? ` (${b.parts} ${t('roofParts')})` : ''}{b.roofMat ? `, ${t(`roofMat.${b.roofMat}` as Key)}` : ''} <Hint>{t(`roofM.${b.roofM}` as Key)}</Hint></>],
-      ['f.landmark', b.landmark ? <span>{b.landmark.name}{b.landmark.match === 'probable' ? <Hint> ({t('landmark.probable')})</Hint> : null}{b.landmark.heritage && b.landmark.heritage.status !== 'unknown' ? ` · ${t(`heritage.${b.landmark.heritage.status}` as Key)}` : ''}<br />{b.landmark.identity_audit ? <Hint>{b.landmark.identity_audit}<br /></Hint> : null}{b.landmark.heritage?.reported_status ? <Hint>{t('heritage.reported')}: {b.landmark.heritage.reported_status} ({b.landmark.heritage.checked})<br /></Hint> : null}<Hint>{b.landmark.evidence}</Hint>{(b.landmark.photos ?? []).map((u, i) => <a key={u} className="ml-1 text-sky-300 underline" href={u} target="_blank" rel="noreferrer">{t('photo')} {i + 1}</a>)}{b.landmark.license ? <Hint> {b.landmark.license}</Hint> : null}{' '}<a className="text-sky-300 underline" href={`https://www.wikidata.org/wiki/${b.landmark.wikidata}`} target="_blank" rel="noreferrer">{b.landmark.wikidata}</a></span> : null],
+      ['f.facade', b.landmark && b.landmark.match !== 'probable' && b.landmark.evidence ? t('facade.photo') : t('facade.procedural')],
+      ['f.landmark', b.landmark ? <span>{b.landmark.name}{b.landmark.match === 'probable' ? <Hint> ({t('landmark.probable')})</Hint> : null}{b.landmark.heritage && b.landmark.heritage.status !== 'unknown' ? ` · ${t(`heritage.${b.landmark.heritage.status}` as Key)}` : ''}<details className="mt-0.5"><summary className="cursor-pointer text-[11px] text-sky-300">{t('evidence')}</summary>{b.landmark.identity_audit ? <Hint>{b.landmark.identity_audit}<br /></Hint> : null}{b.landmark.heritage?.reported_status ? <Hint>{t('heritage.reported')}: {b.landmark.heritage.reported_status} ({b.landmark.heritage.checked})<br /></Hint> : null}<Hint>{b.landmark.evidence}</Hint>{(b.landmark.photos ?? []).map((u, i) => <a key={u} className="ml-1 text-sky-300 underline" href={u} target="_blank" rel="noreferrer">{t('photo')} {i + 1}</a>)}{b.landmark.license ? <Hint> {b.landmark.license}</Hint> : null}</details><a className="text-sky-300 underline" href={`https://www.wikidata.org/wiki/${b.landmark.wikidata}`} target="_blank" rel="noreferrer">{b.landmark.wikidata}</a></span> : null],
       ['f.area', `${b.area.toFixed(0)} ${t('m2')}`],
       ['f.confidence', <Conf c={b.conf} />],
       ['f.source', t(`src.${b.src}` as Key)],
@@ -274,7 +299,7 @@ export function InfoPanel({ index }: { index: TileIndex }) {
     rows.push(['f.name', i.name], ['f.reason', i.reason], ['f.sid', <code>{i.sid}</code>])
   }
   return (
-    <div className={`${panel} w-80 max-w-[calc(100vw-32px)] p-3 text-sm`} data-testid="info-panel">
+    <div className={`${panel} max-h-[calc(100dvh-190px)] w-80 max-w-[calc(100vw-32px)] overflow-y-auto p-3 text-sm`} data-testid="info-panel">
       <div className="mb-2 flex items-center justify-between">
         <div className="font-medium">{sel.type === 'building' ? t('building') : t('dataIssue')}</div>
         <button onClick={() => set({ selection: null })} className="rounded px-2 text-slate-400 hover:bg-slate-800" aria-label={t('close')}>✕</button>
@@ -346,7 +371,7 @@ export function LoadingBar() {
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-30" data-testid="loading">
       <div className="h-0.5 w-full animate-pulse bg-sky-400" />
-      <div className="absolute right-3 top-2 rounded bg-slate-900/80 px-2 py-0.5 text-[11px] text-slate-200">{t('loading')} · {loading} / {active} {t('tiles')}</div>
+      <div className="absolute right-3 top-2 hidden rounded bg-slate-900/80 px-2 py-0.5 text-[11px] text-slate-200 sm:block">{t('loading')} · {loading} / {active} {t('tiles')}</div>
     </div>
   )
 }
@@ -455,7 +480,8 @@ export function Attribution({ index }: { index: TileIndex }) {
   const [open, setOpen] = useState(false)
   return (
     <div className="pointer-events-auto text-right text-[10px] text-slate-200 [text-shadow:0_1px_2px_#000]">
-      <button onClick={() => setOpen(!open)} className="underline decoration-dotted">
+      <button onClick={() => setOpen(!open)} className="underline decoration-dotted sm:hidden" data-testid="attrib-short">{t('attribShort')}</button>
+      <button onClick={() => setOpen(!open)} className="hidden underline decoration-dotted sm:inline">
         © OpenStreetMap contributors (ODbL) · Microsoft Building Footprints (CDLA-Permissive-2.0) · Copernicus WorldDEM-30 · Copernicus Sentinel data 2026 · GHSL (CC BY 4.0) · Trees: Meta & WRI Canopy Height Maps v2 (CC BY 4.0) · ESA WorldCover 2021 (CC BY 4.0)
       </button>
       {open && (
@@ -472,6 +498,46 @@ export function Attribution({ index }: { index: TileIndex }) {
           <div className="text-slate-500">index {index.generated_at.slice(0, 16)} · code {index.code_version}</div>
         </div>
       )}
+    </div>
+  )
+}
+
+/** First-visit card: what this is, how to move, where to go. Shown once per browser (localStorage), reopened with "?". */
+export function WelcomeCard() {
+  const t = useT()
+  const open = useStore((s) => s.welcome)
+  const set = useStore((s) => s.set)
+  useEffect(() => {
+    let seen = false
+    try { seen = localStorage.getItem('skvyra.welcomeSeen') === '1' } catch { /* private mode: show it */ }
+    if (!seen) set({ welcome: true })
+  }, [set])
+  if (!open) return null
+  const close = () => {
+    try { localStorage.setItem('skvyra.welcomeSeen', '1') } catch { /* ignore */ }
+    set({ welcome: false })
+  }
+  const touch = typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches
+  return (
+    <div className="pointer-events-auto absolute inset-0 z-40 flex items-center justify-center bg-slate-950/40 p-4" onClick={close} data-testid="welcome">
+      <div className={`${panel} max-h-[90vh] w-[26rem] max-w-full overflow-y-auto p-4 text-sm`} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+        <div className="mb-2 flex items-start justify-between gap-2">
+          <h1 id="welcome-title" className="text-base font-semibold">{t('welcome.title')}</h1>
+          <button onClick={close} className="rounded px-2 text-slate-400 hover:bg-slate-800" aria-label={t('close')}>✕</button>
+        </div>
+        <p className="mb-2 text-slate-200">{t('welcome.what')}</p>
+        <p className="mb-3 text-slate-300">{t(touch ? 'welcome.touch' : 'welcome.mouse')}</p>
+        <div className="mb-1 text-xs text-slate-400">{t('welcome.places')}</div>
+        <div className="mb-3 flex flex-wrap gap-1">
+          {PLACES.map((pl) => (
+            <button key={pl.id} className="rounded-lg bg-slate-800 px-2 py-1 text-xs hover:bg-slate-700" data-testid={`welcome-${pl.id}`}
+              onClick={() => { set({ view: { camera: pl.camera, target: pl.target, t: Date.now(), fly: true } }); close() }}>
+              {t(pl.label)}
+            </button>
+          ))}
+        </div>
+        <button className="w-full rounded-lg bg-sky-600 px-3 py-2 text-sm font-medium text-white hover:bg-sky-500" onClick={close} data-testid="welcome-go">{t('welcome.go')}</button>
+      </div>
     </div>
   )
 }
