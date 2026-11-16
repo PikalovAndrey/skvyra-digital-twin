@@ -82,4 +82,26 @@ are documented assumptions with "low" confidence.
   Before/after: [Kyivska oblique](img/bridges/kyivska-oblique-before-after.jpg) ·
   [Kyivska side](img/bridges/kyivska-side-before-after.jpg) · [Shevchenka oblique](img/bridges/shevchenka-oblique-before-after.jpg) ·
   [Shevchenka side](img/bridges/shevchenka-side-before-after.jpg).
+- Building type (what decides the look): the building's own OSM tags first (`building`, `amenity`, `shop`,
+  `man_made`, `tourism`, `office`), then a shop/amenity point inside it, then the OSM land use around it
+  (`landuse=industrial/railway/garages/farmyard...` → industrial), then size. Since 2026-11-16 size alone never
+  makes a building industrial: a large (> 600 m²) building with no tags outside industrial/farm land use is
+  **"use unknown"** — plain plaster walls, plain regular windows, low hipped slate/metal roof — instead of a
+  windowless shed (19 buildings). Its wall height, storeys and roof rise are exactly those of the former rule;
+  buildings typed by the tags read since then (museum, Ukrtelecom office, 8 storage tanks, 2 car washes, 2
+  `building=residential`) also keep their former wall height and storeys until a height is confirmed (owner's
+  rule: no storey changes without data); tanks and silos show no storey count, as storeys do not apply to them. Inside OSM `landuse=industrial` buildings stay industrial, including the
+  merged outline that contains the Catholic church (see Known inaccuracies). Before/after:
+  [museum](img/classification/museum-2-before-after.jpg) · [Soborna St](img/classification/soborna-1045-before-after.jpg) ·
+  [Uspenska St](img/classification/uspenska-720-before-after.jpg) · [Ukrtelecom](img/classification/ukrtelecom-2-before-after.jpg) ·
+  [storage tanks](img/classification/tanks-before-after.jpg) · unchanged industry: [grain plant](img/classification/khp-industrial-before-after.jpg),
+  [fan plant](img/classification/fan-plant-industrial-before-after.jpg).
+- Sports grounds: OSM geometry only. A running track mapped as a line (`leisure=track` without `area=yes`, as OSM
+  Carto reads it) is a band along that line; its width is an estimate (5 m, no `width` tag). Kolos stadium: ring
+  and multi-sport court coloured from the licensed 2021 aerial photos (config/surfaces.json; the 2026 Sentinel-2
+  scene independently shows the ring as bare ground), pitch grass, the rest of the stadium polygon (stands, paths)
+  shows the satellite colour instead of a flat green. The red synthetic straight along the stand, the court's green
+  inner area and the stands are not in OSM and are not drawn. Before/after:
+  [from above](img/classification/stadium-top-before-after.jpg) · [oblique](img/classification/stadium-oblique-before-after.jpg) ·
+  [low](img/classification/stadium-low-2-before-after.jpg).
 - Water surfaces inherit DEM noise; rivers are not hydrologically flattened.

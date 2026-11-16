@@ -424,8 +424,9 @@ def build_tile(ix, iy, force=False) -> dict:
     paved_areas = [shapely.clip_by_rect(_CTX["areas"][i][0], *b) for i in aidx if _CTX["areas"][i][1]["cover"] == "paved"]
     if paved_areas:
         road_polys["paved"] = shapely.union_all([road_polys.get("paved", shapely.Polygon()), *paved_areas])
-    areas_local = [(shapely.clip_by_rect(_CTX["areas"][i][0], *b), _CTX["areas"][i][1]["cover"]) for i in aidx]
-    areas_local = [(g, c) for g, c in areas_local if not g.is_empty]
+    areas_local = [(shapely.clip_by_rect(_CTX["areas"][i][0], *b), _CTX["areas"][i][1]["cover"],
+                    _CTX["areas"][i][1].get("colour")) for i in aidx]   # colour: photo estimate (config/surfaces.json)
+    areas_local = [a for a in areas_local if not a[0].is_empty]
     water = shapely.clip_by_rect(_CTX["water"], *b) if _CTX["water"] is not None else None
     if water is not None and water.is_empty:
         water = None

@@ -1,4 +1,20 @@
-# Progress — 2026-11-15
+# Progress — 2026-11-16
+
+## Street-matching fixes 4 and 5 (2026-11-16, local, not committed)
+
+From the street-matching audit (docs/STREET_MATCHING_AUDIT.md). **Building type**: size alone no longer makes a
+building industrial. 22 buildings were industrial only because of the > 600 m² rule: 19 are now "use unknown"
+(neutral plaster, plain windows, low hipped roof), the museum (`tourism=museum`) is public, Ukrtelecom
+(`office=telecommunication`) commercial; one is a landmark (unchanged). Tags not read before: 8 storage tanks
+(`man_made=storage_tank`, drawn as houses with chimneys) are industrial cylinders with flat tops, 2 car washes
+commercial, 2 `building=residential` houses. 33 buildings changed type; wall height is unchanged for all 8,060 and
+storeys for all but the 8 tanks, which no longer show a storey count (it does not apply to a tank) (tested; roof rise
+changed on 11 that now have flat roofs; checked one by one on renders). The 222 buildings typed industrial by OSM
+land use stay industrial. **Kolos stadium**: the OSM running track (a closed line) is a 5 m band (width estimated),
+the paved basketball pitch a court, both coloured from the licensed 2021 aerial photos; the stadium polygon no
+longer paints everything grass. Checks: pytest 165 (incl. Blender), vitest 43, tsc 0, e2e 11 (7 env-gated skipped),
+`make qa` identical to the release, production package 490 files / 46 MB. Tiles: 16 of 119 changed; LOD0 −0.016 %
+bytes, −348 triangles (tanks), LOD1/LOD2 unchanged.
 
 ## 3.5.1 — pre-deploy (2026-11-15)
 

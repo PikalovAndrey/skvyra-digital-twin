@@ -1,0 +1,24 @@
+{
+  "about": "Ground surface colours read from licensed photos, for mapped OSM areas whose tags do not give the colour. The geometry stays OSM's; only the paint colour changes. Colour = median of the surface's pixels on the photo (lit, JPEG): an estimate, not a measurement. The photo date is when it was true.",
+  "colours": [
+    {
+      "source_id": "osm:way/1563486917",
+      "what": "multi-sport court at the north-west end of the Kolos stadium (OSM: leisure=pitch, sport=basketball, surface=paved)",
+      "colour": "#96443f",
+      "seen": "red synthetic court; its inner playing area is green on the photos but is not mapped separately, so the whole OSM polygon gets the red",
+      "photos": ["https://commons.wikimedia.org/wiki/File:Skvyra_Lev_Schwarzburg_Kolos_Stadium_1.jpg",
+                 "https://commons.wikimedia.org/wiki/File:Skvyra_Lev_Schwarzburg_Kolos_Stadium_4.jpg"],
+      "date": "2021-09-15",
+      "license": "CC BY 4.0, Велике будівництво / Тульчинська районна державна адміністрація (Wikimedia Commons)"
+    },
+    {
+      "source_id": "osm:way/953038391",
+      "what": "running track ring of the Kolos stadium (OSM: leisure=track, sport=athletics; no surface, no width)",
+      "colour": "#a59483",
+      "seen": "grey-brown unpaved ring around the pitch; the red synthetic straight along the stand is not mapped in OSM and is not drawn",
+      "photos": ["https://commons.wikimedia.org/wiki/File:Skvyra_Lev_Schwarzburg_Kolos_Stadium_1.jpg"],
+      "date": "2021-09-15",
+      "license": "CC BY 4.0, Велике будівництво / Тульчинська районна державна адміністрація (Wikimedia Commons)"
+    }
+  ]
+}

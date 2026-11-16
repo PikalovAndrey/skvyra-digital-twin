@@ -18,12 +18,13 @@ ROAD_WIDTH = {"motorway": 14, "trunk": 11, "primary": 9, "secondary": 7.5, "tert
               "primary_link": 6, "secondary_link": 6, "tertiary_link": 5, "road": 5.0, "corridor": 1.5}
 UNPAVED = {"unpaved", "dirt", "ground", "gravel", "fine_gravel", "compacted", "sand", "grass", "earth", "mud", "pebblestone"}
 FOOT = {"footway", "path", "pedestrian", "steps", "cycleway", "bridleway", "corridor"}
-COVER_PRIORITY = ["farmland", "residential", "commercial", "industrial", "institutional", "orchard", "grass",
-                  "cemetery", "park", "pitch", "scrub", "forest", "wetland", "paved", "water"]
+COVER_PRIORITY = ["stadium", "farmland", "residential", "commercial", "industrial", "institutional", "orchard", "grass",
+                  "cemetery", "park", "track", "pitch", "court", "scrub", "forest", "wetland", "paved", "water"]
 GROUND = {  # sRGB, used for the ground texture (renderer applies its own lighting)
     "base": (148, 158, 112), "farmland": (196, 186, 128), "residential": (142, 152, 104), "commercial": (170, 166, 150),
     "industrial": (160, 156, 140), "institutional": (150, 158, 118), "orchard": (118, 140, 82), "grass": (128, 156, 88),
     "cemetery": (112, 132, 92), "park": (106, 146, 78), "pitch": (98, 150, 80), "scrub": (112, 128, 78),
+    "track": (165, 148, 131), "court": (150, 148, 142),  # unpaved ring / hard court when no photo gives the colour
     "forest": (70, 98, 58), "wetland": (108, 128, 96), "paved": (150, 148, 142), "water": (62, 92, 110),
     "road": (92, 92, 94), "road_unpaved": (150, 130, 100), "foot": (170, 162, 150), "rail": (110, 100, 92),
     "shoulder": (138, 126, 104), "wet_bank": (74, 78, 52),
@@ -226,7 +227,7 @@ def bridge_mesh(line, p: dict, terrain, offset: float, seg: float = 4.0):
 
 # How strongly mapped land cover tints the satellite base colour (0 = keep Sentinel-2, 1 = flat class colour).
 # Satellite colour is real; class colours are generic, so they are used lightly except for crisp features.
-TINT = {"water": 1.0, "paved": 0.7, "pitch": 0.55, "cemetery": 0.25, "park": 0.2, "grass": 0.15, "forest": 0.15,
+TINT = {"water": 1.0, "paved": 0.7, "pitch": 0.55, "track": 0.85, "court": 0.85, "cemetery": 0.25, "park": 0.2, "grass": 0.15, "forest": 0.15,
         "orchard": 0.1, "wetland": 0.15, "scrub": 0.1, "industrial": 0.2, "commercial": 0.2, "institutional": 0.15}
 
 
@@ -314,8 +315,9 @@ def ground_texture(bounds, size_px: int, areas_local, water_local, roads, rails,
         img.paste(Image.new("RGB", (size_px, size_px), col), (0, 0), m)
 
     rank = {c: i for i, c in enumerate(COVER_PRIORITY)}
-    for g, cover in sorted(areas_local, key=lambda a: (rank.get(a[1], 0), -a[0].area)):
-        paint(g, GROUND.get(cover, GROUND["base"]), TINT.get(cover, 0.0))
+    for g, cover, *col in sorted(areas_local, key=lambda a: (rank.get(a[1], 0), -a[0].area)):
+        rgb = tuple(int(col[0][i:i + 2], 16) for i in (1, 3, 5)) if col and col[0] else GROUND.get(cover, GROUND["base"])
+        paint(g, rgb, TINT.get(cover, 0.0))
     if water_local is not None:
         paint(water_local.buffer(3.5).difference(water_local), GROUND["wet_bank"], 0.45)  # damp, darker banks
         paint(water_local, GROUND["water"])
@@ -384,7 +386,7 @@ def place_trees(tile_bounds, areas_local, blocked, houses, mapped, seed: str, de
     def ok(x, y):
         return blk is None or not blk.contains(shapely.Point(x, y))
 
-    for g, cover in areas_local:
+    for g, cover, *_ in areas_local:
         dens = TREE_DENSITY.get(cover)
         if not dens:
             continue

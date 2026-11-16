@@ -230,7 +230,7 @@ def main():
     rh = np.array([b["h"] - b["eave"] for b in metas.values() if b["roof"] != "flat" and b["kind"] == "house"])
     outliers = [(b["sid"], b["kind"], b["h"], b["hM"]) for b in metas.values()
                 if (b["kind"] == "house" and b["h"] > 11) or (b["kind"] == "outbuilding" and b["h"] > 6)
-                or (b["kind"] in ("public", "industrial", "commercial") and b["h"] < 3)]
+                or (b["kind"] in ("public", "industrial", "commercial", "unknown") and b["h"] < 3)]
     rep = {
         "buildings_checked": len(metas),
         "floating": len(floating), "floating_ids": floating[:20],

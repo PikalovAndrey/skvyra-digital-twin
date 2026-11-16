@@ -45,7 +45,8 @@ KINDS = {
 }
 FACADE = {"none": 0, "house": 1, "apartments": 2, "commercial": 3, "public": 4, "industrial": 5, "church": 6, "historic": 7,
           "tiled_arched": 8,  # tile-clad, rectangular ground-floor windows, tall upper windows with arched fanlights
-          "tiled": 9}         # tile-clad, rectangular windows (photo-observed cladding, landmarks only)
+          "tiled": 9,         # tile-clad, rectangular windows (photo-observed cladding, landmarks only)
+          "unknown": 10}      # large building of unknown use: plain plaster, plain windows (no balconies, no shopfronts)
 ROOF_MAT = {"bitumen": 0, "metal_tile": 1, "slate": 2, "corrugated": 3, "seam": 4}
 FLOOR_H = {"public": 3.8, "historic": 4.0, "apartments": 2.9, "commercial": 3.3, "church": 4.5, "tiled_arched": 5.5, "tiled": 4.2}
 PALETTE = {  # sRGB hex with weights; tuned on licensed photos of Skvyra (docs/ARCHITECTURE_STYLE.md)
@@ -55,6 +56,7 @@ PALETTE = {  # sRGB hex with weights; tuned on licensed photos of Skvyra (docs/A
     "commercial_wall": [("#e9e4da", 3), ("#d7d2c8", 2), ("#e2cfb0", 2), ("#c9c3b6", 1)],
     "public_wall": [("#d9b48f", 3), ("#c8916a", 2), ("#e7dcc6", 3), ("#d6c7a8", 2)],
     "industrial_wall": [("#b9b6ad", 3), ("#a9a69e", 2), ("#c4bfb2", 2), ("#9d8f7f", 1)],
+    "unknown_wall": [("#d6d2c9", 3), ("#cdc8bd", 3), ("#e0dace", 2), ("#c7c3bb", 2)],   # neutral plaster
     "outbuilding_wall": [("#a9a39a", 3), ("#8a6f5a", 2), ("#c2bbb0", 2), ("#7e7a73", 1), ("#9c4f3c", 1)],
     "church_wall": [("#efede6", 1)],
     "roof_slate": [("#8d8f8c", 3), ("#a2a39e", 2), ("#7a7c7a", 2)],
@@ -103,32 +105,57 @@ def obb(p: Polygon):
     return rect.mean(axis=0), u, v, max(L, 1e-3), max(W, 1e-3)
 
 
-def classify(tags: dict, area: float, cover: str | None, poi: list | None = None) -> tuple[str, str]:
-    """-> (kind, how). how: 'tag' (OSM building/amenity tag), 'poi' (shop/amenity point inside), 'inferred'."""
-    b = tags.get("building")
-    if tags.get("amenity") == "place_of_worship" or b in KINDS["church"]:
-        return "church", "tag"
+PUBLIC_AMENITY = {"school", "hospital", "kindergarten", "clinic", "townhall", "post_office", "bank", "library",
+                  "community_centre", "bus_station", "cinema", "theatre"}
+COMMERCIAL_AMENITY = {"cafe", "restaurant", "pharmacy", "fuel", "fast_food", "bar"}
+INDUSTRIAL_MAN_MADE = {"storage_tank", "silo", "works"}
+
+
+def _by_land_use_and_size(area: float, cover: str | None) -> str:
+    if area < 30:
+        return "outbuilding"
+    if cover in ("industrial", "farmland") and area > 150:
+        return "industrial"
+    if cover in ("institutional",) and area > 150:
+        return "public"
+    if cover in ("commercial",) and area > 150:
+        return "commercial"
+    return "unknown" if area > 600 else "house"
+
+
+def classify(tags: dict, area: float, cover: str | None, poi: list | None = None) -> tuple[str, str, str]:
+    """-> (kind, how, mass). how: 'tag' (OSM tags on the building), 'poi' (shop/amenity point inside), 'inferred'.
+
+    kind (what the building is, i.e. its look): its tags first (building, amenity, shop, man_made, tourism, office),
+    then a shop or amenity point inside it, then the OSM land use around it, then size. Size alone never makes a
+    building industrial: a large untagged building outside industrial/farm land use is 'unknown' (neutral look,
+    lowest confidence). Audit 2026-11-16: the museum and other central buildings were drawn as sheds.
+
+    mass (whose default wall height and storeys apply): the type the model used before that fix. The function tags
+    read since then (man_made, tourism, office, building=residential, amenity=car_wash) and the 'unknown' class
+    change the look only; their default heights stay until a height or storey count is confirmed (owner's rule
+    2026-11-16: no storey changes without data)."""
+    b, am, tour, off = tags.get("building"), tags.get("amenity"), tags.get("tourism"), tags.get("office")
+    fallback = ("commercial", "poi") if poi and area > 40 else (_by_land_use_and_size(area, cover), "inferred")
+    old_mass = "industrial" if fallback[0] == "unknown" else fallback[0]
+    if am == "place_of_worship" or b in KINDS["church"]:
+        return "church", "tag", "church"
+    if b == "residential":
+        return "house", "tag", old_mass
     for kind, vals in KINDS.items():
         if b in vals:
-            return kind, "tag"
-    if tags.get("amenity") in ("school", "hospital", "kindergarten", "clinic", "townhall", "post_office", "bank",
-                               "library", "community_centre", "bus_station", "cinema", "theatre"):
-        return "public", "tag"
-    if tags.get("shop") or tags.get("amenity") in ("cafe", "restaurant", "pharmacy", "fuel", "fast_food", "bar"):
-        return "commercial", "tag"
-    if poi and area > 40:
-        return "commercial", "poi"
-    if area < 30:
-        return "outbuilding", "inferred"
-    if cover in ("industrial", "farmland") and area > 150:
-        return "industrial", "inferred"
-    if cover in ("institutional",) and area > 150:
-        return "public", "inferred"
-    if cover in ("commercial",) and area > 150:
-        return "commercial", "inferred"
-    if area > 600:
-        return "industrial", "inferred"
-    return "house", "inferred"
+            return kind, "tag", kind
+    if am in PUBLIC_AMENITY:
+        return "public", "tag", "public"
+    if tags.get("shop") or am in COMMERCIAL_AMENITY:
+        return "commercial", "tag", "commercial"
+    if tags.get("man_made") in INDUSTRIAL_MAN_MADE:
+        return "industrial", "tag", old_mass
+    if tour in ("museum", "gallery") or off == "government":
+        return "public", "tag", old_mass
+    if tour in ("hotel", "guest_house", "hostel", "motel") or off or am == "car_wash":
+        return "commercial", "tag", old_mass
+    return (*fallback, old_mass)
 
 
 def resolve(props: dict, area: float, aspect: float, fill: float, cover: str | None, cfg: dict,
@@ -136,14 +163,15 @@ def resolve(props: dict, area: float, aspect: float, fill: float, cover: str | N
     """All attributes needed to build and describe one building, with provenance."""
     tags = props.get("tags", {})
     r = rng_for(props["id"], cfg["seed"])
-    kind, kind_how = classify(tags, area, cover, props.get("poi"))
+    kind, kind_how, mass = classify(tags, area, cover, props.get("poi"))
     o, ev, lm = override or {}, ev or {}, landmark or {}
     if lm.get("match") == "probable":  # location uncertain: name only, no change of appearance
         lm = {}
     if lm.get("kind"):  # use seen on the landmark photos (e.g. a school annex, not a warehouse)
-        kind, kind_how = lm["kind"], "photo_estimate"
+        kind, kind_how, mass = lm["kind"], "photo_estimate", lm["kind"]
     facade = lm.get("facade") or ("none" if kind == "outbuilding" else kind)
-    fh = lm.get("floor_h") or FLOOR_H.get(facade, FLOOR_H.get(kind, cfg["floor_height_m"]))
+    # storey height follows the massing too, so a building whose look changed keeps its walls and storeys
+    fh = lm.get("floor_h") or FLOOR_H.get(facade if mass == kind else mass, FLOOR_H.get(mass, cfg["floor_height_m"]))
 
     # --- roof shape ---------------------------------------------------------------------------------
     roof, roof_method = None, "inferred"
@@ -167,14 +195,16 @@ def resolve(props: dict, area: float, aspect: float, fill: float, cover: str | N
                 roof = wchoice(r, {"hipped": 50, "gabled": 30, "half-hipped": 20})
         elif kind == "church":
             roof = "gabled"
-        elif kind == "industrial":
-            roof = "flat" if area > 2000 else "gabled"
+        elif kind == "industrial":  # tanks and silos are round: flat top rather than a ridge
+            roof = "flat" if area > 2000 or tags.get("man_made") in INDUSTRIAL_MAN_MADE else "gabled"
+        elif kind == "unknown":  # neutral: low hipped roof (not the shed-like gable of a warehouse)
+            roof = "flat" if area > 2000 else "hipped"
         elif kind == "public":
             roof = "hipped" if area < 1200 else wchoice(r, {"flat": 50, "hipped": 50})
         else:
             roof = "flat"
     pitch = {"outbuilding": r.uniform(12, 22), "house": r.uniform(24, 34), "church": 38.0, "commercial": r.uniform(18, 28),
-             "public": r.uniform(18, 26), "industrial": r.uniform(8, 14), "apartments": 15.0}.get(kind, 20.0)
+             "public": r.uniform(18, 26), "industrial": r.uniform(8, 14), "apartments": 15.0}.get(mass, 20.0)
     if roof == "shed":
         pitch = min(pitch, 18.0)
 
@@ -187,6 +217,8 @@ def resolve(props: dict, area: float, aspect: float, fill: float, cover: str | N
         roof_mat = wchoice(r, {"slate": 45, "corrugated": 35, "metal_tile": 20})
     elif kind == "industrial":
         roof_mat = "corrugated"
+    elif kind == "unknown":
+        roof_mat = wchoice(r, {"slate": 50, "seam": 50})
     else:
         roof_mat = wchoice(r, {"seam": 50, "metal_tile": 30, "slate": 20})
     roof_mat = lm.get("roof_material", roof_mat)
@@ -197,7 +229,7 @@ def resolve(props: dict, area: float, aspect: float, fill: float, cover: str | N
     tag_h, tag_rh = _num(tags.get("height")), _num(tags.get("roof:height"))
     W = math.sqrt(area / max(aspect, 1)) / 2  # approximate OBB half-width
     run = 2 * W if roof == "shed" else W
-    roof_h = 0.0 if roof == "flat" else min(run * math.tan(math.radians(pitch)), ROOF_CAP.get(kind, 4.0))
+    roof_h = 0.0 if roof == "flat" else min(run * math.tan(math.radians(pitch)), ROOF_CAP.get(mass, 4.0))
     if tag_rh:
         roof_h = tag_rh
     elif roof_levels and roof != "flat":
@@ -218,7 +250,7 @@ def resolve(props: dict, area: float, aspect: float, fill: float, cover: str | N
     elif kind == "apartments" and ev.get("nbr_max"):
         levels = float(min(9, max(3, round(ev["nbr_max"] / 3.0))))
         eave, method = levels * fh + plinth, "ghsl_neighbourhood"
-    elif ev.get("anbh") and ev.get("share", 0) >= 0.6 and area >= 400 and kind in ("industrial", "public", "commercial", "church"):
+    elif ev.get("anbh") and ev.get("share", 0) >= 0.6 and area >= 400 and mass in ("industrial", "public", "commercial", "church"):
         # large non-residential building that dominates its cell: the cell value is mostly this building
         # (houses excluded: their 1-2 storey difference is within the product error)
         # ANBH ~ mean height of the roof surface: eave = ANBH - half the roof rise
@@ -233,13 +265,16 @@ def resolve(props: dict, area: float, aspect: float, fill: float, cover: str | N
         defaults = {"outbuilding": (None, 2.4), "house": (2 if area >= 220 else 1, None), "apartments": (5, None),
                     "public": (2, None), "commercial": (1 if area < 250 else 2, None),
                     "industrial": (None, 6.0 if area > 500 else 4.5), "church": (None, 8.0)}
-        dl, de = defaults[kind]
+        dl, de = defaults[mass]
         eave = de if de else dl * fh + plinth
         levels = levels or dl
         method = "type_default"
 
+    if tags.get("man_made") in INDUSTRIAL_MAN_MADE:  # tanks and silos have no storeys (wall height stays)
+        levels = None
     wall_key = {"house": "house_wall", "apartments": "apartments_wall", "public": "public_wall", "commercial": "commercial_wall",
-                "industrial": "industrial_wall", "outbuilding": "outbuilding_wall", "church": "church_wall"}[kind]
+                "industrial": "industrial_wall", "outbuilding": "outbuilding_wall", "church": "church_wall",
+                "unknown": "unknown_wall"}[kind]
     wall_c = pick(r, wall_key)
     roof_c = pick(r, f"roof_{roof_mat}")
     for src in (lm, o):  # landmark photo estimate, then user override, win over the palette
@@ -253,7 +288,7 @@ def resolve(props: dict, area: float, aspect: float, fill: float, cover: str | N
             "levels": levels, "floor_h": fh, "wall_color": wall_c, "roof_color": roof_c, "pitch": round(pitch, 1),
             "facade": facade, "roof_mat": roof_mat,
             "overhang": {"house": 0.45, "commercial": 0.4, "public": 0.5, "church": 0.5, "outbuilding": 0.25,
-                         "industrial": 0.3}.get(kind, 0.0) if roof != "flat" else 0.12,
+                         "industrial": 0.3, "unknown": 0.35}.get(kind, 0.0) if roof != "flat" else 0.12,
             "trim_color": srgb_to_linear(hex_rgb(r.choice(["#f2f0ea", "#ede8dc", "#5a3a2b", "#7a7a76"]))).tolist(),
             "door_color": srgb_to_linear(hex_rgb(r.choice(["#4a2f1e", "#5c3a22", "#3b3f45", "#6b6e70", "#7a4a2a"]))).tolist(),
             "chimney": kind == "house" and roof != "flat" and r.random() < 0.7, "rand": r.random(),

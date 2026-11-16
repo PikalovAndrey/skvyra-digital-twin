@@ -3,7 +3,8 @@
 // All facade / roof / ground detail is procedural in the shader (decorative, see docs/GEOGRAPHIC_ACCURACY.md):
 //   walls  _style = facade type (0 none, 1 house, 2 apartments, 3 commercial, 4 public, 5 industrial,
 //                   6 church, 7 historic, 8 tile-clad with arched upper windows, 9 tile-clad - landmark styles read
-//                   from photos); uv = (metres along wall / bay, floors above ground)
+//                   from photos), 10 unknown use (plain plaster, plain regular windows: no balconies, no shopfronts);
+//                   uv = (metres along wall / bay, floors above ground)
 //   roofs  _style = roof material (0 bitumen, 1 metal tile, 2 slate, 3 corrugated, 4 standing seam);
 //                   uv = metres (u along the eave, v up the slope)
 // Surface relief is a procedural height field turned into a normal perturbation (bump from screen-space
@@ -73,7 +74,7 @@ const WALL_FRAG = /* glsl */ `
   float near = (1.0 - smoothstep(25.0, 140.0, dist)) * uWindows;
   // wall finish: reddish, saturated walls read as brick, the rest as plaster (decorative inference)
   float sat = max(base.r, max(base.g, base.b)) - min(base.r, min(base.g, base.b));
-  float tiled = step(7.5, float(st));                           // landmark tile cladding (photos)
+  float tiled = (st == 8 || st == 9) ? 1.0 : 0.0;               // landmark tile cladding (photos)
   float brick = max(step(0.12, sat) * step(base.g, base.r * 0.55) * step(0.5, float(st)), tiled);   // clearly red walls only
   vec2 wm = st == 8 ? vec2(uv.x * 3.6, uv.y * 5.5) : st == 9 ? vec2(uv.x * 3.2, uv.y * 4.4) : vec2(uv.x * 3.0, uv.y * 3.0); // ~metres
   float row = floor(wm.y / 0.075);
@@ -101,6 +102,7 @@ const WALL_FRAG = /* glsl */ `
   if (st == 6) { ww = 0.12; y0 = 0.16; wh = 0.68; }
   if (st == 8) { ww = 0.18; y0 = 0.2; wh = 0.45; if (cell.y > 0.5) { ww = 0.17; y0 = 0.06; wh = 0.66; } }
   if (st == 9) { ww = 0.23; y0 = 0.2; wh = 0.55; }
+  if (st == 10) { ww = 0.15; y0 = 0.3; wh = 0.4; }
   float win = skBox(f, vec2(0.5 - ww, y0), vec2(0.5 + ww, y0 + wh), aa);
   float fr = skBox(f, vec2(0.5 - ww - 0.03, y0 - 0.04), vec2(0.5 + ww + 0.03, y0 + wh + 0.03), aa) - win;
   float sill = skBox(f, vec2(0.5 - ww - 0.06, y0 - 0.075), vec2(0.5 + ww + 0.06, y0 - 0.035), aa);

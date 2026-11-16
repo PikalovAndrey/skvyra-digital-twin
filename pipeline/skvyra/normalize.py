@@ -36,8 +36,10 @@ ROAD_TAGS = ["highway", "name", "name:en", "ref", "width", "lanes", "surface", "
 BUILDING_TAGS = ["building", "height", "min_height", "building:levels", "building:min_level", "roof:shape",
                  "roof:height", "roof:levels", "roof:colour", "building:colour", "building:material",
                  "roof:material", "name", "amenity", "addr:street", "addr:housenumber", "start_date",
-                 "religion", "denomination", "historic", "tourism", "shop"]
+                 "religion", "denomination", "historic", "tourism", "shop", "office", "man_made"]
 
+HARD_SURFACE = {"paved", "asphalt", "concrete", "acrylic", "tartan", "rubber", "paving_stones"}
+TRACK_WIDTH_M = 5.0  # running track drawn as its line (no width tag in Skvyra): estimate, not a measurement
 COVER = [  # first match wins
     ("water", lambda t: t.get("natural") == "water" or t.get("waterway") in ("riverbank", "dock")
      or t.get("landuse") in ("reservoir", "basin")),
@@ -45,7 +47,10 @@ COVER = [  # first match wins
     ("forest", lambda t: t.get("natural") == "wood" or t.get("landuse") == "forest"),
     ("scrub", lambda t: t.get("natural") in ("scrub", "heath")),
     ("park", lambda t: t.get("leisure") in ("park", "garden")),
-    ("pitch", lambda t: t.get("leisure") in ("pitch", "stadium", "track", "playground", "sports_centre")),
+    ("track", lambda t: t.get("leisure") == "track"),     # area=yes / multipolygon tracks; track lines: TRACK_WIDTH_M
+    ("court", lambda t: t.get("leisure") == "pitch" and t.get("surface") in HARD_SURFACE),
+    ("pitch", lambda t: t.get("leisure") in ("pitch", "playground", "sports_centre")),
+    ("stadium", lambda t: t.get("leisure") == "stadium"),  # stands, paths, grass: no tint, the satellite colour shows
     ("grass", lambda t: t.get("landuse") in ("grass", "meadow", "village_green", "recreation_ground")
      or t.get("natural") in ("grassland",)),
     ("cemetery", lambda t: t.get("landuse") == "cemetery" or t.get("amenity") == "grave_yard"),
@@ -59,6 +64,22 @@ COVER = [  # first match wins
     ("institutional", lambda t: t.get("amenity") in ("school", "hospital", "kindergarten", "college",
                                                       "university", "clinic")),
 ]
+
+
+def _width(v) -> float | None:
+    try:
+        w = float(str(v).split()[0].replace(",", "."))
+        return w if w > 0 else None
+    except (ValueError, IndexError):
+        return None
+
+
+def track_band(line, tags: dict):
+    """A running track mapped as its line -> (band polygon along the line, width m, 'source' | 'estimate')."""
+    w = _width(tags.get("width"))
+    how = "source" if w else "estimate"
+    w = w or TRACK_WIDTH_M
+    return line.buffer(w / 2, cap_style="flat", join_style="round"), w, how
 
 
 def is_sensitive(tags: dict) -> bool:
@@ -206,6 +227,10 @@ def run(cfg: dict) -> dict:
                 elif "railway" in tags and tags["railway"] in ("rail", "narrow_gauge", "light_rail", "tram", "siding"):
                     rails.append(feature(pg, {"source_id": sid, "railway": tags["railway"], "name": tags.get("name"),
                                               "bridge": tags.get("bridge")}))
+                elif tags.get("leisure") == "track":
+                    band, w, how = track_band(part, tags)
+                    areas.append(feature(frame.geom_to_geo(band), {"source_id": sid, "cover": "track", "name": tags.get("name"),
+                                                                   "repaired": False, "width_m": w, "width_method": how}))
                 elif "waterway" in tags and tags["waterway"] in ("river", "stream", "canal", "ditch", "drain"):
                     waterways.append(feature(pg, {"source_id": sid, "waterway": tags["waterway"], "name": tags.get("name"),
                                                   "width": tags.get("width"), "tunnel": tags.get("tunnel")}))
@@ -322,6 +347,14 @@ def run(cfg: dict) -> dict:
     ids = Counter(props["id"] for _, props in buildings)
     if any(c > 1 for c in ids.values()):
         raise RuntimeError(f"stable id collision: {[k for k, c in ids.items() if c > 1][:5]}")
+
+    # paint colours read from licensed photos (config/surfaces.json); geometry and cover class stay OSM's
+    sf = C.ROOT / "config" / "surfaces.json"
+    photo = {c["source_id"]: c for c in json.loads(sf.read_text())["colours"]} if sf.exists() else {}
+    for f in areas:
+        c = photo.get(f["properties"]["source_id"])
+        if c:
+            f["properties"].update(colour=c["colour"], colour_method="photo_estimate", colour_date=c["date"])
 
     buildings.sort(key=lambda b: b[1]["id"])  # deterministic output order
     write("buildings.geojson", [feature(frame.geom_to_geo(p), props) for p, props in buildings])

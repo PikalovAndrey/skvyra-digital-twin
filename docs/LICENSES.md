@@ -14,6 +14,7 @@ Not legal advice.
 | ESA WorldCover 2021 v200 | CC BY 4.0 — esa-worldcover.org | "© ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium" | used only to decide where the canopy model is outdated, never as geometry |
 | KartaView street imagery | CC BY-SA 4.0 — KartaView terms (kartaview.org, checked 2026-11-14) | contributor + KartaView + licence | **not used**: the only Skvyra sequence is marked deleted and exposes no author name; viewed for research only |
 | Wikidata | CC0 | — | coordinates and names of listed buildings |
+| Wikimedia Commons photos — Kolos stadium aerials ("Skvyra Lev Schwarzburg Kolos Stadium 1/4", 2021-09-15) | CC BY 4.0, Велике будівництво / Тульчинська районна державна адміністрація | credit in `LICENSES/NOTICE.txt` and `config/surfaces.json` | two colour values only (track ring, court); no pixels in the model or the repository |
 | Wikimedia Commons photos | CC BY-SA 3.0/4.0 (per file) | — (not redistributed) | used only as visual reference to estimate colours/roof family/storeys of 2 buildings, the lyceum corner tower and the synagogue (blocks, heights, attic, stairs, colours); no pixels are copied into the model, and no photo is stored in the repository |
 
 ## Compatibility

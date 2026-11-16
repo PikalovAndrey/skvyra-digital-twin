@@ -125,6 +125,89 @@ def test_bad_tag_values_do_not_crash():
     assert a["height_method"] == "type_default"
 
 
+@pytest.mark.parametrize("area", [80, 601, 2500, 12000])
+def test_size_alone_never_makes_a_tagged_public_building_industrial(area):
+    """Audit 2026-11-16: the museum (tourism=museum, 964 m2) was drawn as a windowless shed because every
+    building over 600 m2 without a building=* type became industrial."""
+    for tags in ({"building": "yes", "tourism": "museum"}, {"building": "yes", "amenity": "school"},
+                 {"building": "school"}, {"building": "yes", "office": "government"}):
+        assert B.classify(tags, area, None)[:2] == ("public", "tag"), tags
+        assert B.classify(tags, area, "industrial")[0] == "public", tags  # its own tags beat the land use
+        a = B.resolve(props(tags), area, 2.0, 0.9, None, CFG)
+        assert a["kind"] == "public" and a["facade"] == "public" and a["roof_mat"] != "corrugated", tags
+
+
+def test_large_untagged_building_is_unknown_not_industrial_and_keeps_its_height():
+    assert B.classify({"building": "yes"}, 1000, None)[:2] == ("unknown", "inferred")
+    assert B.classify({"building": "yes"}, 1000, "residential")[0] == "unknown"
+    assert B.classify({"building": "yes"}, 400, None)[0] == "house"                    # small: unchanged
+    # real industry stays industrial: explicit type, industrial/farm land use, tanks and silos
+    assert B.classify({"building": "warehouse"}, 100, "residential")[:2] == ("industrial", "tag")
+    assert B.classify({"building": "yes"}, 1000, "industrial")[:2] == ("industrial", "inferred")
+    assert B.classify({"building": "yes"}, 200, "farmland")[0] == "industrial"
+    assert B.classify({"building": "yes", "man_made": "storage_tank"}, 40, None)[:2] == ("industrial", "tag")
+    u = B.resolve(props({"building": "yes"}, "u1"), 1000, 2.5, 0.9, None, CFG)
+    i = B.resolve(props({"building": "yes"}, "u1"), 1000, 2.5, 0.9, "industrial", CFG)
+    assert (u["kind"], u["facade"]) == ("unknown", "unknown") and u["roof_mat"] in ("slate", "seam")
+    # neutral look only: wall height, storeys and roof rise are those of the former size rule
+    assert (u["eave_height"], u["levels"], u["roof_height"], u["height_method"]) == \
+           (i["eave_height"], i["levels"], i["roof_height"], i["height_method"]) == (6.0, None, i["roof_height"], "type_default")
+
+
+def test_function_tags_change_the_look_not_the_storeys():
+    """Tags read since 2026-11-16 (tourism, office, man_made, building=residential, car_wash) must not change a
+    building's wall height or storey count: those stay until a height or storey count is confirmed."""
+    cases = [({"building": "yes", "tourism": "museum"}, 964, None), ({"building": "yes", "office": "telecommunication"}, 640, None),
+             ({"building": "yes", "man_made": "storage_tank"}, 38, None), ({"building": "residential"}, 232, "commercial"),
+             ({"building": "yes", "amenity": "car_wash"}, 452, None)]
+    for tags, area, cover in cases:
+        new = B.resolve(props(tags, "f1"), area, 1.5, 0.9, cover, CFG)
+        before = B.resolve(props({"building": "yes"}, "f1"), area, 1.5, 0.9, cover, CFG)   # what the size rule gave
+        assert new["kind"] != before["kind"], tags
+        assert (new["eave_height"], new["height_method"]) == (before["eave_height"], before["height_method"]), tags
+        # storeys kept, except where they do not apply (a tank is not "1 storey")
+        assert new["levels"] == (None if "man_made" in tags else before["levels"]), tags
+    ev = {"anbh": 9.0, "share": 0.8}  # GHSL-derived height keeps its value too
+    new = B.resolve(props({"building": "yes", "tourism": "museum"}, "f2"), 964, 2.0, 0.9, None, CFG, ev=ev)
+    old = B.resolve(props({"building": "yes"}, "f2"), 964, 2.0, 0.9, None, CFG, ev=ev)
+    assert new["kind"] == "public" and new["height_method"] == old["height_method"] == "ghsl_dominant"
+    assert (new["eave_height"], new["levels"]) == (old["eave_height"], old["levels"])
+
+
+def test_running_track_line_is_a_band_not_a_filled_oval():
+    assert osm.is_area_way({"leisure": "track", "sport": "athletics"}) is False      # line unless area=yes
+    assert osm.is_area_way({"leisure": "track", "area": "yes"}) is True
+    assert osm.is_area_way({"leisure": "pitch"}) is True
+    oval = shapely.Point(0, 0).buffer(40).exterior
+    band, w, how = N.track_band(oval, {"leisure": "track"})
+    assert (w, how) == (N.TRACK_WIDTH_M, "estimate")
+    assert band.area == pytest.approx(oval.length * w, rel=0.02) and not band.contains(shapely.Point(0, 0))
+    assert N.track_band(oval, {"leisure": "track", "width": "7 m"})[1:] == (7.0, "source")
+    assert N.cover_class({"leisure": "track", "area": "yes"}) == "track"
+    assert N.cover_class({"leisure": "pitch", "surface": "paved"}) == "court"
+    assert N.cover_class({"leisure": "pitch", "surface": "grass"}) == "pitch"
+    assert N.cover_class({"leisure": "stadium"}) == "stadium"   # stands and paths: no grass paint over all of it
+
+
+def test_sport_surfaces_paint_in_order_with_photo_colours():
+    pitch = shapely.box(-40, -25, 40, 25)
+    track, _, _ = N.track_band(shapely.box(-43, -28, 43, 28).exterior, {})
+    court = shapely.box(44, -8, 58, 8)
+    stadium = shapely.box(-70, -60, 70, 60)
+    areas = [(stadium, "stadium", None), (court, "court", "#96443f"), (pitch, "pitch", None), (track, "track", "#a59483")]
+    import io
+    from PIL import Image
+    jpg = S.ground_texture((-70, -60, 70, 60), 140, areas, None, {}, [], 95, "t", base=None)
+    px = np.asarray(Image.open(io.BytesIO(jpg)).convert("RGB")).astype(int)
+    at = lambda x, y: px[int(60 - y), int(x + 70)]
+    r, g, b = at(51, 0)
+    assert r > g + 40 and r > b + 40                       # court: the photo's red, painted over the track
+    r, g, b = at(0, 0)
+    assert g > r and g > b                                 # pitch stays grass inside the track
+    r, g, b = at(0, 28)
+    assert r > g > b and abs(r - 165) < 45                 # the ring: grey-brown unpaved
+
+
 def test_inference_is_deterministic_per_id():
     a1 = B.resolve(props({}, "bX"), 90, 1.3, 0.9, None, CFG)
     a2 = B.resolve(props({}, "bX"), 90, 1.3, 0.9, None, CFG)

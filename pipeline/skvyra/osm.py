@@ -15,6 +15,8 @@ def is_area_way(tags: dict) -> bool:
         return True
     if "highway" in tags or "barrier" in tags or "railway" in tags:
         return False
+    if tags.get("leisure") == "track":  # a closed track way is its line unless area=yes (OSM wiki, OSM Carto)
+        return False
     if "natural" in tags:
         return tags["natural"] not in NATURAL_LINEAR
     if "waterway" in tags:
