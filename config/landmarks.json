@@ -576,6 +576,162 @@
     }
    ],
    "street_door": false
+  },
+  {
+   "source_id": "osm:way/953018275",
+   "anchor": [
+    29.662348,
+    49.730153
+   ],
+   "name": "Адміністративна будівля на центральній площі (за пам'ятником Т. Шевченку)",
+   "lonlat": [
+    29.662348,
+    49.730153
+   ],
+   "kind": "public",
+   "levels": 3,
+   "facade": "tiled_ribbon",
+   "roof_shape": "flat",
+   "roof_material": "bitumen",
+   "wall_colour": "#c5beac",
+   "roof_colour": "#8c8d8a",
+   "evidence": "Identity: the OSM outline (way 953018275, 42.9 x 12.8 m, building=yes, no name or use tag) is the only large building on the square; its long north-east face is 23 m from the OSM node 'Тарас Шевченко', and the monument stands on the axis of that face in the 2008 photo. Observed (Orest Brod 2008-09-15, frontal, north-east face): Soviet-era office block with a flat roof and a railing; three storeys of wide windows (white frames, three panes) between light tile-clad pilasters, brick-red spandrel panels between the window rows, a plain tiled band and a narrow green band with small vents under the roof edge; a flat white entrance canopy over the ground floor on the axis (its right half is hidden by the statue - assumed symmetric). Current state: the 2021 aerial photos (Велике будівництво, CC BY 4.0) show the same light flat-roofed block of four window rows beyond the south-east end of the stadium. Estimates (scale from the storeys; a frontal photo from about 1.6 m): storey 3.5 m, top bands 2.6 m, roof edge 13.6 m, window bays 3.9 m, canopy 13 x 3 m at 4 m. Use: not stated in the sources (shown as an office/public building). Not modelled: the small vents of the green band, the blank stair bay at the north-west end, the roof railing and antennas, rear and end facades (drawn like the front).",
+   "photos": [
+    "https://commons.wikimedia.org/wiki/File:ТД_1-_08.Сквира.jpg",
+    "https://commons.wikimedia.org/wiki/File:Skvyra_Lev_Schwarzburg_Kolos_Stadium_1.jpg",
+    "https://commons.wikimedia.org/wiki/File:Skvyra_Lev_Schwarzburg_Kolos_Stadium_3.jpg"
+   ],
+   "license": "Orest Brod (2008-09-15, CC BY-SA 4.0); Велике будівництво / Тульчинська районна державна адміністрація (2021-09-15, CC BY 4.0); Wikimedia Commons; referenced, not redistributed",
+   "composite": {
+    "method": "photo_estimate",
+    "axis_from": "east",
+    "front": "north",
+    "split_m": [],
+    "plinth_colour": "#8d8a80",
+    "parts": [
+     {
+      "name": "office block",
+      "roof": "flat",
+      "eave_m": 13.6,
+      "rise_m": 0.0,
+      "floor_h": 3.5,
+      "bay_m": 3.9,
+      "window_base_m": 0.5,
+      "facade": "tiled_ribbon",
+      "plinth_m": 0.5,
+      "wall_colour": "#c5beac",
+      "roof_colour": "#8c8d8a",
+      "roof_material": "bitumen",
+      "frieze": false,
+      "bands": [
+       [
+        11.0,
+        12.8,
+        "#c9c2b0"
+       ],
+       [
+        12.8,
+        13.25,
+        "#6b7660"
+       ],
+       [
+        13.25,
+        13.6,
+        "#c9c2b0"
+       ]
+      ]
+     }
+    ],
+    "features": [
+     {
+      "type": "canopy",
+      "part": 0,
+      "at_m": 21.4,
+      "width_m": 13.0,
+      "depth_m": 3.0,
+      "height_m": 4.0,
+      "thick_m": 0.35,
+      "colour": "#e8e4dc"
+     }
+    ]
+   }
+  },
+  {
+   "source_id": "osm:way/1573335660",
+   "anchor": [
+    29.659236,
+    49.730887
+   ],
+   "name": "Будинок культури (у ньому за OSM — Сквирський народний краєзнавчий музей), вул. Богачевського, 35",
+   "lonlat": [
+    29.659236,
+    49.730887
+   ],
+   "kind": "public",
+   "levels": 2,
+   "facade": "public",
+   "wall_colour": "#df9a78",
+   "roof_colour": "#8b9094",
+   "roof_material": "slate",
+   "address": "вул. Богачевського, 35",
+   "evidence": "Identity: OSM way 1573335660 (41.3 x 23.4 m) carries addr Богачевського 35 and tourism=museum; the WLM list places the Afghan war memorial at 'вул. Богачевського, 35 (біля Будинку культури)'. Position: a 2019 360-degree panorama taken beside that memorial (phone GPS +-10-30 m; azimuths fixed by the low November sun) - the bearings of the pediment, of the block's corners and of the far end of the hall fit this outline to within 1 degree when the camera stands 12 m north of its GPS point. Observed (WestBam 2019-11-22): at the north-east end a two-storey block in salmon-orange plaster with a white cornice, a pediment with a round window over a front of three window axes facing south-east, white plastic windows with brick-pattern surrounds; along the rest of the south-east side a one-storey hall in darker terracotta plaster with a row of windows, a low hipped slate roof and a raised upper roof; grey asbestos-cement and sheet roofs. Estimates: block 10.3 m along the street side (from its angular width at the solved distance), eaves 8.6 m (block) and 4.5 m (hall), pediment rise 3.2 m; colours from the dusk panorama scaled so that the white house next to the camera reads white (factors R 1.65, G 1.60, B 1.47). Not visible / not modelled: the north-west and north-east facades, the entrance, the two-tier hall roof (drawn as one hipped roof), the window surrounds.",
+   "photos": [
+    "https://commons.wikimedia.org/wiki/File:Сквира_Меморіальний_комплекс_на_честь_воїнів-афганців_2019-11-25.jpg",
+    "https://commons.wikimedia.org/wiki/File:Сквира_Меморіальний_комплекс_на_честь_воїнів-афганців_2019-11-25_02.jpg"
+   ],
+   "license": "CC BY-SA 4.0, Wikimedia Commons - WestBam (2019-11-22); referenced, not redistributed",
+   "composite": {
+    "method": "photo_estimate",
+    "axis_from": "south",
+    "front": "south",
+    "split_m": [
+     31.0
+    ],
+    "plinth_colour": "#8a7f78",
+    "parts": [
+     {
+      "name": "one-storey hall",
+      "roof": "hipped",
+      "eave_m": 4.5,
+      "rise_m": 3.5,
+      "floor_h": 4.5,
+      "bay_m": 3.5,
+      "window_base_m": 0.0,
+      "facade": "public",
+      "plinth_m": 0.5,
+      "wall_colour": "#b3664a",
+      "roof_colour": "#85878a",
+      "roof_material": "slate",
+      "frieze": false
+     },
+     {
+      "name": "two-storey front block",
+      "roof": "gabled",
+      "eave_m": 8.6,
+      "rise_m": 3.2,
+      "floor_h": 4.0,
+      "bay_m": 3.4,
+      "window_base_m": 0.6,
+      "facade": "public",
+      "plinth_m": 0.6,
+      "wall_colour": "#df9a78",
+      "frieze_colour": "#ece9e2",
+      "roof_colour": "#8b9094",
+      "roof_material": "slate"
+     }
+    ],
+    "features": [
+     {
+      "type": "pediment",
+      "part": 1,
+      "at_m": 36.15,
+      "width_m": 10.3,
+      "rise_m": 3.2,
+      "oculus_r": 0.5,
+      "cornice_colour": "#ece9e2"
+     }
+    ]
+   }
   }
  ],
  "monuments": [
@@ -625,6 +781,53 @@
     "w": 0.8,
     "h": 0.95,
     "colour": "#3d3f3a"
+   }
+  },
+  {
+   "name": "Пам'ятник Т. Г. Шевченку (центральна площа)",
+   "osm": "osm:node/5377699189",
+   "lonlat": [
+    29.66251,
+    49.730277
+   ],
+   "facing_deg": 37,
+   "method": "photo_estimate",
+   "location_note": "Placed on the Microsoft ML outline ms:ea6509eb312e (6.1 x 3.4 m, 20 m2), which the pipeline drew as a 3 m white shed in the middle of the square: it lies on the axis of the administrative building's north-east face, 11.6 m in front of it, exactly where the 2008 photo shows the monument (the OSM node, 11 m further north-east, is a rough point). The ML outline is suppressed as a building (data/overrides/overrides.json) and used as the platform.",
+   "evidence": "Orest Brod 2008-09-15: a standing figure of Shevchenko in a long coat with a cape, in red-brown metal or painted stone, on a grey stone pedestal, centred in front of the tile-clad administrative building and facing away from it (north-east). Sizes are estimates from the storeys of the building behind it (+-30 %): pedestal top about 3 m, figure about 4.5 m. Sculpture drawn as a simple silhouette - no likeness. The 2008 photo is the latest one found; the OSM node (still mapped) and the ML outline confirm that the monument stands there.",
+   "photos": [
+    "https://commons.wikimedia.org/wiki/File:ТД_1-_08.Сквира.jpg"
+   ],
+   "license": "CC BY-SA 4.0, Wikimedia Commons - Orest Brod (2008-09-15); referenced, not redistributed",
+   "stack": [
+    {
+     "w": 6.1,
+     "d": 3.4,
+     "h": 0.3,
+     "colour": "#8f8a80"
+    },
+    {
+     "w": 2.0,
+     "d": 1.8,
+     "h": 0.4,
+     "colour": "#5c5b52"
+    },
+    {
+     "w": 1.3,
+     "d": 1.3,
+     "h": 2.2,
+     "colour": "#6e6c62"
+    },
+    {
+     "w": 1.8,
+     "d": 1.6,
+     "h": 0.3,
+     "colour": "#7a4433"
+    }
+   ],
+   "figure": {
+    "w": 1.8,
+    "h": 4.5,
+    "colour": "#95543f"
    }
   }
  ]

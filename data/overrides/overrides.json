@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "buildings": {
+    "ms:ea6509eb312e": {
+      "suppress": true,
+      "verified": false,
+      "anchor": [
+        29.66251,
+        49.730277
+      ],
+      "date": "2026-11-17",
+      "author": "Central Buildings Realism (assistant), for the owner's review",
+      "note": "Not a building: the Shevchenko monument on the central square (see config/landmarks.json monuments). Drawn as a white 3 m shed before.",
+      "evidence": "Commons: ТД 1- 08.Сквира.jpg (Orest Brod 2008, CC BY-SA 4.0) shows the monument on the axis of the administrative building's north-east face; this 6.1 x 3.4 m ML outline lies on that axis 11.6 m in front of the face; OSM node 5377699189 'Тарас Шевченко' is 11 m away."
+    }
+  }
+}
