@@ -793,7 +793,7 @@
    "facing_deg": 37,
    "method": "photo_estimate",
    "location_note": "Placed on the Microsoft ML outline ms:ea6509eb312e (6.1 x 3.4 m, 20 m2), which the pipeline drew as a 3 m white shed in the middle of the square: it lies on the axis of the administrative building's north-east face, 11.6 m in front of it, exactly where the 2008 photo shows the monument (the OSM node, 11 m further north-east, is a rough point). The ML outline is suppressed as a building (data/overrides/overrides.json) and used as the platform.",
-   "evidence": "Orest Brod 2008-09-15: a standing figure of Shevchenko in a long coat with a cape, in red-brown metal or painted stone, on a grey stone pedestal, centred in front of the tile-clad administrative building and facing away from it (north-east). Sizes are estimates from the storeys of the building behind it (+-30 %): pedestal top about 3 m, figure about 4.5 m. Sculpture drawn as a simple silhouette - no likeness. The 2008 photo is the latest one found; the OSM node (still mapped) and the ML outline confirm that the monument stands there.",
+   "evidence": "Orest Brod 2008-09-15 (frontal): standing Shevchenko in a long coat with a cape thrown over the shoulders, spreading further to the statue's right; red-brown (copper-coloured) surface; a red-brown slab under the feet on a wide grey stone pedestal with a dark inscription plate. Figure: the front outline is traced from the photo at 11 heights (coat 0.35-0.38 of the figure height wide, cape 0.53, head 0.15 wide and 0.18 tall, shifted to the statue's left); depth is not visible - assumed about 0.6 of the width; no facial or portrait features. Absolute size from the storeys of the building behind (+-30 %): figure about 4.5 m, slab 0.43 m, pedestal 2.0 m (its lower part is hidden by people). The 2008 photo is the latest one found; the OSM node and the ML outline confirm that the monument stands there.",
    "photos": [
     "https://commons.wikimedia.org/wiki/File:ТД_1-_08.Сквира.jpg"
    ],
@@ -806,28 +806,88 @@
      "colour": "#8f8a80"
     },
     {
-     "w": 2.0,
+     "w": 2.1,
      "d": 1.8,
-     "h": 0.4,
-     "colour": "#5c5b52"
+     "h": 2.0,
+     "colour": "#847a70"
     },
     {
-     "w": 1.3,
-     "d": 1.3,
-     "h": 2.2,
-     "colour": "#6e6c62"
-    },
-    {
-     "w": 1.8,
+     "w": 2.0,
      "d": 1.6,
-     "h": 0.3,
-     "colour": "#7a4433"
+     "h": 0.43,
+     "colour": "#96543d"
     }
    ],
    "figure": {
-    "w": 1.8,
-    "h": 4.5,
-    "colour": "#95543f"
+    "colour": "#93503a",
+    "rings": [
+     [
+      0.0,
+      0.97,
+      0.776,
+      0.543
+     ],
+     [
+      1.319,
+      0.869,
+      0.737,
+      0.481
+     ],
+     [
+      2.405,
+      0.815,
+      0.776,
+      0.466
+     ],
+     [
+      3.103,
+      1.241,
+      0.993,
+      0.481
+     ],
+     [
+      3.414,
+      1.319,
+      1.047,
+      0.45
+     ],
+     [
+      3.569,
+      1.047,
+      0.776,
+      0.403
+     ],
+     [
+      3.662,
+      0.233,
+      0.349,
+      0.248
+     ],
+     [
+      3.786,
+      0.209,
+      0.442,
+      0.349
+     ],
+     [
+      4.112,
+      0.233,
+      0.45,
+      0.372
+     ],
+     [
+      4.384,
+      0.171,
+      0.372,
+      0.31
+     ],
+     [
+      4.5,
+      0.016,
+      0.217,
+      0.109
+     ]
+    ]
    }
   }
  ]

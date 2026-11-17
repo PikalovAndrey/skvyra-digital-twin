@@ -1117,3 +1117,16 @@ def test_office_block_facade_style_is_registered_everywhere():
     shader = (root / "apps/web/src/scene/materials.ts").read_text()
     assert "st == 11" in shader and re.search(r"st == 8 \|\| st == 9 \|\| st == 11", shader)
     assert "11: 0.33" in (root / "blender/scripts/build_scene.py").read_text()
+
+
+def test_monument_figure_lofted_from_traced_rings():
+    from skvyra import buildings as B
+    rings = [[0.0, 0.97, 0.78, 0.54], [2.4, 0.82, 0.78, 0.47], [3.4, 1.32, 1.05, 0.45], [3.66, 0.23, 0.35, 0.25], [4.5, 0.02, 0.22, 0.11]]
+    spec = {"facing_deg": 37, "stack": [{"w": 2.1, "d": 1.8, "h": 2.0, "colour": "#847a70"}], "figure": {"colour": "#93503a", "rings": rings}}
+    t0, c0 = B.monument_mesh(0.0, 0.0, 200.0, spec, 0)
+    t1, _ = B.monument_mesh(0.0, 0.0, 200.0, spec, 1)
+    assert len(t0) == len(c0) and len(t1) < len(t0)                   # fewer sides at LOD1
+    assert t0[..., 2].max() == pytest.approx(206.5) and _outward_share(t0, (0.0, 0.0)) == 1.0
+    # the cape spreads to the statue's right (+u, east when it faces north): asymmetric extents survive
+    tn, _ = B.monument_mesh(0.0, 0.0, 0.0, {"facing_deg": 0, "stack": [], "figure": {"rings": rings}}, 0)
+    assert tn[..., 0].max() == pytest.approx(1.32) and tn[..., 0].min() == pytest.approx(-1.05)

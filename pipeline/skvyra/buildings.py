@@ -915,7 +915,25 @@ def monument_mesh(cx, cy, z_ground, spec: dict, lod: int):
             tris += t
             cols += [col] * len(t)
     fig = spec.get("figure")  # standing statue as a simple silhouette (long coat, shoulders, head): no likeness
-    if fig and lod < 2:
+    if fig and lod < 2 and fig.get("rings"):
+        # silhouette lofted through rings [z above the stack, extent to +u (the statue's right), extent to -u,
+        # half depth], metres: the front outline is traced from a frontal photo, the depth is assumed
+        col = lin(fig.get("colour", "#8a5a44"))
+        n = 16 if lod == 0 else 8
+        ts = np.linspace(0, 2 * math.pi, n + 1)
+        rings = [[c + (math.cos(t) * (a if math.cos(t) >= 0 else b)) * u + math.sin(t) * d * v for t in ts]
+                 for _, a, b, d in fig["rings"]]
+        zs = [z + r[0] for r in fig["rings"]]
+        for lo, hi, z0, z1 in zip(rings[:-1], rings[1:], zs[:-1], zs[1:]):
+            for k in range(n):
+                A, B_, C_, D = (*lo[k], z0), (*lo[k + 1], z0), (*hi[k + 1], z1), (*hi[k], z1)
+                tris += [[A, B_, C_], [A, C_, D]]
+                cols += [col, col]
+        top = (*np.mean(rings[-1][:-1], axis=0), zs[-1])
+        for k in range(n):
+            tris.append([top, (*rings[-1][k], zs[-1]), (*rings[-1][k + 1], zs[-1])])
+            cols.append(col)
+    elif fig and lod < 2:
         col = lin(fig.get("colour", "#8a5a44"))
         w, h = fig["w"], fig["h"]
         parts = [frustum_tris(c, u, v, (w * 0.5, w * 0.3), (w * 0.48, w * 0.28), z, z + h * 0.55),                # coat
