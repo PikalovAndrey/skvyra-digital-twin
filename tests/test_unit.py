@@ -630,6 +630,38 @@ def test_eaves_overhang_extends_roof_not_walls(roof):
     assert len(m["extra"]) > 0                                          # fascia board at LOD0
 
 
+@pytest.mark.parametrize("roof", ["gabled", "hipped", "half-hipped"])
+@pytest.mark.parametrize("name", list(COMPLEX))
+def test_multipart_eaves_hang_from_the_wall_top(roof, name):
+    """Regression (2026-11-17): the overhang of a multi-part roof was one triangulation of the whole strip with heights
+    extrapolated from the nearest part - along long walls it dropped metres below the wall top (a 'detached' band
+    under the roof, house ms:b95e6bc42b42) - and parts meeting only up to rounding got no step faces (see-through
+    gaps). Now: every strip vertex sits within [wall top - 1.2 x overhang, wall top]; strips have no cracks."""
+    p = shapely.orient_polygons(COMPLEX[name])
+    attrs = {"roof": roof, "eave_height": 3.4, "kind": "house", "pitch": 30.0, "chimney": False, "rand": 0.3,
+             "decompose": True, "facade": "house", "overhang": 0.45}
+    m = B.building_mesh(p, attrs, FlatTerrain().z, 3.0, lod=0)
+    roof_t, _ = m["roof"]
+    walls, _ = m["walls"]
+    assert area_xy(roof_t) == pytest.approx(p.buffer(0.45, join_style="mitre", mitre_limit=2.0).area, rel=1e-2)
+    out = roof_t[~shapely.contains_xy(p.buffer(1e-3), *roof_t.mean(axis=1)[:, :2].T)]
+    assert len(out)
+    V = out.reshape(-1, 3)
+    ring = p.exterior
+    feet = shapely.line_interpolate_point(ring, shapely.line_locate_point(ring, shapely.points(V[:, :2])))
+    # wall top under each strip vertex: highest exterior-wall vertex at that point of the outline
+    wv = walls.reshape(-1, 3)
+    low = min(part.eave for part in B.plan(p, attrs)[0])
+    for (x, y, z), f in zip(V, feet):
+        near = wv[np.hypot(wv[:, 0] - f.x, wv[:, 1] - f.y) < 0.6]
+        assert z <= near[:, 2].max() + 1e-6  # never above the wall it overhangs
+        assert z >= low - 1.2 * 0.45 - 1e-6  # never below the lowest eave by more than the overhang drop
+    key = {}
+    for x, y, z in V:
+        key.setdefault((round(x, 3), round(y, 3)), []).append(z)
+    assert max(max(z) - min(z) for z in key.values()) < 0.05  # adjacent strips meet: no cracks at corners or seams
+
+
 def test_pond_cut_leaves_no_terrain_above_water_inside_outline():
     """Regression (2026-11-12): grid triangles straddling a pond shore rose above the flat water ("saw teeth")."""
     from skvyra import tiles as T

@@ -545,6 +545,65 @@ def _split_ts(a, b, cuts):
     return sorted(set(round(t, 9) for t in ts)), ln
 
 
+def _multipart_eaves(p: Polygon, pieces, cuts, top_at, oh: float, z_ground: float):
+    """Eave overhang of a multi-part roof, built wall by wall: the inner edge follows the wall top (so it meets the
+    roof edge exactly), the outer edge follows the roof plane of the part that wall belongs to, never above the wall
+    top and never more than 1.2 x the overhang below it. (The former single triangulation of the whole strip let one
+    triangle span a 15 m wall with heights extrapolated from a neighbouring part: strips dropping down the walls.)
+    -> (strip tris, strip uvs, (outer ring xy, outer ring z))."""
+    ring = np.asarray(p.exterior.coords)[:-1]
+    n_v = len(ring)
+    edges = [(ring[i], ring[(i + 1) % n_v]) for i in range(n_v)]
+    normals = []
+    for a, b in edges:
+        d = b - a
+        ln = float(np.hypot(*d))
+        normals.append(np.array([d[1], -d[0]]) / ln if ln > 1e-9 else np.zeros(2))  # outward for a CCW ring
+    miter = []
+    for i in range(n_v):  # offset corner shared by the edge ending here and the edge starting here
+        n1, n2 = normals[i - 1], normals[i]
+        m = (n1 + n2) / max(1.0 + float(n1 @ n2), 1e-6)
+        ml = float(np.hypot(*m))
+        miter.append(ring[i] + oh * (m if ml <= 2.0 else m / ml * 2.0))
+
+    def owner(q):
+        pt = shapely.Point(q)
+        return min(pieces, key=lambda part: part.poly.distance(pt))
+
+    walls = []
+    for i, (a, b) in enumerate(edges):
+        if float(np.hypot(*(b - a))) < 1e-4:
+            walls.append(None)
+            continue
+        ts, _ = _split_ts(a, b, cuts)
+        q = a + np.outer(ts, b - a)
+        o = q + oh * normals[i]
+        o[0], o[-1] = miter[i], miter[(i + 1) % n_v]
+        zin = np.array([top_at(x) for x in q])
+        zo, step = [], (b - a) * 1e-3
+        for k in range(len(q)):  # a point where the owning part changes takes the lower side: no step in the strip
+            sides = ([q[k] - step] if k > 0 else []) + ([q[k] + step] if k < len(q) - 1 else [])
+            z = min(float(owner(x).z_ext(o[k])[0]) for x in sides)
+            zo.append(float(np.clip(z, zin[k] - 1.2 * oh, zin[k])))
+        walls.append([q, o, zin, np.array(zo)])
+    live = [w for w in walls if w is not None]
+    for w0, w1 in zip(live, live[1:] + live[:1]):  # a corner is shared by two strips: one height, no crack
+        w0[3][-1] = w1[3][0] = min(w0[3][-1], w1[3][0])
+    tris, uvs, out_xy, out_z = [], [], [], []
+    for q, o, zin, zo in live:
+        for k in range(len(q) - 1):
+            A, B_ = (*q[k], zin[k] + z_ground), (*q[k + 1], zin[k + 1] + z_ground)
+            C_, D = (*o[k + 1], zo[k + 1] + z_ground), (*o[k], zo[k] + z_ground)
+            tris.append(np.array([[A, B_, C_], [A, C_, D]]))
+            uvs.append(np.array([[q[k], q[k + 1], o[k + 1]], [q[k], o[k + 1], o[k]]]))
+        out_xy += [x for x in o[:-1]]
+        out_z += list(zo[:-1] + z_ground)
+    if out_xy:
+        out_xy.append(out_xy[0])
+        out_z.append(out_z[0])
+    return tris, uvs, (np.array(out_xy).reshape(-1, 2), np.array(out_z))
+
+
 def building_mesh(p: Polygon, attrs: dict, ground, floor_h: float, lod: int, parts=None):
     """-> dict(walls=(tris, uvs), roof=(tris, uvs), extra=tris, z_ground) in local coords. ground(x, y) -> z."""
     p = shapely.orient_polygons(p, exterior_cw=False)  # exterior CCW, holes CW => walls face outward
@@ -593,12 +652,14 @@ def building_mesh(p: Polygon, attrs: dict, ground, floor_h: float, lod: int, par
         region_lines.append(part.poly.exterior)
     cuts = shapely.union_all(region_lines) if region_lines else None
 
+    touch = 1e-6 if len(pieces) == 1 else 0.02  # decomposed parts meet the outline only up to rounding (mm)
+
     def top_at(xy):
         """Roof height (relative) at a boundary point: highest piece touching it."""
         best = -1e9
         pt = shapely.Point(xy)
         for part in pieces:
-            if part.poly.distance(pt) < 1e-6:
+            if part.poly.distance(pt) < touch:
                 best = max(best, float(part.z(xy)[0]))
         return best if best > -1e9 else eave_main
 
@@ -640,8 +701,9 @@ def building_mesh(p: Polygon, attrs: dict, ground, floor_h: float, lod: int, par
         for j, pj in enumerate(pieces):
             if i == j:
                 continue
-            shared = pi.poly.boundary.intersection(pj.poly.boundary)
-            for line in shapely.get_parts(shared):
+            # parts made by decompose() share edges only up to rounding: take i's boundary within 3 cm of j's
+            shared = pi.poly.boundary.intersection(pj.poly.boundary.buffer(0.03, cap_style="flat"))
+            for line in shapely.get_parts(shapely.line_merge(shared) if shared.geom_type == "MultiLineString" else shared):
                 if line.geom_type != "LineString" or line.length < 0.05:
                     continue
                 pts = np.asarray(line.coords)
@@ -695,14 +757,8 @@ def building_mesh(p: Polygon, attrs: dict, ground, floor_h: float, lod: int, par
                 z = z_ground + main.eave + main.rh * f
                 st_tris.append(np.concatenate([flat, z[:, None]], 1).reshape(-1, 3, 3))
                 st_uv.append(_facet_uv(flat, main, plane).reshape(-1, 3, 2))
-        else:  # multi-part: each strip triangle follows the roof of the nearest part
-            t2 = triangulate(strip)
-            for tri in t2:
-                cpt = shapely.Point(tri.mean(axis=0))
-                part = min(pieces, key=lambda pt: pt.poly.distance(cpt))
-                z = z_ground + part.z_ext(tri)
-                st_tris.append(np.concatenate([tri, z[:, None]], 1).reshape(1, 3, 3))
-                st_uv.append(tri.reshape(1, 3, 2).copy())
+        else:  # multi-part: one strip per wall, hanging from the wall top it overhangs
+            st_tris, st_uv, outer_ring = _multipart_eaves(p, pieces, cuts, top_at, oh, z_ground)
         if st_tris:
             top = np.concatenate(st_tris)
             uv_top = np.concatenate(st_uv)
@@ -714,9 +770,12 @@ def building_mesh(p: Polygon, attrs: dict, ground, floor_h: float, lod: int, par
         if st_tris and lod == 0:  # soffit + fascia only close up: invisible from LOD1 distances
             fascia = 0.14  # no separate soffit: the viewer renders roofs double-sided (underside visible)
             # fascia board along the outer edge (heights from the overhang surface)
-            ring = np.asarray(outer.exterior.coords) if outer.geom_type == "Polygon" else np.zeros((0, 2))
+            if single:
+                ring = np.asarray(outer.exterior.coords) if outer.geom_type == "Polygon" else np.zeros((0, 2))
+                zt = np.array([float(main.z_ext(q)[0]) for q in ring]) + z_ground if len(ring) else np.zeros(0)
+            else:  # the outer edge of the per-wall strips
+                ring, zt = outer_ring
             if len(ring):
-                zt = np.array([float(min(pieces, key=lambda pt: pt.poly.distance(shapely.Point(q))).z_ext(q)[0]) for q in ring]) + z_ground
                 for k in range(len(ring) - 1):
                     (x0, y0), (x1, y1) = ring[k], ring[k + 1]
                     A, B = (x0, y0, zt[k] - fascia), (x1, y1, zt[k + 1] - fascia)

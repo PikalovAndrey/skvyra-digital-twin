@@ -130,7 +130,7 @@ Honest list of what this reconstruction is **not**, as of 2026-11-14.
   estimates (scale from door heights), only the street fronts were visible; the synagogue's basement windows,
   courtyard annexes and rear are not modelled. The kostel has no footprint and is not modelled.
 
-## Multi-part roofs: systemic mesh defects (found 2026-11-17, not fixed - future investigation)
+## Multi-part roofs: systemic mesh defects (found 2026-11-17; defects 1-3 fixed on branch fix/roof-eave-junction)
 
 Found while fixing house `ms:edc91edf970c` after owner feedback (see docs/CENTRE_REALISM.md §10). When `plan()` splits an
 irregular footprint into several roof parts (`buildings.decompose()`), the multi-part branch of `building_mesh()` produces
@@ -149,6 +149,17 @@ Scale (in-memory rebuild of every multi-part building, 2026-11-17): 689 of 731 m
 one defect, 264 of 282 in the central 3x3 tiles; 0 of 400 sampled single-part houses. All of it predates the Centre
 Realism work (identical in 06c2406).
 
-Status: only `ms:edc91edf970c` is corrected, locally, with the override `roof_parts: 1`. A global fix (clamp `z_ext`, build
-step faces with a tolerance, widen the `top_at()` test, or snap decomposed parts to shared edges) would change ~690
-buildings and needs its own before/after review and the owner's decision.
+Status: `ms:edc91edf970c` was corrected first with the override `roof_parts: 1` (released d205944). Owner feedback on
+house `ms:b95e6bc42b42` (a band under the roof, a see-through gable) led to the global fix of 1-3 in `building_mesh()`:
+
+- the multi-part overhang is built wall by wall (`_multipart_eaves()`): the inner edge is the wall top, the outer edge
+  follows the owning part's roof plane clamped to [wall top - 1.2 x overhang, wall top]; corners and seams where the
+  owning part changes share one height (no cracks);
+- step faces between parts use the part boundary within 3 cm of the neighbour's (not an exact intersection);
+- `top_at()` accepts parts within 2 cm of an outline point (multi-part only; single roofs keep 1e-6 m).
+
+Result (same in-memory scan): overhang dropping more than 0.6 m below the nearest wall top 669 -> 41 buildings (the
+remaining ones are corners where the nearest wall is a higher gable; by construction no strip is more than 0.54 m below
+its own wall top), more than 1.5 m 372 -> 1, see-through gaps between parts 140 -> 0. Only multi-part buildings and the
+composite lyceum (its eave band no longer sags) change; single-part buildings, the admin building, the House of Culture,
+the Shevchenko monument, bridges and LOD2 are byte-identical. Not fixed: 4 (rake overhangs).
