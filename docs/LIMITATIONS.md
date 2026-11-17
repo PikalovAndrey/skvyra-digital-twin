@@ -129,3 +129,26 @@ Honest list of what this reconstruction is **not**, as of 2026-11-14.
 - Landmarks rebuilt from photos: the lyceum's corner tower and the synagogue (3.1). All their dimensions are photo
   estimates (scale from door heights), only the street fronts were visible; the synagogue's basement windows,
   courtyard annexes and rear are not modelled. The kostel has no footprint and is not modelled.
+
+## Multi-part roofs: systemic mesh defects (found 2026-11-17, not fixed - future investigation)
+
+Found while fixing house `ms:edc91edf970c` after owner feedback (see docs/CENTRE_REALISM.md §10). When `plan()` splits an
+irregular footprint into several roof parts (`buildings.decompose()`), the multi-part branch of `building_mesh()` produces
+four kinds of defect; single-part roofs have none:
+
+1. **Overhang strips dropping down the walls.** Each triangle of the 0.45 m eave ring takes its height from the planes of
+   the part nearest its centroid, extended without a lower clamp (`Part.z_ext()`); triangles spanning a whole wall can end
+   0.2-2 m above the ground ("dark diagonal stripes").
+2. **Missing step faces between parts.** The vertical face between two parts is built only when their outlines intersect
+   as a line; parts made by `decompose()` share edges only up to rounding, so slots up to ~0.4 m tall stay open.
+3. **Wall tops falling back to the main eave.** Outline corners a few millimetres outside every part fail the 1e-6 m test
+   in `top_at()`; those walls stop at the main eave (cut gables, wall fins above lean-to roofs).
+4. **Missing rake overhangs** on small gabled parts.
+
+Scale (in-memory rebuild of every multi-part building, 2026-11-17): 689 of 731 multi-part buildings (94 %) have at least
+one defect, 264 of 282 in the central 3x3 tiles; 0 of 400 sampled single-part houses. All of it predates the Centre
+Realism work (identical in 06c2406).
+
+Status: only `ms:edc91edf970c` is corrected, locally, with the override `roof_parts: 1`. A global fix (clamp `z_ext`, build
+step faces with a tolerance, widen the `top_at()` test, or snap decomposed parts to shared edges) would change ~690
+buildings and needs its own before/after review and the owner's decision.

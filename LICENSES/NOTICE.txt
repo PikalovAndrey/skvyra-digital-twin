@@ -70,6 +70,9 @@ Kolos stadium: the colours of the running track ring and the multi-sport court a
 State Administration (Велике будівництво / Тульчинська районна державна адміністрація), CC BY 4.0
 (https://creativecommons.org/licenses/by/4.0/), https://commons.wikimedia.org/wiki/File:Skvyra_Lev_Schwarzburg_Kolos_Stadium_1.jpg ;
 changes made: only two colour values were taken, no part of the photos is included.
+The same aerial "Skvyra Lev Schwarzburg Kolos Stadium 1" was also used as visual reference for the current form of
+the administrative building on the central square and for the roof form and colour of the house next to it
+(ms:edc91edf970c); changes made: only proportions and one colour value were taken, no part of the photo is included.
 
 All data is provided as is, without warranty. Heights, roofs, colours and most trees are estimates;
 see the in-app notes and docs/GEOGRAPHIC_ACCURACY.md in the repository.
