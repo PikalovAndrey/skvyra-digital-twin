@@ -1,18 +1,20 @@
 // Viewer screenshots from the fixed viewpoints in blender/presets/viewpoints.json.
 // COMPARE=<label> npx playwright test compare  -> renders/compare/<label>/web-<viewpoint>.png
+// optional: VPFILE=<json {name: {camera, target}}> instead of the presets, SIZE=390x844 (phone), COLOR=realistic
 import { test } from '@playwright/test'
 import { mkdirSync, readFileSync } from 'node:fs'
 
 test.skip(!process.env.COMPARE, 'set COMPARE=<label>')
 
-const vps = JSON.parse(readFileSync('../../blender/presets/viewpoints.json', 'utf8')).viewpoints as Record<string, { camera: number[]; target: number[] }>
+const vps = (process.env.VPFILE ? JSON.parse(readFileSync(process.env.VPFILE, 'utf8')) : JSON.parse(readFileSync('../../blender/presets/viewpoints.json', 'utf8')).viewpoints) as Record<string, { camera: number[]; target: number[] }>
 type W = { __skvyraStore: { getState(): { set(p: object): void } }; __skvyra: { stats(): { active: number; loading: number; queued: number } }; __idle?: number }
 
 test('compare screenshots', async ({ page }) => {
   test.setTimeout(400_000)
   const dir = `../../renders/compare/${process.env.COMPARE}`
   mkdirSync(dir, { recursive: true })
-  await page.setViewportSize({ width: 1600, height: 900 })
+  const [vw, vh] = (process.env.SIZE ?? '1600x900').split('x').map(Number)
+  await page.setViewportSize({ width: vw, height: vh })
   await page.goto('/?clean=1')
   await page.waitForFunction(() => !!(window as unknown as W).__skvyra)
   await page.evaluate((c) => (window as unknown as W).__skvyraStore.getState().set({ quality: 'high', ...(c ? { colorMode: c } : {}) }),

@@ -662,6 +662,55 @@ def test_multipart_eaves_hang_from_the_wall_top(roof, name):
     assert max(max(z) - min(z) for z in key.values()) < 0.05  # adjacent strips meet: no cracks at corners or seams
 
 
+def _qa_geometry():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("qa_geometry", C.ROOT / "scripts" / "qa_geometry.py")
+    Q = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(Q)
+    return Q
+
+
+@pytest.mark.parametrize("roof", ["gabled", "hipped", "half-hipped"])
+@pytest.mark.parametrize("name", list(COMPLEX))
+def test_multipart_roofs_pass_the_roof_junction_qa(roof, name):
+    """Regression (2026-11-17): with the published d205944 code 12 of these 15 fail (cracks between overhang strips,
+    eave edges off the wall top, see-through gaps on the rotated L)."""
+    Q = _qa_geometry()
+    p = shapely.orient_polygons(COMPLEX[name])
+    attrs = {"roof": roof, "eave_height": 3.4, "kind": "house", "pitch": 35.0, "chimney": False, "rand": 0.9,
+             "decompose": True, "facade": "house", "overhang": 0.45}
+    m = B.building_mesh(p, attrs, FlatTerrain().z, 3.0, lod=0)
+    r = Q.roof_junctions(m["roof"][0], m["walls"][0], p)
+    assert all(r[k] <= lim for k, lim in Q.ROOF_LIMITS.items()), r
+
+
+def test_roof_junction_qa_passes_good_roofs_and_catches_the_2026_11_defects():
+    """scripts/qa_geometry.py roof_junctions() (make qa): clean on a correct multi-part roof; flags an overhang strip
+    dropped down the wall, a floating eave edge, and a missing step face between parts (see-through gap)."""
+    Q = _qa_geometry()
+    p = shapely.orient_polygons(COMPLEX["T"])
+    attrs = {"roof": "gabled", "eave_height": 3.4, "kind": "house", "pitch": 35.0, "chimney": False, "rand": 0.9,
+             "decompose": True, "facade": "house", "overhang": 0.45}
+    m = B.building_mesh(p, attrs, FlatTerrain().z, 3.0, lod=0)
+    roof, walls, uv = m["roof"][0], m["walls"][0], m["walls"][1]
+    ok = Q.roof_junctions(roof, walls, p)
+    assert all(ok[k] <= lim for k, lim in Q.ROOF_LIMITS.items()), ok
+    cen = roof.mean(axis=1)
+    outside = ~shapely.contains_xy(p.buffer(1e-3), cen[:, 0], cen[:, 1])
+    on = shapely.distance(p.boundary, shapely.points(roof[..., :2].reshape(-1, 2))).reshape(-1, 3) < 0.02
+    sagged = roof.copy()
+    drop = outside[:, None] & ~on
+    sagged[..., 2][drop] -= 2.0  # the outer edge of the overhang 2 m down the walls
+    k = np.flatnonzero(outside & on.any(axis=1))[0]
+    assert Q.roof_junctions(sagged, walls, p)["eave_drop"] > Q.ROOF_LIMITS["eave_drop"]
+    floating = roof.copy()
+    floating[k][on[k], 2] += 0.5  # its inner edge lifted off the wall top
+    assert Q.roof_junctions(floating, walls, p)["eave_gap"] > Q.ROOF_LIMITS["eave_gap"]
+    step = (uv[:, :, 0] < 0).all(axis=1) & (walls[:, :, 2].min(axis=1) >= 2.0)  # internal faces between parts
+    assert step.any()
+    assert Q.roof_junctions(roof, walls[~step], p)["hole_m"] > Q.ROOF_LIMITS["hole_m"]
+
+
 def test_pond_cut_leaves_no_terrain_above_water_inside_outline():
     """Regression (2026-11-12): grid triangles straddling a pond shore rose above the flat water ("saw teeth")."""
     from skvyra import tiles as T
