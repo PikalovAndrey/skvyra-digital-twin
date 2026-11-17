@@ -1130,3 +1130,21 @@ def test_monument_figure_lofted_from_traced_rings():
     # the cape spreads to the statue's right (+u, east when it faces north): asymmetric extents survive
     tn, _ = B.monument_mesh(0.0, 0.0, 0.0, {"facing_deg": 0, "stack": [], "figure": {"rings": rings}}, 0)
     assert tn[..., 0].max() == pytest.approx(1.32) and tn[..., 0].min() == pytest.approx(-1.05)
+
+
+def test_roof_parts_override_gives_one_roof_over_an_irregular_outline(tmp_path, monkeypatch):
+    """Owner feedback 2026-11-17 (ms:edc91edf970c): a Z-shaped ML outline split into 4 roof parts showed eave strips
+    dropping across the walls and cut gables; the override `roof_parts: 1` keeps one roof over the unchanged outline."""
+    from skvyra import buildings as B, overrides as OVR
+    z = Polygon([(0, 0), (9, 0), (9, 6), (15, 6), (15, 15), (6, 15), (6, 9), (0, 9)])  # Z-like rectilinear plan
+    props, cfg = {"id": "zz", "tags": {"building": "yes"}}, {"seed": 1, "floor_height_m": 3.0}
+    base = B.resolve(props, z.area, 1.0, 0.8, None, cfg)
+    one = B.resolve(props, z.area, 1.0, 0.8, None, cfg, override={"roof_parts": 1})
+    assert base["decompose"] and not one["decompose"]
+    assert len(B.plan(z, {**one, "roof": "half-hipped"})[0]) == 1
+    assert {k: v for k, v in one.items() if k != "decompose"} == {k: v for k, v in base.items() if k != "decompose"}
+    p = tmp_path / "overrides.json"
+    p.write_text(json.dumps({"version": 1, "buildings": {"ms:x": {"roof_parts": 2}}}))
+    monkeypatch.setattr(C, "OVERRIDES", p)
+    with pytest.raises(ValueError, match="roof_parts"):
+        OVR.load()

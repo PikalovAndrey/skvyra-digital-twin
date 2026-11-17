@@ -294,7 +294,8 @@ def resolve(props: dict, area: float, aspect: float, fill: float, cover: str | N
             "door_color": srgb_to_linear(hex_rgb(r.choice(["#4a2f1e", "#5c3a22", "#3b3f45", "#6b6e70", "#7a4a2a"]))).tolist(),
             "chimney": kind == "house" and roof != "flat" and r.random() < 0.7, "rand": r.random(),
             "rand2": r.random(), "bay_m": lm.get("bay_m", 3.0), "window_base_m": lm.get("window_base_m", 0.0),
-            "decompose": kind in ("house", "public", "commercial", "outbuilding", "church") and roof != "flat"}
+            "decompose": kind in ("house", "public", "commercial", "outbuilding", "church") and roof != "flat"
+                         and o.get("roof_parts") != 1}  # override: one roof over the whole outline
 
 
 # ------------------------------------------------------------------------------------------------------

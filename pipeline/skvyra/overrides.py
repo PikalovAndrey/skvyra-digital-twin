@@ -24,7 +24,7 @@ from . import config as C
 from .log import log
 
 ALLOWED = {"height", "levels", "roof_shape", "wall_colour", "roof_colour", "suppress", "verified", "note",
-           "author", "date", "anchor", "model", "model_rotation_deg", "evidence"}
+           "author", "date", "anchor", "model", "model_rotation_deg", "evidence", "roof_parts"}
 
 
 def load() -> dict:
@@ -38,6 +38,8 @@ def load() -> dict:
             raise ValueError(f"override {sid}: unknown fields {sorted(unknown)} (allowed: {sorted(ALLOWED)})")
         if "roof_shape" in o and o["roof_shape"] not in ("flat", "gabled", "hipped", "pyramidal", "shed"):
             raise ValueError(f"override {sid}: unsupported roof_shape {o['roof_shape']}")
+        if "roof_parts" in o and o["roof_parts"] != 1:
+            raise ValueError(f"override {sid}: roof_parts can only be 1 (one roof over the whole outline)")
         if "height" in o and not (1 <= float(o["height"]) <= 200):
             raise ValueError(f"override {sid}: implausible height {o['height']}")
         out[sid] = o
