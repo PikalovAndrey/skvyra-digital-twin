@@ -22,8 +22,11 @@
       ],
       "date": "2026-11-17",
       "author": "Centre Realism follow-up (assistant), for the owner's review",
-      "note": "One roof over the whole outline instead of 4 generated parts: the multi-part roof of this Z-shaped ML outline produced roof strips dropping across the walls and cut gables (owner's feedback, 2026-11-17). Roof form and height stay generic estimates; the real roof is not determinable from the available licensed photos.",
-      "evidence": "Diagnosis 2026-11-17: contour clean (corners within 0.2 deg of 90), defect from decompose() into 4 parts; geometry identical in 06c2406 (not a side effect of Centre Realism)."
+      "note": "One low roof over the whole outline instead of 4 generated parts (the multi-part roof of this Z-shaped ML outline dropped eave strips across the walls and cut the gables; owner's feedback 2026-11-17). Roof: hipped, light pinkish-grey - estimates from the 2021 aerial, where only the south-east half is visible (one storey, a single low light roof, two differently lit planes, no gable seen); the north-west half is under trees. Wall colour kept as the model had it (the photo shows light walls, hue not determinable). Eave 3.4 m and ridge about 6.6 m are generic estimates consistent with the photo (about 3 m / 6 m).",
+      "evidence": "Commons 'Skvyra Lev Schwarzburg Kolos Stadium 1.jpg' (Velyke budivnytstvo, 2021-09-15, CC BY 4.0): camera fitted on the pitch and the administrative building (RMS ~5 px); house roof sunlit #9b8c93, lighter than a red roof in the same photo. Diagnosis 2026-11-17: contour clean, defect from decompose() into 4 parts; geometry identical in 06c2406.",
+      "roof_shape": "hipped",
+      "roof_colour": "#a89aa0",
+      "wall_colour": "#e6b99a"
     }
   }
 }
