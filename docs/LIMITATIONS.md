@@ -163,3 +163,15 @@ remaining ones are corners where the nearest wall is a higher gable; by construc
 its own wall top), more than 1.5 m 372 -> 1, see-through gaps between parts 140 -> 0. Only multi-part buildings and the
 composite lyceum (its eave band no longer sags) change; single-part buildings, the admin building, the House of Culture,
 the Shevchenko monument, bridges and LOD2 are byte-identical. Not fixed: 4 (rake overhangs).
+
+Guard (2026-11-17): `make qa` runs `roof_junctions()` (scripts/qa_geometry.py) on every LOD0 building - from the finished
+mesh only: overhang hanging below the wall-top line or floating above it, the eave's inner edge off the wall top, open
+cracks between overhang strips, internal roof steps with no wall (see-through gaps). It fails on any non-landmark
+building over `ROOF_LIMITS`; landmarks rebuilt from photos (porticoes, pediments, towers) are listed separately. Published
+d205944 tiles: 730 of 730 multi-part houses fail; this fix: 0.
+
+Known, accepted: two houses (ms:f379dbc1cf41, ms:756c5e85c007) keep a step of 0.23-0.29 m in the outer eave edge where two
+cut points almost coincide (closed by a vertical sliver, no gap); merging such points changed ~700 other houses, so it was
+left. At concave corners the lower part's overhang runs under the higher one (as on real houses). The lyceum's one-storey
+wing and link now show their (existing, style-coloured) fascia board along the eave. Mobile cost (local test, iPhone
+viewport, 4x CPU throttling, 9 Mbit/s): same first load (3.45 MB), centre +0.11 MB (+4 %), same frame time.
