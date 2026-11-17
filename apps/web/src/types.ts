@@ -29,6 +29,8 @@ export interface TileIndex {
 export interface BuildingMeta {
   id: string
   sid: string
+  /** slot of an outline suppressed in data/overrides: no geometry, kept so feature ids stay stable */
+  suppressed?: boolean
   src: 'osm' | 'ms_ml' | 'local'
   local?: { confidence: string; method: string; date: string; author?: string; note?: string; evidence?: { url: string; license?: string; author?: string }[] }
   conf: 'verified' | 'source' | 'inferred'

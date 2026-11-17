@@ -522,6 +522,7 @@ export class TileManager {
 
 function paletteFor(buildings: BuildingMeta[], mode: ColorMode): ([number, number, number] | null)[] {
   return buildings.map((b) => {
+    if (b.suppressed) return null // slot of an outline suppressed in data/overrides: no geometry
     if (mode === 'geometry') return linear(QUALITY_COLORS[b.conf])
     if (b.hM === 'override') return linear(QUALITY_COLORS.hOverride)
     if (b.hM === 'type_default') return linear(QUALITY_COLORS.hDefault)

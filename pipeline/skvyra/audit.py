@@ -149,7 +149,7 @@ def reconcile(frame, boundary) -> dict:
     tile_n = None
     tiles = C.GENERATED / "tiles"
     if (tiles / "index.json").exists():
-        tile_n = sum(len(json.loads(p.read_text())["buildings"]) for p in tiles.glob("t*.json"))
+        tile_n = sum(sum(not b.get("suppressed") for b in json.loads(p.read_text())["buildings"]) for p in tiles.glob("t*.json"))
     return {
         "osm": {"accepted_parts": cnt["buildings_osm"], "duplicates_dropped": st.get("osm_building_duplicate", 0),
                 "quarantined": osm_q, "quarantine_reasons": {k: v for k, v in q.items() if k != "ml_footprint_on_road"},

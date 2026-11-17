@@ -173,6 +173,34 @@ def test_overrides_apply_and_conflicts_are_reported(built):
     cli(built, "build", "--offline", "--workers", "2")
 
 
+def test_suppressed_outline_keeps_its_slot_so_neighbours_keep_their_feature_ids(built):
+    """Regression (Centre Realism 2026-11-17): suppressing one outline shifted the feature ids of every later building
+    in its tile, and with them the per-building window pattern (curtains, frames, blank windows) seeded by the id."""
+    idx = json.loads((tiles_dir(built) / "index.json").read_text())
+    tid = next(t["id"] for t in idx["tiles"] if t["n"]["buildings"] >= 3)
+    before = [b["sid"] for b in json.loads((tiles_dir(built) / f"{tid}.json").read_text())["buildings"]]
+    victim = before[1]
+    ov = built / "data" / "overrides"
+    ov.mkdir(parents=True, exist_ok=True)
+    (ov / "overrides.json").write_text(json.dumps({"version": 1, "buildings": {victim: {"suppress": True, "note": "test"}}}))
+    try:
+        cli(built, "build", "--offline", "--workers", "2")
+        meta = json.loads((tiles_dir(built) / f"{tid}.json").read_text())
+        assert [b["sid"] for b in meta["buildings"]] == before          # same order, same index for everyone
+        assert meta["buildings"][1].get("suppressed") is True and "h" not in meta["buildings"][1]
+        assert meta["index"]["n"]["buildings"] == len(before) - 1
+        js, binary = read_glb(tiles_dir(built) / meta["files"]["0"]["u"])
+        fids = set()
+        for m in js["meshes"]:
+            at = m["primitives"][0]["attributes"]
+            if "_FEATURE_ID" in at:
+                fids |= set(np.unique(accessor(js, binary, at["_FEATURE_ID"])).astype(int).tolist())
+        assert 1 not in fids and 0 in fids and len(before) - 1 in fids  # no geometry in the kept slot
+    finally:
+        (ov / "overrides.json").unlink()
+        cli(built, "build", "--offline", "--workers", "2")
+
+
 def test_failed_tile_is_reported_and_retried_alone(built):
     # corrupt one tile's cache marker: only that tile is rebuilt
     victim = sorted(tiles_dir(built).glob("t*.json"))[0]

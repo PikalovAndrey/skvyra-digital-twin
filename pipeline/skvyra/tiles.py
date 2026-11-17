@@ -372,11 +372,13 @@ def build_tile(ix, iy, force=False) -> dict:
     tb = box(*b)
     floor_h = cfg["floor_height_m"]
     # ---- buildings: attributes once, geometry per LOD ----
-    blds, metas = [], []
+    blds, metas, fids = [], [], []
     for i in bidx:
         g, p = _CTX["bld"][i]
         ov = _CTX["overrides"].get(p["source_id"])
-        if ov and ov.get("suppress"):
+        if ov and ov.get("suppress"):  # no geometry, but it keeps its slot: the feature ids of the other buildings
+            metas.append({"id": p["id"], "sid": p["source_id"], "src": p["source"], "suppressed": True,  # (picking and
+                          "note": ov.get("note")})                                    # window patterns) stay put
             continue
         c, u, v, L, W = B.obb(g)
         obb_area = 4 * L * W
@@ -393,6 +395,7 @@ def build_tile(ix, iy, force=False) -> dict:
             attrs.update(eave_height=max(ps["eave_m"] for ps in comp["parts"]), height_method="photo_estimate",
                          height_conf=B.CONF["photo_estimate"], roof="complex", roof_method="photo_estimate", door=None)
         blds.append((g, p, attrs, ov, parts))
+        fids.append(len(metas))
         rp = g.representative_point()
         lon, lat = frame.to_geo(rp.x, rp.y)
         tags = p.get("tags", {})
@@ -525,7 +528,7 @@ def build_tile(ix, iy, force=False) -> dict:
         zr = zr_l if lod == 0 else zr
         uv = np.stack([(tris[..., 0] - b[0]) / (b[2] - b[0]), (b[3] - tris[..., 1]) / (b[3] - b[1])], -1)
         soups["terrain"].add(tris, COLORS["terrain"], uv)
-        for fi, (g, p, attrs, ov, parts) in enumerate(blds):
+        for fi, (g, p, attrs, ov, parts) in zip(fids, blds):
             lm = _CTX["landmarks"].get(p["source_id"])
             comp = lm.get("composite") if lm and lm.get("match") != "probable" else None
             if comp:
@@ -579,7 +582,7 @@ def build_tile(ix, iy, force=False) -> dict:
         files[str(lod)] = {"u": name, "s": sizes[lod]}
 
     index_entry = {"id": tid, "ix": ix, "iy": iy, "b": list(b), "z": [round(zr[0], 2), round(zr[1], 2)],
-                   "n": {"buildings": len(metas), "trees": len(tree_arr), "issues": len(issues)},
+                   "n": {"buildings": len(blds), "trees": len(tree_arr), "issues": len(issues)},
                    "files": files, "hash": digest, "secs": round(time.time() - t0, 2)}
     meta = {"id": tid, "hash": digest, "bounds": list(b), "buildings": metas, "trees": tree_arr, "tree_dates": tree_dates,
             "issues": issues, "files": files, "index": index_entry}
@@ -769,7 +772,7 @@ def attribute_report() -> dict:
         n = multipart = landmarks = 0
         for f in sorted(OUT.glob("t*.json")):
             for b in json.loads(f.read_text())["buildings"]:
-                if scope == "boundary" and not b.get("inb"):
+                if b.get("suppressed") or (scope == "boundary" and not b.get("inb")):
                     continue
                 n += 1
                 for key, field in (("height_method", "hM"), ("height_conf", "hC"), ("roof_method", "roofM"),

@@ -144,7 +144,8 @@ def main():
     for meta_path in sorted(tiles.glob("t*.json")):
         meta = json.loads(meta_path.read_text())
         for b in meta["buildings"]:
-            metas[b["id"]] = b
+            if not b.get("suppressed"):  # slot of an outline suppressed in data/overrides (no geometry)
+                metas[b["id"]] = b
         js, binary = glb(tiles / meta["files"]["0"]["u"])
         for m in js["meshes"]:
             if m["name"] != "walls":
