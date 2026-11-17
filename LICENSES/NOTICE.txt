@@ -60,6 +60,11 @@ Other
 Landmark coordinates and names: Wikidata (CC0).
 Wikimedia Commons photos were used only as visual reference for a few landmarks; no photo is part of
 this website. Each building card links to the photo pages with author and licence.
+Shevchenko monument on the central square (no building card): the outline of the statue and the
+pedestal were estimated from "ТД 1- 08.Сквира.jpg" by Orest Brod (2008-09-15), CC BY-SA 4.0
+(https://creativecommons.org/licenses/by-sa/4.0/), https://commons.wikimedia.org/wiki/File:ТД_1-_08.Сквира.jpg ;
+changes made: only proportions and two colour values were taken, no part of the photo is included; the
+figure is a simple silhouette without a likeness.
 Kolos stadium: the colours of the running track ring and the multi-sport court are median colours read from
 "Skvyra Lev Schwarzburg Kolos Stadium 1" and "... 4" (2021-09-15) by Velyke budivnytstvo / Tulchyn District
 State Administration (Велике будівництво / Тульчинська районна державна адміністрація), CC BY 4.0
