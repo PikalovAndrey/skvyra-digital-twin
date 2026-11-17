@@ -45,7 +45,7 @@ export interface BuildingMeta {
   inb?: boolean
   poi?: string[]
   ghsl?: { anbh?: number; share?: number }
-  landmark?: { name: string; wikidata: string; evidence?: string; photos?: string[]; license?: string; match_distance_m?: number; match?: string; identity_audit?: string; heritage?: { status: 'registered_monument' | 'newly_identified' | 'not_registered' | 'unknown'; reported_status?: string; checked?: string } }
+  landmark?: { name: string; wikidata?: string; evidence?: string; photos?: string[]; license?: string; match_distance_m?: number; match?: string; identity_audit?: string; heritage?: { status: 'registered_monument' | 'newly_identified' | 'not_registered' | 'unknown'; reported_status?: string; checked?: string } }
   lv?: number
   roof: string
   roofM: 'override' | 'source_tag' | 'photo_estimate' | 'inferred'

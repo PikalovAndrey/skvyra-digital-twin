@@ -27,8 +27,24 @@ def match(buildings, frame, max_dist: float = 30.0, streets=None) -> dict:
     from .overrides import landmark_rejections
     rejected = landmark_rejections()
     tree = shapely.STRtree([g for g, _ in buildings])
+    by_sid = {p["source_id"]: i for i, (_, p) in enumerate(buildings)}
     out, report = {}, []
     for lm in cat:
+        if lm.get("source_id"):  # no Wikidata item: bound explicitly to one source outline (re-matched by anchor)
+            i = by_sid.get(lm["source_id"])
+            if i is None and lm.get("anchor"):
+                x, y = frame.to_local(*lm["anchor"])
+                hit = list(tree.query(shapely.Point(float(x), float(y)), predicate="within"))
+                i = hit[0] if hit else None
+            if i is None:
+                report.append({"source_id": lm["source_id"], "name": lm["name"], "matched": None,
+                               "reason": "source outline not found (and no outline contains the anchor)"})
+                continue
+            sid = buildings[i][1]["source_id"]
+            out[sid] = {**lm, "match_distance_m": 0.0, "match": "source_id"}
+            report.append({"source_id": lm["source_id"], "name": lm["name"], "matched": sid, "match": "source_id",
+                           "footprint_area_m2": round(buildings[i][0].area)})
+            continue
         bound = [i for i, (_, p) in enumerate(buildings) if (p.get("local") or {}).get("wikidata") == lm["wikidata"]]
         if bound:  # a confirmed local outline explicitly bound to this landmark wins over proximity
             sid = buildings[bound[0]][1]["source_id"]

@@ -46,7 +46,8 @@ KINDS = {
 FACADE = {"none": 0, "house": 1, "apartments": 2, "commercial": 3, "public": 4, "industrial": 5, "church": 6, "historic": 7,
           "tiled_arched": 8,  # tile-clad, rectangular ground-floor windows, tall upper windows with arched fanlights
           "tiled": 9,         # tile-clad, rectangular windows (photo-observed cladding, landmarks only)
-          "unknown": 10}      # large building of unknown use: plain plaster, plain windows (no balconies, no shopfronts)
+          "unknown": 10,      # large building of unknown use: plain plaster, plain windows (no balconies, no shopfronts)
+          "tiled_ribbon": 11}  # tile-clad pilasters, wide windows, brick-red spandrels (Soviet-era office block, photos)
 ROOF_MAT = {"bitumen": 0, "metal_tile": 1, "slate": 2, "corrugated": 3, "seam": 4}
 FLOOR_H = {"public": 3.8, "historic": 4.0, "apartments": 2.9, "commercial": 3.3, "church": 4.5, "tiled_arched": 5.5, "tiled": 4.2}
 PALETTE = {  # sRGB hex with weights; tuned on licensed photos of Skvyra (docs/ARCHITECTURE_STYLE.md)
@@ -913,6 +914,17 @@ def monument_mesh(cx, cy, z_ground, spec: dict, lod: int):
         for t in parts:
             tris += t
             cols += [col] * len(t)
+    fig = spec.get("figure")  # standing statue as a simple silhouette (long coat, shoulders, head): no likeness
+    if fig and lod < 2:
+        col = lin(fig.get("colour", "#8a5a44"))
+        w, h = fig["w"], fig["h"]
+        parts = [frustum_tris(c, u, v, (w * 0.5, w * 0.3), (w * 0.48, w * 0.28), z, z + h * 0.55),                # coat
+                 frustum_tris(c, u, v, (w * 0.48, w * 0.28), (w * 0.6, w * 0.32), z + h * 0.55, z + h * 0.8),      # cape
+                 frustum_tris(c, u, v, (w * 0.62, w * 0.32), (w * 0.25, w * 0.2), z + h * 0.8, z + h * 0.84),      # shoulders
+                 frustum_tris(c, u, v, (w * 0.18, w * 0.2), (w * 0.16, w * 0.18), z + h * 0.84, z + h)]            # head
+        for t in parts:
+            tris += t
+            cols += [col] * len(t)
     return np.array(tris, float).reshape(-1, 3, 3), np.array(cols, float).reshape(-1, 3)
 
 
@@ -1100,6 +1112,17 @@ def composite_details(p: Polygon, spec: dict, ground, lod: int, wall_rgb):
         elif f["type"] == "door":
             z_a = z0 + f.get("sill_m", 0.0)
             box(base + n * 0.02, f.get("width_m", 1.2) / 2, 0.03, z_a, z_a + f.get("height_m", 2.3), lin(f.get("colour", "#5a3b26")))
+        elif f["type"] == "canopy":  # flat entrance canopy: a slab out from the front wall, optional corner posts
+            hw, hd, z1 = f["width_m"] / 2, f["depth_m"] / 2, z0 + f["height_m"]
+            za, col = z1 - f.get("thick_m", 0.3), lin(f.get("colour", "#e6e3dc"))
+            c2 = base + n * hd
+            box(c2, hw, hd, za, z1, col)
+            q = [c2 - hw * u + hd * n, c2 + hw * u + hd * n, c2 + hw * u - hd * n, c2 - hw * u - hd * n]
+            tris.extend([[(*q[0], za), (*q[2], za), (*q[1], za)], [(*q[0], za), (*q[3], za), (*q[2], za)]])  # underside
+            cols.extend([col, col])
+            if f.get("posts"):
+                for s_ in (-1, 1):
+                    box(c2 + n * (hd - 0.2) + s_ * u * (hw - 0.2), 0.15, 0.15, z_bot, za, col)
         elif f["type"] == "stair":
             # stone stair along the facade: rises from at_m to at_m + dir*length_m up to height_m, landing at the top
             length, h, w_, d = f["length_m"], f["height_m"], f.get("width_m", 1.5), f.get("dir", 1)

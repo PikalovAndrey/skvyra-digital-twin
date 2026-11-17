@@ -1055,3 +1055,65 @@ def test_bridge_deck_faces_up_meets_road_and_clears_ground(highway):
         outer, inner = np.abs(dist - w / 2) < 0.05, np.abs(dist - (w / 2 - 0.25)) < 0.05
         assert outer.sum() > 4 and inner.sum() > 4
         assert (away[outer] > 0).all() and (away[inner] < 0).all()
+
+
+# ---------------------------------------------------------------------------------------------------
+# Central Buildings Realism (2026-11-17): landmarks without a Wikidata item, entrance canopy, standing statue
+# ---------------------------------------------------------------------------------------------------
+def test_landmark_bound_by_source_id_and_rematched_by_anchor(tmp_path, monkeypatch):
+    from skvyra import landmarks as LM
+    lon, lat = FRAME.to_geo(15.0, 10.0)
+    entry = {"source_id": "osm:way/7", "anchor": [float(lon), float(lat)], "name": "Office block", "kind": "public"}
+    cat = tmp_path / "landmarks.json"
+    cat.write_text(json.dumps({"landmarks": [entry]}))
+    monkeypatch.setattr(LM, "CATALOGUE", cat)
+    monkeypatch.setattr(C, "PROCESSED", tmp_path)
+    near = (shapely.box(40, 0, 60, 20), {"source_id": "osm:way/8", "source": "osm"})  # bigger and closer to nothing
+    got = LM.match([(shapely.box(0, 0, 30, 20), {"source_id": "osm:way/7", "source": "osm"}), near], FRAME)
+    assert set(got) == {"osm:way/7"} and got["osm:way/7"]["match"] == "source_id"
+    # the OSM way was replaced: the outline that contains the anchor takes the landmark, never a neighbour
+    got = LM.match([(shapely.box(0, 0, 30, 20), {"source_id": "osm:way/99", "source": "osm"}), near], FRAME)
+    assert set(got) == {"osm:way/99"}
+    # nothing contains the anchor: not applied (and reported), no proximity guess
+    assert LM.match([near], FRAME) == {}
+    assert json.loads((tmp_path / "landmarks_report.json").read_text())[0]["matched"] is None
+
+
+def test_composite_canopy_is_a_slab_seen_from_below_with_posts_on_the_ground():
+    fp = Polygon([(0, 0), (40, 0), (40, 12), (0, 12)])
+    spec = {"axis_from": "west", "front": "south", "split_m": [], "parts": [{"roof": "flat", "eave_m": 13.0, "rise_m": 0.0, "frieze": False}],
+            "features": [{"type": "canopy", "part": 0, "at_m": 20.0, "width_m": 12.0, "depth_m": 3.0, "height_m": 4.0,
+                          "thick_m": 0.3, "colour": "#0000ff", "posts": True}]}
+    tris, cols = B.composite_details(fp, spec, lambda x, y: np.zeros(np.shape(x)), lod=1, wall_rgb=[0.5, 0.5, 0.5])
+    blue = np.all(np.isclose(cols, np.asarray(B.srgb_to_linear(B.hex_rgb("#0000ff"))), atol=1e-6), axis=1)
+    t = tris[blue]
+    n = np.cross(t[:, 1] - t[:, 0], t[:, 2] - t[:, 0])
+    assert t[..., 2].max() == pytest.approx(4.0)
+    assert (n[:, 2] < -1e-9).sum() == 2                       # the underside, and only it, faces down
+    assert t[..., 1].min() == pytest.approx(-3.0) and t[..., 1].max() == pytest.approx(0.0)   # out from the south wall
+    assert t[..., 0].min() == pytest.approx(14.0) and t[..., 0].max() == pytest.approx(26.0)  # centred on at_m
+    assert t[..., 2].min() < 0.0                                # posts reach below ground
+
+
+def test_monument_standing_figure_height_and_lod():
+    from skvyra import buildings as B
+    spec = {"facing_deg": 37, "stack": [{"w": 6.1, "d": 3.4, "h": 0.3, "colour": "#888888"}, {"w": 1.3, "d": 1.3, "h": 2.2, "colour": "#666666"}],
+            "figure": {"w": 1.8, "h": 4.5, "colour": "#95543f"}}
+    for lod in (0, 1):
+        t, c = B.monument_mesh(0.0, 0.0, 200.0, spec, lod)
+        assert len(t) == len(c) and t[..., 2].max() == pytest.approx(200.0 + 0.3 + 2.2 + 4.5)
+        assert _outward_share(t, (0.0, 0.0)) == 1.0
+        xy = t.reshape(-1, 3)[:, :2]
+        assert np.hypot(xy[:, 0], xy[:, 1]).max() <= np.hypot(3.05, 1.7) + 1e-6   # all within the platform
+    t2, _ = B.monument_mesh(0.0, 0.0, 200.0, spec, 2)
+    assert t2[..., 2].max() == pytest.approx(202.5)            # overview LOD: pedestal only
+
+
+def test_office_block_facade_style_is_registered_everywhere():
+    import re
+    from pathlib import Path
+    assert B.FACADE["tiled_ribbon"] == 11
+    root = Path(__file__).resolve().parents[1]
+    shader = (root / "apps/web/src/scene/materials.ts").read_text()
+    assert "st == 11" in shader and re.search(r"st == 8 \|\| st == 9 \|\| st == 11", shader)
+    assert "11: 0.33" in (root / "blender/scripts/build_scene.py").read_text()
