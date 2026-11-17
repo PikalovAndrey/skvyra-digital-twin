@@ -1,4 +1,17 @@
-# Progress — 2026-11-16
+# Progress — 2026-11-17
+
+## Central Buildings Realism, batch 1 (2026-11-17, branch `feature/skvyra-centre-realism`, local only)
+
+Rollback first: tag `stable/06c2406-pre-centre-realism`, backup `~/skvyra-backups/2026-11-17-pre-centre-realism-06c2406`
+(tested: rebuild at the tag = 358/358 GLB byte-identical). 20 central candidates listed in docs/CENTRE_REALISM.md;
+3 had enough licensed evidence and an existing outline: the administrative building on the central square
+(flat roof, 3 storeys, tile pilasters and brick-red spandrels, canopy - photo 2008 + aerials 2021), the Shevchenko
+monument (a Microsoft ML "building" on the square was its platform - suppressed and replaced by a pedestal and a
+simple standing figure) and the House of Culture / museum (pedimented two-storey block + one-storey hall, placed
+by solving the 2019 panorama camera). Kostel, zemstvo, post, Rylskyi house and others skipped (no outline or only
+old photos). New: landmarks bound by `source_id` (+ `anchor`), facade style 11, composite `canopy`, monument `figure`.
+Checks: pytest 169, vitest 43, tsc 0, e2e 11, `make qa` unchanged except the suppressed shed; only tile t-1+0 changed
+(LOD0 +8 % triangles, LOD1 +25 %, LOD2 unchanged).
 
 ## Street-matching fixes 4 and 5 (2026-11-16, local, not committed)
 

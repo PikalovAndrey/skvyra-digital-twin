@@ -37,7 +37,8 @@ Q70598), retrieved 2026-11-12. No Google/Yandex Street View or other proprietary
 
 - walls: 0 none (outbuildings), 1 house, 2 apartment block, 3 commercial (ground-floor shopfronts),
   4 public, 5 industrial (no windows), 6 place of worship, 7 historic (arched windows), 8/9 tile-clad landmark
-  styles (photos), 10 use unknown (large untagged building: plain plaster, plain regular windows)
+  styles (photos), 10 use unknown (large untagged building: plain plaster, plain regular windows), 11 tile-clad
+  office block (light tile pilasters, wide windows, brick-red spandrels - the administrative building on the square, photos)
 - roofs: 0 bitumen membrane (flat), 1 metal tile, 2 asbestos-cement slate, 3 corrugated sheet,
   4 standing seam
 
