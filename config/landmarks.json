@@ -595,7 +595,7 @@
    "roof_material": "bitumen",
    "wall_colour": "#c5beac",
    "roof_colour": "#8c8d8a",
-   "evidence": "Identity: the OSM outline (way 953018275, 42.9 x 12.8 m, building=yes, no name or use tag) is the only large building on the square; its long north-east face is 23 m from the OSM node 'Тарас Шевченко', and the monument stands on the axis of that face in the 2008 photo. Observed (Orest Brod 2008-09-15, frontal, north-east face): Soviet-era office block with a flat roof and a railing; three storeys of wide windows (white frames, three panes) between light tile-clad pilasters, brick-red spandrel panels between the window rows, a plain tiled band and a narrow green band with small vents under the roof edge; a flat white entrance canopy over the ground floor on the axis (its right half is hidden by the statue - assumed symmetric). Current state: the 2021 aerial photos (Велике будівництво, CC BY 4.0) show the same light flat-roofed block of four window rows beyond the south-east end of the stadium. Estimates (scale from the storeys; a frontal photo from about 1.6 m): storey 3.5 m, top bands 2.6 m, roof edge 13.6 m, window bays 3.9 m, canopy 13 x 3 m at 4 m. Use: not stated in the sources (shown as an office/public building). Not modelled: the small vents of the green band, the blank stair bay at the north-west end, the roof railing and antennas, rear and end facades (drawn like the front).",
+   "evidence": "Identity: the OSM outline (way 953018275, 42.9 x 12.8 m, building=yes, no name or use tag) is the only large building on the square; its long north-east face is 23 m from the OSM node 'Тарас Шевченко', and the monument stands on the axis of that face in the 2008 photo. Observed (Orest Brod 2008-09-15, frontal, north-east face): Soviet-era office block with a flat roof and a railing; three storeys of wide windows (white frames, three panes) between light tile-clad pilasters, brick-red spandrel panels between the window rows, a plain tiled band and a narrow green band with small vents under the roof edge; a flat white entrance canopy over the ground floor on the axis (its right half is hidden by the statue - assumed symmetric). Current state: the 2021 aerial photos (Велике будівництво, CC BY 4.0) show the same light flat-roofed block of four window rows beyond the south-east end of the stadium. Estimates (scale from the storeys; a frontal photo from about 1.6 m): storey 3.5 m, top bands 2.6 m, roof edge 13.6 m, window bays 3.0 m (12 bays on the square side) and a blank tile-clad stair bay of about 6.8 m at the north-west end (2008 photo: window pitch 132 px, blank end 300 px, facade 42.9 m), canopy 13 x 3 m at 4 m. Use: not stated in the sources (shown as an office/public building). Not modelled: the small vents of the green band, the roof railing and antennas, rear and end facades (drawn like the front).",
    "photos": [
     "https://commons.wikimedia.org/wiki/File:ТД_1-_08.Сквира.jpg",
     "https://commons.wikimedia.org/wiki/File:Skvyra_Lev_Schwarzburg_Kolos_Stadium_1.jpg",
@@ -606,7 +606,9 @@
     "method": "photo_estimate",
     "axis_from": "east",
     "front": "north",
-    "split_m": [],
+    "split_m": [
+     36.1
+    ],
     "plinth_colour": "#8d8a80",
     "parts": [
      {
@@ -615,9 +617,41 @@
       "eave_m": 13.6,
       "rise_m": 0.0,
       "floor_h": 3.5,
-      "bay_m": 3.9,
+      "bay_m": 3.0,
       "window_base_m": 0.5,
       "facade": "tiled_ribbon",
+      "plinth_m": 0.5,
+      "wall_colour": "#c5beac",
+      "roof_colour": "#8c8d8a",
+      "roof_material": "bitumen",
+      "frieze": false,
+      "bands": [
+       [
+        11.0,
+        12.8,
+        "#c9c2b0"
+       ],
+       [
+        12.8,
+        13.25,
+        "#6b7660"
+       ],
+       [
+        13.25,
+        13.6,
+        "#c9c2b0"
+       ]
+      ]
+     },
+     {
+      "name": "stair bay (blank on the square side)",
+      "roof": "flat",
+      "eave_m": 13.6,
+      "rise_m": 0.0,
+      "floor_h": 3.5,
+      "bay_m": 3.0,
+      "window_base_m": 0.5,
+      "facade": "none",
       "plinth_m": 0.5,
       "wall_colour": "#c5beac",
       "roof_colour": "#8c8d8a",
